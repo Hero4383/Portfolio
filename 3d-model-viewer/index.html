@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed UV Mapped Brain Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #brain-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+            text-shadow: 0 0 10px #00ff41;
+            max-width: 400px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+            text-shadow: 0 0 10px #00ff41;
+        }
+        
+        button {
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 65, 0.4);
+            box-shadow: 0 0 10px #00ff41;
+        }
+        
+        #textureControls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+            text-shadow: 0 0 10px #00ff41;
+            max-width: 300px;
+        }
+        
+        #attribution {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #00ff41;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+            text-shadow: 0 0 5px #00ff41;
+            opacity: 0.7;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            z-index: 15;
+            text-align: center;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ff41;
+            max-width: 600px;
+        }
+        
+        .progress-bar {
+            width: 400px;
+            height: 6px;
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid #00ff41;
+            margin: 15px auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #00cc33);
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 15px #00ff41;
+        }
+        
+        .file-input-section {
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px dashed #00ff41;
+            color: #00ff41;
+            padding: 15px;
+            margin: 10px auto;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            border-radius: 5px;
+            transition: all 0.3s;
+            max-width: 400px;
+        }
+        
+        .file-input-section:hover {
+            background: rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 15px #00ff41;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .error-message {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .texture-preview {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            border: 1px solid #00ff41;
+            margin: 5px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .texture-preview:hover {
+            box-shadow: 0 0 10px #00ff41;
+            transform: scale(1.1);
+        }
+        
+        .texture-info {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="matrix-bg"></canvas>
+        <div id="brain-container"></div>
+        
+        <div id="loading">
+            <h2>🧠 UV MAPPED BRAIN VIEWER</h2>
+            <p>Advanced UV Mapping & PBR Textures</p>
+            <p id="loadingProgress">Ready to load model and textures...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="file-input-section" onclick="document.getElementById('daeFile').click()">
+                📁 Load DAE Model<br>
+                <small>Select your brain model.dae file</small>
+            </div>
+            <input type="file" id="daeFile" accept=".dae,.xml" onchange="handleDAESelect(event)">
+            
+            <div class="file-input-section" onclick="document.getElementById('textureFiles').click()" style="margin-top: 10px;">
+                🎨 Load Textures<br>
+                <small>Select albedo, normal, roughness, AO textures</small>
+            </div>
+            <input type="file" id="textureFiles" multiple accept=".jpg,.jpeg,.png,.tga,.bmp" onchange="handleTextureSelect(event)">
+            
+            <p id="loadingDetails">Proper UV mapping for realistic texture application</p>
+            <div id="errorContainer"></div>
+        </div>
+        
+        <div id="info" style="display: none;">
+            <h2>🧠 UV MAPPED BRAIN MODEL</h2>
+            <p>PBR + Proper UV Mapping</p>
+            <p id="status">Model with UV coordinates loaded!</p>
+            <p id="modelStats">Analyzing geometry...</p>
+            <p id="textureStats">UV Status: Ready</p>
+        </div>
+        
+        <div id="textureControls" style="display: none;">
+            <h3>🎨 TEXTURE CONTROLS</h3>
+            <div id="texturePreview">
+                <div class="texture-info">Loaded Textures:</div>
+                <div id="texturePreviews"></div>
+            </div>
+            <button onclick="togglePBR()" style="width: 100%; margin: 10px 0;">Toggle PBR Mode</button>
+            <button onclick="cycleTextureSet()" style="width: 100%; margin: 5px 0;">Cycle Texture Set</button>
+            <button onclick="adjustIntensity()" style="width: 100%; margin: 5px 0;">Adjust Intensity</button>
+        </div>
+        
+        <div id="controls" style="display: none;">
+            <button onclick="toggleRotation()">Toggle Rotation</button>
+            <button onclick="tiltBrain()">Tilt Brain (+10°)</button>
+            <button onclick="resetTilt()">Reset Tilt</button>
+            <button onclick="adjustLighting()">Adjust Lighting</button>
+            <button onclick="cycleBackground()">Background Effect</button>
+            <button onclick="toggleWireframe()">Toggle Wireframe</button>
+            <button onclick="changeColor()">Base Color</button>
+            <button onclick="resetCamera()">Reset View</button>
+            <button onclick="exportModel()">Export Model</button>
+            <button onclick="loadNewFiles()">Load New</button>
+        </div>
+        
+        <div id="attribution">
+            UV Mapped Brain Viewer v4.0<br>
+            Proper texture coordinate mapping<br>
+            Advanced PBR material system
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // Matrix background effect
+        const matrixCanvas = document.getElementById('matrix-bg');
+        const matrixCtx = matrixCanvas.getContext('2d');
+        let matrixInterval;
+        let starsArray = [];
+        
+        function initMatrix() {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            
+            const matrixChars = '01アカサタナハマヤラワガザダバパイキシチニヒミリギジヂビピウクスツヌフムユルグズヅブプエケセテネヘメレゲゼデベペオコソトノホモヨロゴゾドボポ';
+            const fontSize = 14;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const drops = Array.from({length: columns}, () => 1);
+            
+            function drawMatrix() {
+                matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                
+                matrixCtx.fillStyle = '#00ff41';
+                matrixCtx.font = fontSize + 'px monospace';
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    matrixCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            matrixInterval = setInterval(drawMatrix, 35);
+        }
+        
+        function initStars() {
+            starsArray = [];
+            for (let i = 0; i < 200; i++) {
+                starsArray.push({
+                    x: Math.random() * matrixCanvas.width,
+                    y: Math.random() * matrixCanvas.height,
+                    size: Math.random() * 3,
+                    speed: Math.random() * 0.5 + 0.1,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+            
+            function drawStars() {
+                matrixCtx.fillStyle = 'rgba(0, 0, 20, 0.1)';
+                matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                
+                starsArray.forEach(star => {
+                    const opacity = (Math.sin(star.twinkle) + 1) / 2;
+                    matrixCtx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.8})`;
+                    matrixCtx.beginPath();
+                    matrixCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    matrixCtx.fill();
+                    
+                    star.twinkle += 0.02;
+                    star.y += star.speed;
+                    if (star.y > matrixCanvas.height) {
+                        star.y = 0;
+                        star.x = Math.random() * matrixCanvas.width;
+                    }
+                });
+            }
+            
+            matrixInterval = setInterval(drawStars, 50);
+        }
+        
+        function drawGradientBackground() {
+            const gradient = matrixCtx.createLinearGradient(0, 0, 0, matrixCanvas.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0.5, '#16213e');
+            gradient.addColorStop(1, '#0f3460');
+            
+            matrixCtx.fillStyle = gradient;
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+        }
+        
+        function drawMedicalBackground() {
+            const gradient = matrixCtx.createRadialGradient(
+                matrixCanvas.width / 2, matrixCanvas.height / 2, 0,
+                matrixCanvas.width / 2, matrixCanvas.height / 2, Math.max(matrixCanvas.width, matrixCanvas.height) / 2
+            );
+            gradient.addColorStop(0, '#001122');
+            gradient.addColorStop(0.5, '#002244');
+            gradient.addColorStop(1, '#000011');
+            
+            matrixCtx.fillStyle = gradient;
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            
+            // Add subtle medical grid
+            matrixCtx.strokeStyle = 'rgba(0, 100, 150, 0.1)';
+            matrixCtx.lineWidth = 1;
+            
+            for (let i = 0; i < matrixCanvas.width; i += 50) {
+                matrixCtx.beginPath();
+                matrixCtx.moveTo(i, 0);
+                matrixCtx.lineTo(i, matrixCanvas.height);
+                matrixCtx.stroke();
+            }
+            
+            for (let i = 0; i < matrixCanvas.height; i += 50) {
+                matrixCtx.beginPath();
+                matrixCtx.moveTo(0, i);
+                matrixCtx.lineTo(matrixCanvas.width, i);
+                matrixCtx.stroke();
+            }
+        }
+        
+        // Three.js setup
+        let scene, camera, renderer, brainModel;
+        let rotating = true;
+        let wireframeMode = false;
+        let pbrMode = true;
+        let colorIndex = 0;
+        let currentFileName = '';
+        let loadedTextures = {};
+        let textureSetIndex = 0;
+        let intensityLevel = 1.0;
+        let currentTilt = 0; // Track current tilt angle in degrees
+        let lightingLevel = 1; // Track lighting intensity level (1-4)
+        let backgroundMode = 0; // Track background effect mode (0=matrix, 1=gradient, 2=stars, 3=medical, 4=solid)
+        
+        const medicalColors = [
+            0xffc0cb, // Medical brain pink
+            0x00ff41, // Matrix green
+            0xff6b6b, // Arterial red
+            0x4a90e2, // Venous blue
+            0xffd700, // Neural gold
+            0xe6e6fa, // Cortical lavender
+            0xff9999, // Light coral
+            0xffb3ba  // Soft pink
+        ];
+        
+        const colorNames = [
+            'Medical Pink', 'Matrix Green', 'Arterial Red', 
+            'Venous Blue', 'Neural Gold', 'Cortical Lavender', 
+            'Light Coral', 'Soft Pink'
+        ];
+        
+        function updateLoadingProgress(message, progress = null, isError = false) {
+            const progressEl = document.getElementById('loadingProgress');
+            const progressFill = document.getElementById('progressFill');
+            const errorContainer = document.getElementById('errorContainer');
+            
+            if (progressEl) {
+                progressEl.textContent = message;
+                if (isError) {
+                    progressEl.style.color = '#ff4444';
+                } else {
+                    progressEl.style.color = '#00ff41';
+                }
+            }
+            
+            if (progress !== null && progressFill) {
+                progressFill.style.width = progress + '%';
+            }
+            
+            if (isError && errorContainer) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                errorContainer.appendChild(errorDiv);
+            }
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('textureControls').style.display = 'block';
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('info').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('textureControls').style.display = 'none';
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+        
+        function initThreeJS() {
+            try {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: true, 
+                    preserveDrawingBuffer: true  // Enable frame capture
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x000000, 0);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.physicallyCorrectLights = true;
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.0;
+                
+                document.getElementById('brain-container').appendChild(renderer.domElement);
+                
+                // Subtle, well-balanced lighting system
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Soft overall illumination
+                scene.add(ambientLight);
+                
+                // Primary key light (main illumination) - reduced intensity
+                const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                keyLight.position.set(5, 5, 5);
+                keyLight.castShadow = true;
+                keyLight.shadow.mapSize.width = 1024;
+                keyLight.shadow.mapSize.height = 1024;
+                scene.add(keyLight);
+                
+                // Subtle fill light from opposite side
+                const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+                fillLight.position.set(-3, 2, -2);
+                scene.add(fillLight);
+                
+                // Gentle rim light for definition
+                const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
+                rimLight.position.set(0, 0, -5);
+                scene.add(rimLight);
+                
+                // Soft hemisphere light for natural ambient
+                const envLight = new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.4);
+                scene.add(envLight);
+                
+                // Additional soft point lights for even illumination
+                const pointLight1 = new THREE.PointLight(0xffffff, 0.3, 10);
+                pointLight1.position.set(2, 3, 2);
+                scene.add(pointLight1);
+                
+                const pointLight2 = new THREE.PointLight(0xffffff, 0.2, 10);
+                pointLight2.position.set(-2, 1, -2);
+                scene.add(pointLight2);
+                
+                camera.position.set(0.1, 0.05, 0.3);
+                camera.lookAt(0, 0, 0);
+                
+                animate();
+                setupMouseControls();
+                setupDragAndDrop();
+                
+            } catch (error) {
+                console.error('Three.js initialization error:', error);
+                updateLoadingProgress('3D Engine Error: ' + error.message, 0, true);
+            }
+        }
+        
+        function handleDAESelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            currentFileName = file.name;
+            updateLoadingProgress(`Loading ${file.name}...`, 10);
+            
+            if (!file.name.toLowerCase().endsWith('.dae') && !file.name.toLowerCase().endsWith('.xml')) {
+                updateLoadingProgress('Error: Please select a DAE or XML file', 0, true);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    updateLoadingProgress('Processing COLLADA with UV mapping...', 30);
+                    processDAEContentWithUV(e.target.result);
+                } catch (error) {
+                    updateLoadingProgress('DAE processing error: ' + error.message, 0, true);
+                }
+            };
+            
+            reader.onerror = function() {
+                updateLoadingProgress('Failed to read DAE file', 0, true);
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        function handleTextureSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            updateLoadingProgress(`Loading ${files.length} texture files...`, 50);
+            loadTextures(files);
+        }
+        
+        function loadTextures(files) {
+            const textureLoader = new THREE.TextureLoader();
+            let loadedCount = 0;
+            const totalFiles = files.length;
+            
+            loadedTextures = {};
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileName = file.name.toLowerCase();
+                    const imageUrl = e.target.result;
+                    
+                    let textureType = 'unknown';
+                    if (fileName.includes('albedo') || fileName.includes('diffuse') || fileName.includes('color')) {
+                        textureType = 'albedo';
+                    } else if (fileName.includes('normal')) {
+                        textureType = 'normal';
+                    } else if (fileName.includes('roughness')) {
+                        textureType = 'roughness';
+                    } else if (fileName.includes('metallic') || fileName.includes('metalness')) {
+                        textureType = 'metallic';
+                    } else if (fileName.includes('ao') || fileName.includes('ambient')) {
+                        textureType = 'ao';
+                    } else if (fileName.includes('scatter')) {
+                        textureType = 'scatter';
+                    }
+                    
+                    textureLoader.load(imageUrl, function(texture) {
+                        // Proper UV texture settings
+                        texture.wrapS = THREE.RepeatWrapping;
+                        texture.wrapT = THREE.RepeatWrapping;
+                        texture.flipY = false;
+                        texture.generateMipmaps = true;
+                        texture.minFilter = THREE.LinearMipmapLinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        
+                        loadedTextures[textureType] = texture;
+                        loadedCount++;
+                        
+                        updateLoadingProgress(`Loaded texture ${loadedCount}/${totalFiles}: ${textureType}`, 50 + (loadedCount / totalFiles * 30));
+                        
+                        createTexturePreview(textureType, imageUrl);
+                        
+                        if (loadedCount === totalFiles) {
+                            updateLoadingProgress('All textures loaded! Applying with UV mapping...', 85);
+                            applyTexturesToModelWithUV();
+                        }
+                    }, undefined, function(error) {
+                        console.error('Error loading texture:', file.name, error);
+                        loadedCount++;
+                        if (loadedCount === totalFiles) {
+                            applyTexturesToModelWithUV();
+                        }
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function createTexturePreview(type, imageUrl) {
+            const previews = document.getElementById('texturePreviews');
+            const preview = document.createElement('div');
+            preview.style.display = 'inline-block';
+            preview.style.margin = '5px';
+            preview.innerHTML = `
+                <div class="texture-preview" style="background-image: url(${imageUrl})" onclick="toggleTextureType('${type}')"></div>
+                <div class="texture-info">${type.toUpperCase()}</div>
+            `;
+            previews.appendChild(preview);
+        }
+        
+        function processDAEContentWithUV(daeText) {
+            try {
+                updateLoadingProgress('Parsing COLLADA XML with UV support...', 35);
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(daeText, 'text/xml');
+                
+                const parserError = xmlDoc.getElementsByTagName('parsererror');
+                if (parserError.length > 0) {
+                    throw new Error('XML parsing failed: Invalid COLLADA structure');
+                }
+                
+                updateLoadingProgress('Extracting geometry with UV coordinates...', 45);
+                
+                const libraryGeometries = xmlDoc.getElementsByTagName('library_geometries')[0];
+                if (!libraryGeometries) {
+                    throw new Error('No geometry library found');
+                }
+                
+                const geometries = libraryGeometries.getElementsByTagName('geometry');
+                console.log(`Found ${geometries.length} geometries in COLLADA file`);
+                
+                if (geometries.length === 0) {
+                    throw new Error('No geometries found');
+                }
+                
+                updateLoadingProgress('Processing UV-mapped geometry...', 55);
+                
+                // Find the geometry with the most vertices
+                let selectedGeometry = geometries[0];
+                let maxVertexCount = 0;
+                
+                for (let i = 0; i < geometries.length; i++) {
+                    const mesh = geometries[i].getElementsByTagName('mesh')[0];
+                    if (mesh) {
+                        const sources = mesh.getElementsByTagName('source');
+                        for (let source of sources) {
+                            const floatArray = source.getElementsByTagName('float_array')[0];
+                            if (floatArray) {
+                                const count = parseInt(floatArray.getAttribute('count') || '0');
+                                if (count > maxVertexCount) {
+                                    maxVertexCount = count;
+                                    selectedGeometry = geometries[i];
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                console.log(`Processing geometry with ${maxVertexCount} data points`);
+                updateLoadingProgress(`Processing ${maxVertexCount} vertices with UV coordinates...`, 65);
+                
+                const brainGeometry = parseGeometryWithUVMapping(selectedGeometry);
+                
+                updateLoadingProgress('Creating UV-mapped 3D model...', 80);
+                
+                if (brainModel) {
+                    scene.remove(brainModel);
+                    brainModel.geometry.dispose();
+                    brainModel.material.dispose();
+                }
+                
+                // Create material with proper UV support
+                const material = new THREE.MeshStandardMaterial({
+                    color: medicalColors[colorIndex],
+                    roughness: 0.8,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide,
+                    transparent: false
+                });
+                
+                brainModel = new THREE.Mesh(brainGeometry, material);
+                brainModel.castShadow = true;
+                brainModel.receiveShadow = true;
+                
+                // Auto-scale and center
+                brainGeometry.computeBoundingBox();
+                const bbox = brainGeometry.boundingBox;
+                const size = Math.max(
+                    bbox.max.x - bbox.min.x,
+                    bbox.max.y - bbox.min.y,
+                    bbox.max.z - bbox.min.z
+                );
+                
+                const targetSize = 0.2;
+                const scale = targetSize / size;
+                brainModel.scale.set(scale, scale, scale);
+                
+                const center = bbox.getCenter(new THREE.Vector3());
+                brainModel.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+                
+                scene.add(brainModel);
+                
+                updateLoadingProgress('UV-mapped DAE model loaded!', 95);
+                
+                setTimeout(() => {
+                    if (Object.keys(loadedTextures).length === 0) {
+                        hideLoading();
+                        updateModelInfo();
+                    } else {
+                        applyTexturesToModelWithUV();
+                    }
+                }, 1000);
+                
+                console.log('UV-mapped DAE brain model loaded successfully!');
+                
+            } catch (error) {
+                console.error('DAE processing error:', error);
+                updateLoadingProgress('UV processing failed: ' + error.message, 0, true);
+            }
+        }
+        
+        function parseGeometryWithUVMapping(geometryElement) {
+            const mesh = geometryElement.getElementsByTagName('mesh')[0];
+            if (!mesh) {
+                throw new Error('No mesh found in geometry element');
+            }
+            
+            // Extract all source data
+            const sources = mesh.getElementsByTagName('source');
+            let vertices = [];
+            let normals = [];
+            let uvs = [];
+            let sourceMap = {};
+            
+            // Build source map for easy lookup
+            for (let source of sources) {
+                const sourceId = source.getAttribute('id') || '';
+                const floatArray = source.getElementsByTagName('float_array')[0];
+                
+                if (!floatArray) continue;
+                
+                const data = floatArray.textContent.trim().split(/\s+/).map(parseFloat);
+                sourceMap[sourceId] = data;
+                
+                if (sourceId.includes('position') || sourceId.includes('vertices')) {
+                    vertices = data;
+                    console.log(`Extracted ${vertices.length / 3} vertices`);
+                } else if (sourceId.includes('normal')) {
+                    normals = data;
+                    console.log(`Extracted ${normals.length / 3} normals`);
+                } else if (sourceId.includes('uv') || sourceId.includes('map') || sourceId.includes('tex')) {
+                    uvs = data;
+                    console.log(`Extracted ${uvs.length / 2} UV coordinates`);
+                }
+            }
+            
+            if (vertices.length === 0) {
+                throw new Error('No vertex position data found');
+            }
+            
+            // Process indices with proper UV mapping
+            const polylist = mesh.getElementsByTagName('polylist')[0];
+            if (!polylist) {
+                throw new Error('No polylist found for UV mapping');
+            }
+            
+            const inputs = polylist.getElementsByTagName('input');
+            const pElement = polylist.getElementsByTagName('p')[0];
+            const vcountElement = polylist.getElementsByTagName('vcount')[0];
+            
+            if (!pElement || !vcountElement) {
+                throw new Error('Missing polylist data for UV mapping');
+            }
+            
+            // Parse input structure
+            let positionOffset = -1;
+            let normalOffset = -1;
+            let uvOffset = -1;
+            let stride = 0;
+            
+            for (let input of inputs) {
+                const semantic = input.getAttribute('semantic');
+                const offset = parseInt(input.getAttribute('offset') || '0');
+                stride = Math.max(stride, offset + 1);
+                
+                if (semantic === 'VERTEX') {
+                    positionOffset = offset;
+                } else if (semantic === 'NORMAL') {
+                    normalOffset = offset;
+                } else if (semantic === 'TEXCOORD') {
+                    uvOffset = offset;
+                }
+            }
+            
+            console.log(`UV Mapping - Position offset: ${positionOffset}, Normal offset: ${normalOffset}, UV offset: ${uvOffset}, Stride: ${stride}`);
+            
+            const indexData = pElement.textContent.trim().split(/\s+/).map(val => parseInt(val));
+            const vcounts = vcountElement.textContent.trim().split(/\s+/).map(val => parseInt(val));
+            
+            // Build final geometry with proper UV mapping
+            const finalVertices = [];
+            const finalNormals = [];
+            const finalUVs = [];
+            const finalIndices = [];
+            
+            let currentIndex = 0;
+            let vertexIndex = 0;
+            
+            for (let vcount of vcounts) {
+                if (vcount === 3) {
+                    // Process triangle
+                    for (let i = 0; i < 3; i++) {
+                        const vertIdx = indexData[currentIndex + i * stride + positionOffset];
+                        
+                        // Add vertex position
+                        finalVertices.push(
+                            vertices[vertIdx * 3],
+                            vertices[vertIdx * 3 + 1],
+                            vertices[vertIdx * 3 + 2]
+                        );
+                        
+                        // Add normal if available
+                        if (normalOffset >= 0 && normals.length > 0) {
+                            const normalIdx = indexData[currentIndex + i * stride + normalOffset];
+                            finalNormals.push(
+                                normals[normalIdx * 3],
+                                normals[normalIdx * 3 + 1],
+                                normals[normalIdx * 3 + 2]
+                            );
+                        }
+                        
+                        // Add UV coordinates if available
+                        if (uvOffset >= 0 && uvs.length > 0) {
+                            const uvIdx = indexData[currentIndex + i * stride + uvOffset];
+                            finalUVs.push(
+                                uvs[uvIdx * 2],
+                                uvs[uvIdx * 2 + 1]
+                            );
+                        }
+                        
+                        finalIndices.push(vertexIndex++);
+                    }
+                } else if (vcount === 4) {
+                    // Convert quad to two triangles
+                    const indices = [];
+                    for (let i = 0; i < 4; i++) {
+                        const vertIdx = indexData[currentIndex + i * stride + positionOffset];
+                        
+                        finalVertices.push(
+                            vertices[vertIdx * 3],
+                            vertices[vertIdx * 3 + 1],
+                            vertices[vertIdx * 3 + 2]
+                        );
+                        
+                        if (normalOffset >= 0 && normals.length > 0) {
+                            const normalIdx = indexData[currentIndex + i * stride + normalOffset];
+                            finalNormals.push(
+                                normals[normalIdx * 3],
+                                normals[normalIdx * 3 + 1],
+                                normals[normalIdx * 3 + 2]
+                            );
+                        }
+                        
+                        if (uvOffset >= 0 && uvs.length > 0) {
+                            const uvIdx = indexData[currentIndex + i * stride + uvOffset];
+                            finalUVs.push(
+                                uvs[uvIdx * 2],
+                                uvs[uvIdx * 2 + 1]
+                            );
+                        }
+                        
+                        indices.push(vertexIndex++);
+                    }
+                    
+                    // Create two triangles from quad
+                    finalIndices.push(indices[0], indices[1], indices[2]);
+                    finalIndices.push(indices[0], indices[2], indices[3]);
+                }
+                
+                currentIndex += vcount * stride;
+            }
+            
+            console.log(`UV Mapping Results - Vertices: ${finalVertices.length / 3}, UVs: ${finalUVs.length / 2}, Normals: ${finalNormals.length / 3}`);
+            
+            // Create Three.js geometry with proper UV mapping
+            const geometry = new THREE.BufferGeometry();
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(finalVertices, 3));
+            
+            if (finalUVs.length > 0) {
+                geometry.setAttribute('uv', new THREE.Float32BufferAttribute(finalUVs, 2));
+                console.log('UV coordinates successfully applied!');
+            } else {
+                console.warn('No UV coordinates found - textures may not display correctly');
+            }
+            
+            if (finalNormals.length > 0) {
+                geometry.setAttribute('normal', new THREE.Float32BufferAttribute(finalNormals, 3));
+            } else {
+                geometry.computeVertexNormals();
+            }
+            
+            if (finalIndices.length > 0) {
+                geometry.setIndex(finalIndices);
+            }
+            
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+            
+            return geometry;
+        }
+        
+        function applyTexturesToModelWithUV() {
+            if (!brainModel) {
+                updateLoadingProgress('No model loaded to apply textures to', 0, true);
+                return;
+            }
+            
+            try {
+                // Create advanced PBR material with proper UV support
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    roughness: 0.8,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide,
+                    transparent: false
+                });
+                
+                // Apply textures with proper UV mapping
+                if (loadedTextures.albedo) {
+                    material.map = loadedTextures.albedo;
+                    console.log('Applied albedo texture with UV mapping');
+                }
+                
+                if (loadedTextures.normal) {
+                    material.normalMap = loadedTextures.normal;
+                    material.normalScale = new THREE.Vector2(1, 1);
+                    console.log('Applied normal map with UV mapping');
+                }
+                
+                if (loadedTextures.roughness) {
+                    material.roughnessMap = loadedTextures.roughness;
+                    console.log('Applied roughness map with UV mapping');
+                }
+                
+                if (loadedTextures.metallic) {
+                    material.metalnessMap = loadedTextures.metallic;
+                    console.log('Applied metallic map with UV mapping');
+                }
+                
+                if (loadedTextures.ao) {
+                    material.aoMap = loadedTextures.ao;
+                    material.aoMapIntensity = intensityLevel;
+                    console.log('Applied ambient occlusion map with UV mapping');
+                }
+                
+                // Enhanced brain-specific effects
+                if (loadedTextures.scatter) {
+                    // Subsurface scattering simulation
+                    material.transparent = true;
+                    material.opacity = 0.95;
+                    material.transmission = 0.05;
+                    console.log('Applied subsurface scattering effect');
+                }
+                
+                // Replace material
+                brainModel.material.dispose();
+                brainModel.material = material;
+                
+                updateLoadingProgress('UV-mapped textures applied successfully!', 100);
+                
+                setTimeout(() => {
+                    hideLoading();
+                    updateModelInfo();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error applying UV-mapped textures:', error);
+                updateLoadingProgress('Error applying UV-mapped textures: ' + error.message, 0, true);
+            }
+        }
+        
+        function updateModelInfo() {
+            const vertexCount = brainModel.geometry.attributes.position.count;
+            const faceCount = brainModel.geometry.index ? brainModel.geometry.index.count / 3 : vertexCount / 3;
+            const textureCount = Object.keys(loadedTextures).length;
+            const hasUV = brainModel.geometry.attributes.uv ? 'Yes' : 'No';
+            
+            document.getElementById('status').textContent = `${currentFileName} loaded with proper UV mapping!`;
+            document.getElementById('modelStats').textContent = `Vertices: ${vertexCount.toLocaleString()} | Faces: ${Math.floor(faceCount).toLocaleString()}`;
+            document.getElementById('textureStats').textContent = `Textures: ${textureCount} | UV Mapping: ${hasUV} | Quality: ${hasUV === 'Yes' ? 'Photorealistic' : 'Basic'}`;
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (rotating && brainModel) {
+                // Horizontal rotation only (around Y-axis)
+                brainModel.rotation.y += 0.01;
+                // Keep the tilt constant during rotation
+                brainModel.rotation.x = currentTilt * (Math.PI / 180);
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Enhanced Controls
+        function toggleRotation() {
+            rotating = !rotating;
+            document.getElementById('status').textContent = 'Horizontal Rotation: ' + (rotating ? 'ON' : 'OFF');
+        }
+        
+        function tiltBrain() {
+            if (!brainModel) return;
+            
+            currentTilt += 10;
+            // Keep tilt within reasonable bounds (-90 to +90 degrees)
+            if (currentTilt > 90) currentTilt = -90;
+            
+            brainModel.rotation.x = currentTilt * (Math.PI / 180);
+            document.getElementById('status').textContent = `Brain Tilt: ${currentTilt}°`;
+        }
+        
+        function resetTilt() {
+            if (!brainModel) return;
+            
+            currentTilt = 0;
+            brainModel.rotation.x = 0;
+            document.getElementById('status').textContent = 'Brain Tilt: Reset to 0°';
+        }
+        
+        function adjustLighting() {
+            lightingLevel = (lightingLevel % 4) + 1;
+            
+            // Get all lights in the scene
+            const lights = scene.children.filter(child => child.isLight);
+            
+            switch(lightingLevel) {
+                case 1: // Subtle lighting (default)
+                    lights.forEach(light => {
+                        if (light.type === 'AmbientLight') light.intensity = 0.6;
+                        else if (light.type === 'DirectionalLight') {
+                            if (light.position.x === 5) light.intensity = 0.8; // Key light
+                            else if (light.position.x === -3) light.intensity = 0.3; // Fill light
+                            else light.intensity = 0.2; // Rim light
+                        }
+                        else if (light.type === 'HemisphereLight') light.intensity = 0.4;
+                        else if (light.type === 'PointLight') {
+                            light.intensity = light.position.x > 0 ? 0.3 : 0.2;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Lighting: Subtle (Default)';
+                    break;
+                case 2: // Brighter lighting
+                    lights.forEach(light => {
+                        if (light.type === 'AmbientLight') light.intensity = 0.8;
+                        else if (light.type === 'DirectionalLight') {
+                            if (light.position.x === 5) light.intensity = 1.0;
+                            else if (light.position.x === -3) light.intensity = 0.5;
+                            else light.intensity = 0.3;
+                        }
+                        else if (light.type === 'HemisphereLight') light.intensity = 0.6;
+                        else if (light.type === 'PointLight') {
+                            light.intensity = light.position.x > 0 ? 0.4 : 0.3;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Lighting: Bright';
+                    break;
+                case 3: // Softer lighting
+                    lights.forEach(light => {
+                        if (light.type === 'AmbientLight') light.intensity = 0.4;
+                        else if (light.type === 'DirectionalLight') {
+                            if (light.position.x === 5) light.intensity = 0.6;
+                            else if (light.position.x === -3) light.intensity = 0.2;
+                            else light.intensity = 0.1;
+                        }
+                        else if (light.type === 'HemisphereLight') light.intensity = 0.3;
+                        else if (light.type === 'PointLight') {
+                            light.intensity = light.position.x > 0 ? 0.2 : 0.1;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Lighting: Soft';
+                    break;
+                case 4: // Dramatic lighting
+                    lights.forEach(light => {
+                        if (light.type === 'AmbientLight') light.intensity = 0.3;
+                        else if (light.type === 'DirectionalLight') {
+                            if (light.position.x === 5) light.intensity = 1.2;
+                            else if (light.position.x === -3) light.intensity = 0.1;
+                            else light.intensity = 0.4;
+                        }
+                        else if (light.type === 'HemisphereLight') light.intensity = 0.2;
+                        else if (light.type === 'PointLight') {
+                            light.intensity = light.position.x > 0 ? 0.5 : 0.1;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Lighting: Dramatic';
+                    break;
+            }
+        }
+        
+        function cycleBackground() {
+            backgroundMode = (backgroundMode + 1) % 5;
+            
+            // Clear any existing intervals
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+                matrixInterval = null;
+            }
+            
+            // Update scene background and lighting based on mode
+            switch(backgroundMode) {
+                case 0: // Matrix (default)
+                    scene.background = null;
+                    renderer.setClearColor(0x000000, 0);
+                    initMatrix();
+                    document.getElementById('status').textContent = 'Background: Matrix Effect';
+                    break;
+                    
+                case 1: // Blue Gradient
+                    scene.background = null;
+                    renderer.setClearColor(0x000000, 0);
+                    drawGradientBackground();
+                    // Add subtle blue ambient boost
+                    scene.children.forEach(child => {
+                        if (child.type === 'AmbientLight') {
+                            child.color.setHex(0x4080ff);
+                            child.intensity = 0.8;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Background: Blue Gradient';
+                    break;
+                    
+                case 2: // Starfield
+                    scene.background = null;
+                    renderer.setClearColor(0x000000, 0);
+                    initStars();
+                    document.getElementById('status').textContent = 'Background: Starfield';
+                    break;
+                    
+                case 3: // Medical
+                    scene.background = null;
+                    renderer.setClearColor(0x000000, 0);
+                    drawMedicalBackground();
+                    // Boost medical lighting
+                    scene.children.forEach(child => {
+                        if (child.type === 'AmbientLight') {
+                            child.color.setHex(0x6090ff);
+                            child.intensity = 1.0;
+                        } else if (child.type === 'HemisphereLight') {
+                            child.intensity = 0.8;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Background: Medical';
+                    break;
+                    
+                case 4: // Solid Black
+                    scene.background = new THREE.Color(0x000000);
+                    renderer.setClearColor(0x000000, 1);
+                    matrixCtx.fillStyle = '#000000';
+                    matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                    // Reset ambient to neutral
+                    scene.children.forEach(child => {
+                        if (child.type === 'AmbientLight') {
+                            child.color.setHex(0x404040);
+                            child.intensity = 0.6;
+                        } else if (child.type === 'HemisphereLight') {
+                            child.intensity = 0.4;
+                        }
+                    });
+                    document.getElementById('status').textContent = 'Background: Solid Black';
+                    break;
+            }
+        }
+        
+        function toggleWireframe() {
+            wireframeMode = !wireframeMode;
+            
+            if (brainModel && brainModel.material) {
+                brainModel.material.wireframe = wireframeMode;
+            }
+            
+            document.getElementById('status').textContent = 'Wireframe: ' + (wireframeMode ? 'ON' : 'OFF');
+        }
+        
+        function changeColor() {
+            colorIndex = (colorIndex + 1) % medicalColors.length;
+            
+            if (brainModel && brainModel.material) {
+                if (!loadedTextures.albedo) {
+                    brainModel.material.color.setHex(medicalColors[colorIndex]);
+                }
+            }
+            
+            document.getElementById('status').textContent = 'Color: ' + colorNames[colorIndex];
+        }
+        
+        function resetCamera() {
+            camera.position.set(0.1, 0.05, 0.3);
+            camera.lookAt(0, 0, 0);
+            // Reset tilt when resetting camera
+            currentTilt = 0;
+            if (brainModel) {
+                brainModel.rotation.x = 0;
+                brainModel.rotation.z = 0;
+            }
+            document.getElementById('status').textContent = 'Camera and tilt reset to default';
+        }
+        
+        function togglePBR() {
+            pbrMode = !pbrMode;
+            
+            if (brainModel && brainModel.material) {
+                if (pbrMode) {
+                    // Switch to PBR material
+                    const newMaterial = new THREE.MeshStandardMaterial({
+                        color: brainModel.material.color,
+                        roughness: 0.8,
+                        metalness: 0.1,
+                        side: THREE.DoubleSide
+                    });
+                    
+                    // Copy all textures
+                    if (loadedTextures.albedo) newMaterial.map = loadedTextures.albedo;
+                    if (loadedTextures.normal) newMaterial.normalMap = loadedTextures.normal;
+                    if (loadedTextures.roughness) newMaterial.roughnessMap = loadedTextures.roughness;
+                    if (loadedTextures.metallic) newMaterial.metalnessMap = loadedTextures.metallic;
+                    if (loadedTextures.ao) newMaterial.aoMap = loadedTextures.ao;
+                    
+                    brainModel.material.dispose();
+                    brainModel.material = newMaterial;
+                } else {
+                    // Switch to basic material
+                    const newMaterial = new THREE.MeshPhongMaterial({
+                        color: brainModel.material.color,
+                        shininess: 30,
+                        side: THREE.DoubleSide
+                    });
+                    
+                    if (loadedTextures.albedo) newMaterial.map = loadedTextures.albedo;
+                    
+                    brainModel.material.dispose();
+                    brainModel.material = newMaterial;
+                }
+            }
+            
+            document.getElementById('status').textContent = 'PBR Mode: ' + (pbrMode ? 'ON (Realistic)' : 'OFF (Basic)');
+        }
+        
+        function cycleTextureSet() {
+            if (!brainModel || Object.keys(loadedTextures).length === 0) return;
+            
+            textureSetIndex = (textureSetIndex + 1) % 4;
+            
+            const material = brainModel.material;
+            
+            switch(textureSetIndex) {
+                case 0: // All textures
+                    if (loadedTextures.albedo) material.map = loadedTextures.albedo;
+                    if (loadedTextures.normal) material.normalMap = loadedTextures.normal;
+                    if (loadedTextures.roughness) material.roughnessMap = loadedTextures.roughness;
+                    if (loadedTextures.ao) material.aoMap = loadedTextures.ao;
+                    document.getElementById('status').textContent = 'Texture Set: Full PBR';
+                    break;
+                case 1: // Albedo only
+                    material.map = loadedTextures.albedo || null;
+                    material.normalMap = null;
+                    material.roughnessMap = null;
+                    material.aoMap = null;
+                    document.getElementById('status').textContent = 'Texture Set: Albedo Only';
+                    break;
+                case 2: // Normal + Albedo
+                    material.map = loadedTextures.albedo || null;
+                    material.normalMap = loadedTextures.normal || null;
+                    material.roughnessMap = null;
+                    material.aoMap = null;
+                    document.getElementById('status').textContent = 'Texture Set: Albedo + Normal';
+                    break;
+                case 3: // Base color only
+                    material.map = null;
+                    material.normalMap = null;
+                    material.roughnessMap = null;
+                    material.aoMap = null;
+                    document.getElementById('status').textContent = 'Texture Set: Base Color Only';
+                    break;
+            }
+            
+            material.needsUpdate = true;
+        }
+        
+        function adjustIntensity() {
+            intensityLevel = intensityLevel >= 2.0 ? 0.5 : intensityLevel + 0.5;
+            
+            if (brainModel && brainModel.material && brainModel.material.aoMap) {
+                brainModel.material.aoMapIntensity = intensityLevel;
+                brainModel.material.needsUpdate = true;
+            }
+            
+            document.getElementById('status').textContent = `AO Intensity: ${intensityLevel.toFixed(1)}`;
+        }
+        
+        async function exportModel() {
+            if (!brainModel) {
+                alert('No model loaded to export');
+                return;
+            }
+            
+            // Store current state
+            const wasRotating = rotating;
+            const originalRotationY = brainModel.rotation.y;
+            const originalTiltX = brainModel.rotation.x;
+            const originalCameraPosition = camera.position.clone(); // Store original camera position
+            
+            // Temporarily stop rotation for clean captures
+            rotating = false;
+            
+            // Zoom in for better brain visibility (make it ~40% larger)
+            const zoomFactor = 0.7; // Closer = larger brain
+            camera.position.multiplyScalar(zoomFactor);
+            
+            try {
+                // First, capture and show preview frame
+                const previewFrame = await captureFrame(256, 256);
+                const proceed = await showPreviewAndConfirm(previewFrame);
+                
+                if (!proceed) {
+                    // Restore original state
+                    rotating = wasRotating;
+                    brainModel.rotation.y = originalRotationY;
+                    brainModel.rotation.x = originalTiltX;
+                    camera.position.copy(originalCameraPosition); // Restore camera position
+                    return;
+                }
+                
+                // Show progress
+                updateLoadingProgress('Capturing animation frames for Discord icon...', 0);
+                showLoading();
+                
+                // Capture 16 frames for smooth animation (good balance of quality vs file size)
+                const totalFrames = 16;
+                const frames = [];
+                
+                for (let i = 0; i < totalFrames; i++) {
+                    // Calculate rotation for this frame (full 360° rotation)
+                    const rotationAngle = (i / totalFrames) * Math.PI * 2;
+                    brainModel.rotation.y = rotationAngle;
+                    
+                    // Keep the current tilt during animation
+                    brainModel.rotation.x = currentTilt * (Math.PI / 180);
+                    
+                    // Force a render to update the scene
+                    renderer.render(scene, camera);
+                    
+                    // Capture frame
+                    const frameData = await captureFrame(256, 256);
+                    frames.push(frameData);
+                    
+                    // Update progress
+                    const progress = ((i + 1) / totalFrames) * 90;
+                    updateLoadingProgress(`Captured frame ${i + 1}/${totalFrames}`, progress);
+                    
+                    // Small delay to ensure clean captures
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                updateLoadingProgress('Processing frames for download...', 95);
+                
+                // Download all frames as individual PNG files
+                await downloadFrames(frames);
+                
+                updateLoadingProgress('Animation frames exported successfully!', 100);
+                
+                // Show completion message
+                setTimeout(() => {
+                    hideLoading();
+                    showExportInstructions(totalFrames);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                updateLoadingProgress('Export failed: ' + error.message, 0, true);
+                hideLoading();
+            } finally {
+                // Restore original state
+                rotating = wasRotating;
+                brainModel.rotation.y = originalRotationY;
+                brainModel.rotation.x = originalTiltX;
+                camera.position.copy(originalCameraPosition); // Restore original camera position
+            }
+        }
+        
+        async function captureFrame(width, height) {
+            return new Promise((resolve) => {
+                // Force a render to make sure everything is up to date
+                renderer.render(scene, camera);
+                
+                // Wait a moment for the render to complete
+                setTimeout(() => {
+                    // Get the current window dimensions
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+                    
+                    // Create a temporary canvas for the full screen capture first
+                    const fullCanvas = document.createElement('canvas');
+                    fullCanvas.width = windowWidth;
+                    fullCanvas.height = windowHeight;
+                    const fullContext = fullCanvas.getContext('2d');
+                    
+                    // Draw the matrix background at full size
+                    const matrixCanvas = document.getElementById('matrix-bg');
+                    fullContext.drawImage(matrixCanvas, 0, 0);
+                    
+                    // Draw the 3D scene on top at full size
+                    const sceneCanvas = renderer.domElement;
+                    if (brainModel && brainModel.visible) {
+                        console.log('Brain model is visible, capturing at full resolution...');
+                        fullContext.globalCompositeOperation = 'source-over';
+                        fullContext.drawImage(sceneCanvas, 0, 0);
+                    }
+                    
+                    // Now create the target canvas and crop/scale from the center
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    const tempContext = tempCanvas.getContext('2d');
+                    
+                    // Calculate center crop dimensions
+                    const minDimension = Math.min(windowWidth, windowHeight);
+                    const cropX = (windowWidth - minDimension) / 2;
+                    const cropY = (windowHeight - minDimension) / 2;
+                    
+                    // Draw the center square crop, scaled to target size
+                    tempContext.drawImage(
+                        fullCanvas,
+                        cropX, cropY, minDimension, minDimension,  // source: center square
+                        0, 0, width, height  // destination: scaled to target
+                    );
+                    
+                    // Convert to data URL
+                    const dataURL = tempCanvas.toDataURL('image/png');
+                    resolve(dataURL);
+                }, 100);
+            });
+        }
+        
+        async function showPreviewAndConfirm(previewDataURL) {
+            return new Promise((resolve) => {
+                // Create preview modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                    font-family: 'Courier New', monospace;
+                    color: #00ff41;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="text-align: center; background: rgba(0, 20, 0, 0.8); padding: 30px; border: 2px solid #00ff41; border-radius: 10px; max-width: 500px;">
+                        <h2 style="color: #00ff41; margin-bottom: 20px;">🧠 DISCORD ICON PREVIEW</h2>
+                        <div style="margin-bottom: 20px;">
+                            <img src="${previewDataURL}" style="width: 256px; height: 256px; border: 2px solid #00ff41; border-radius: 5px; image-rendering: pixelated;">
+                        </div>
+                        <p style="margin-bottom: 20px; line-height: 1.5;">
+                            This is how the first frame will look.<br>
+                            The animation will rotate the brain horizontally<br>
+                            while maintaining current lighting and tilt.
+                        </p>
+                        <div>
+                            <button id="continueExport" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                                ✅ Continue Export (16 frames)
+                            </button>
+                            <button id="cancelExport" style="background: rgba(255, 65, 65, 0.2); border: 1px solid #ff4141; color: #ff4141; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                                ❌ Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add hover effects
+                const continueBtn = modal.querySelector('#continueExport');
+                const cancelBtn = modal.querySelector('#cancelExport');
+                
+                continueBtn.onmouseover = () => continueBtn.style.boxShadow = '0 0 10px #00ff41';
+                continueBtn.onmouseout = () => continueBtn.style.boxShadow = 'none';
+                cancelBtn.onmouseover = () => cancelBtn.style.boxShadow = '0 0 10px #ff4141';
+                cancelBtn.onmouseout = () => cancelBtn.style.boxShadow = 'none';
+                
+                // Handle button clicks
+                continueBtn.onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(true);
+                };
+                
+                cancelBtn.onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(false);
+                };
+                
+                // Allow ESC to cancel
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        document.body.removeChild(modal);
+                        document.removeEventListener('keydown', handleKeyPress);
+                        resolve(false);
+                    }
+                };
+                document.addEventListener('keydown', handleKeyPress);
+            });
+        }
+        
+        async function downloadFrames(frames) {
+            const zip = new JSZip();
+            
+            // Add each frame to the zip
+            for (let i = 0; i < frames.length; i++) {
+                const frameNumber = String(i).padStart(3, '0');
+                const base64Data = frames[i].split(',')[1]; // Remove data:image/png;base64,
+                zip.file(`brain_frame_${frameNumber}.png`, base64Data, {base64: true});
+            }
+            
+            // Generate and download the zip file
+            const zipBlob = await zip.generateAsync({type: 'blob'});
+            const zipUrl = URL.createObjectURL(zipBlob);
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = zipUrl;
+            downloadLink.download = `brain_discord_animation_frames_${Date.now()}.zip`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Clean up
+            URL.revokeObjectURL(zipUrl);
+        }
+        
+        function showExportInstructions(frameCount) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                font-family: 'Courier New', monospace;
+                color: #00ff41;
+            `;
+            
+            const stats = document.getElementById('modelStats').textContent;
+            const textureStats = document.getElementById('textureStats').textContent;
+            const uvStatus = brainModel.geometry.attributes.uv ? 'Perfect UV Mapping' : 'No UV Mapping';
+            
+            modal.innerHTML = `
+                <div style="text-align: center; background: rgba(0, 20, 0, 0.8); padding: 30px; border: 2px solid #00ff41; border-radius: 10px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                    <h2 style="color: #00ff41; margin-bottom: 20px;">🧠 DISCORD ANIMATION EXPORT COMPLETE</h2>
+                    
+                    <div style="text-align: left; margin-bottom: 20px; padding: 15px; background: rgba(0, 50, 0, 0.5); border-radius: 5px;">
+                        <strong>Export Details:</strong><br>
+                        📁 Original: ${currentFileName}<br>
+                        ${stats}<br>
+                        ${textureStats}<br>
+                        UV Status: ${uvStatus}<br>
+                        🎬 Frames: ${frameCount} @ 256x256px
+                    </div>
+                    
+                    <div style="text-align: left; margin-bottom: 20px; line-height: 1.6;">
+                        <strong>📋 NEXT STEPS FOR DISCORD:</strong><br><br>
+                        
+                        <strong>1. Extract the ZIP file</strong><br>
+                        • You now have ${frameCount} PNG frames<br>
+                        • Files named: brain_frame_000.png to brain_frame_${String(frameCount-1).padStart(3, '0')}.png<br><br>
+                        
+                        <strong>2. Create GIF Animation</strong><br>
+                        • Use online GIF maker (ezgif.com, giphy.com)<br>
+                        • Upload all ${frameCount} frames in order<br>
+                        • Set delay: 100-150ms per frame<br>
+                        • Enable loop: Yes<br>
+                        • Resize if needed: 512x512px for Discord<br><br>
+                        
+                        <strong>3. Optimize for Discord</strong><br>
+                        • Target file size: Under 10MB<br>
+                        • Use GIF optimization/compression<br>
+                        • Test the animation preview<br><br>
+                        
+                        <strong>4. Upload to Discord</strong><br>
+                        • Server Settings → Overview<br>
+                        • Upload the GIF as server icon<br>
+                        • Animation shows on hover! 🎯
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                            ✅ Got it!
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add hover effect to button
+            const button = modal.querySelector('button');
+            button.onmouseover = () => button.style.boxShadow = '0 0 10px #00ff41';
+            button.onmouseout = () => button.style.boxShadow = 'none';
+            
+            // Allow ESC to close
+            const handleKeyPress = (e) => {
+                if (e.key === 'Escape') {
+                    document.body.removeChild(modal);
+                    document.removeEventListener('keydown', handleKeyPress);
+                }
+            };
+            document.addEventListener('keydown', handleKeyPress);
+        }
+        
+        function loadNewFiles() {
+            showLoading();
+            loadedTextures = {};
+            document.getElementById('texturePreviews').innerHTML = '';
+        }
+        
+        function toggleTextureType(type) {
+            if (loadedTextures[type] && brainModel && brainModel.material) {
+                const material = brainModel.material;
+                
+                switch(type) {
+                    case 'albedo':
+                        material.map = material.map ? null : loadedTextures[type];
+                        break;
+                    case 'normal':
+                        material.normalMap = material.normalMap ? null : loadedTextures[type];
+                        break;
+                    case 'roughness':
+                        material.roughnessMap = material.roughnessMap ? null : loadedTextures[type];
+                        break;
+                    case 'metallic':
+                        material.metalnessMap = material.metalnessMap ? null : loadedTextures[type];
+                        break;
+                    case 'ao':
+                        material.aoMap = material.aoMap ? null : loadedTextures[type];
+                        break;
+                }
+                
+                material.needsUpdate = true;
+                document.getElementById('status').textContent = `Toggled ${type} texture`;
+            }
+        }
+        
+        // Mouse controls
+        let mouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        function setupMouseControls() {
+            renderer.domElement.addEventListener('mousedown', (event) => {
+                mouseDown = true;
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            renderer.domElement.addEventListener('mouseup', () => {
+                mouseDown = false;
+            });
+            
+            renderer.domElement.addEventListener('mousemove', (event) => {
+                if (!mouseDown || !brainModel) return;
+                
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                // Only allow horizontal rotation (Y-axis) with mouse
+                brainModel.rotation.y += deltaX * 0.01;
+                
+                // Update tilt based on vertical mouse movement
+                const tiltChange = deltaY * 0.1;
+                currentTilt += tiltChange;
+                // Clamp tilt to reasonable bounds
+                currentTilt = Math.max(-90, Math.min(90, currentTilt));
+                brainModel.rotation.x = currentTilt * (Math.PI / 180);
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            renderer.domElement.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                const zoomSpeed = 0.1;
+                const scale = event.deltaY > 0 ? 1 + zoomSpeed : 1 - zoomSpeed;
+                
+                camera.position.multiplyScalar(scale);
+                
+                const distance = camera.position.length();
+                if (distance < 0.05) camera.position.normalize().multiplyScalar(0.05);
+                if (distance > 5) camera.position.normalize().multiplyScalar(5);
+            });
+        }
+        
+        // Drag and drop support
+        function setupDragAndDrop() {
+            const container = document.getElementById('container');
+            
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                container.style.backgroundColor = 'rgba(0, 255, 65, 0.1)';
+            });
+            
+            container.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                container.style.backgroundColor = '';
+            });
+            
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                container.style.backgroundColor = '';
+                
+                const files = Array.from(e.dataTransfer.files);
+                const daeFiles = files.filter(f => f.name.toLowerCase().endsWith('.dae') || f.name.toLowerCase().endsWith('.xml'));
+                const textureFiles = files.filter(f => f.name.toLowerCase().match(/\.(jpg|jpeg|png|tga|bmp)$/));
+                
+                if (daeFiles.length > 0) {
+                    const fileInput = document.getElementById('daeFile');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(daeFiles[0]);
+                    fileInput.files = dataTransfer.files;
+                    handleDAESelect({ target: { files: [daeFiles[0]] } });
+                }
+                
+                if (textureFiles.length > 0) {
+                    setTimeout(() => {
+                        const textureInput = document.getElementById('textureFiles');
+                        const dataTransfer = new DataTransfer();
+                        textureFiles.forEach(file => dataTransfer.items.add(file));
+                        textureInput.files = dataTransfer.files;
+                        handleTextureSelect({ target: { files: textureFiles } });
+                    }, 1000);
+                }
+            });
+        }
+        
+        // Resize handling
+        window.addEventListener('resize', () => {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            // Reinitialize current background effect
+            if (backgroundMode === 0) {
+                if (matrixInterval) clearInterval(matrixInterval);
+                initMatrix();
+            } else if (backgroundMode === 1) {
+                drawGradientBackground();
+            } else if (backgroundMode === 2) {
+                if (matrixInterval) clearInterval(matrixInterval);
+                initStars();
+            } else if (backgroundMode === 3) {
+                drawMedicalBackground();
+            }
+        });
+        
+        // Initialize everything
+        window.addEventListener('load', () => {
+            console.log('🧠 UV Mapped Brain Model Viewer v4.0');
+            console.log('🎨 Advanced UV Mapping & PBR Textures');
+            console.log('📁 Proper COLLADA UV coordinate processing');
+            console.log('⚡ Photorealistic brain rendering');
+            console.log('🌟 Multiple background effects');
+            
+            initMatrix(); // Start with matrix effect by default
+            initThreeJS();
+            
+            // Show helpful tips
+            setTimeout(() => {
+                if (!brainModel) {
+                    updateLoadingProgress('💡 Matrix background active - Load DAE + textures for full experience', null);
+                }
+            }, 3000);
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (brainModel) {
+                brainModel.geometry.dispose();
+                brainModel.material.dispose();
+            }
+            
+            Object.values(loadedTextures).forEach(texture => {
+                texture.dispose();
+            });
+            
+            if (renderer) {
+                renderer.dispose();
+            }
+        });
+    </script>
+</body>
+</html>
