@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Orchestration Platform - Learn to Build Multi-Agent Systems</title>
+    <title>AI Orchestration Academy - Learn Multi-Agent Systems</title>
     <style>
         * {
             margin: 0;
@@ -13,17 +13,18 @@
         
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+            line-height: 1.7;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #4a6741 50%, #2980b9 75%, #3498db 100%);
             background-size: 400% 400%;
-            animation: gradientShift 10s ease infinite;
-            color: #2c3e50;
+            animation: gradientShift 15s ease infinite;
             min-height: 100vh;
+            color: #2c3e50;
         }
         
         @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
+            0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         .container {
@@ -40,7 +41,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
         }
         
         nav {
@@ -51,107 +53,100 @@
         
         .logo {
             font-size: 1.5rem;
-            font-weight: bold;
-            color: #1e3c72;
+            font-weight: 700;
+            color: #2c3e50;
             text-decoration: none;
+            letter-spacing: -0.5px;
         }
         
         .nav-links {
             display: flex;
-            gap: 2rem;
             list-style: none;
+            gap: 2rem;
         }
         
         .nav-links a {
             color: #2c3e50;
             text-decoration: none;
-            font-weight: 500;
+            transition: all 0.3s ease;
             padding: 0.5rem 1rem;
             border-radius: 8px;
-            transition: all 0.3s ease;
+            font-weight: 500;
         }
         
         .nav-links a:hover {
-            background: rgba(30, 60, 114, 0.1);
-            color: #1e3c72;
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            transform: translateY(-1px);
         }
         
         /* Hero Section */
         .hero {
             text-align: center;
-            padding: 6rem 0;
+            padding: 8rem 0 6rem;
             color: white;
         }
         
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
+            font-size: 3.2rem;
+            margin-bottom: 0.5rem;
             font-weight: 700;
+            letter-spacing: -1px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         
-        .hero .subtitle {
+        .hero .title {
             font-size: 1.4rem;
             margin-bottom: 2rem;
-            opacity: 0.9;
+            opacity: 0.95;
+            font-weight: 400;
+            color: #ecf0f1;
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
         }
         
-        .hero-description {
-            font-size: 1.1rem;
+        .hero p {
+            font-size: 1.2rem;
             margin-bottom: 3rem;
-            opacity: 0.8;
-            max-width: 700px;
+            opacity: 0.9;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-        }
-        
-        .cta-buttons {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
+            color: #bdc3c7;
         }
         
         .cta-button {
             display: inline-block;
-            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 1.2rem 3rem;
             text-decoration: none;
             border-radius: 50px;
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .cta-primary {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-        }
-        
-        .cta-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            border: 2px solid transparent;
         }
         
         .cta-button:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9, #3498db);
         }
         
-        /* Learning Path */
-        .learning-path {
-            padding: 6rem 0;
+        /* Projects Section */
+        .projects {
+            padding: 8rem 0;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px);
         }
         
         .section-title {
             text-align: center;
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             color: #2c3e50;
             margin-bottom: 1rem;
             font-weight: 700;
@@ -252,94 +247,22 @@
             cursor: not-allowed;
         }
         
-        /* What You'll Build */
-        .what-youll-build {
-            padding: 6rem 0;
-            color: white;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-        
-        .feature-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .feature-card p {
-            opacity: 0.9;
-            line-height: 1.6;
-        }
-        
         /* Footer */
         footer {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(44, 62, 80, 0.95);
             backdrop-filter: blur(15px);
             text-align: center;
             padding: 3rem 0;
-            color: rgba(255, 255, 255, 0.8);
+            color: #bdc3c7;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 { font-size: 2.5rem; }
-            .hero .subtitle { font-size: 1.2rem; }
-            .cta-buttons { flex-direction: column; align-items: center; }
-            .modules-grid { grid-template-columns: 1fr; }
+            .hero .title { font-size: 1.2rem; }
             .nav-links { gap: 1rem; }
-        }
-        
-        /* Progress Indicator */
-        .progress-flow {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 3rem 0;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .progress-step {
-            background: rgba(30, 60, 114, 0.1);
-            border: 2px solid #1e3c72;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #1e3c72;
-        }
-        
-        .progress-arrow {
-            color: #1e3c72;
-            font-size: 1.5rem;
+            .modules-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -349,8 +272,6 @@
             <a href="#" class="logo">🤖 AI Orchestration Academy</a>
             <ul class="nav-links">
                 <li><a href="#modules">Modules</a></li>
-                <li><a href="#build">What You'll Build</a></li>
-                <li><a href="#community">Community</a></li>
                 <li><a href="../">Portfolio</a></li>
             </ul>
         </nav>
@@ -360,39 +281,22 @@
         <section class="hero">
             <div class="container">
                 <h1>🧠 AI Orchestration Academy</h1>
-                <div class="subtitle">Learn to Build Multi-Agent AI Systems That Work Together</div>
-                <p class="hero-description">
+                <div class="title">Learn to Build Multi-Agent AI Systems That Work Together</div>
+                <p>
                     Start simple, build progressively. Learn how to create AI systems where multiple agents collaborate, 
                     communicate, and accomplish complex tasks - from "Hello World" to production-ready orchestration platforms.
                 </p>
-                <div class="cta-buttons">
-                    <a href="#modules" class="cta-button cta-primary">Start Learning</a>
-                    <a href="#build" class="cta-button cta-secondary">See What You'll Build</a>
-                </div>
+                <a href="#modules" class="cta-button">Start Learning</a>
             </div>
         </section>
 
-        <section id="modules" class="learning-path">
+        <section id="modules" class="projects">
             <div class="container">
                 <h2 class="section-title">Progressive Learning Path</h2>
                 <p class="section-subtitle">
                     Master AI orchestration step by step. Each module builds on the previous one, 
                     starting simple and growing into powerful multi-agent systems.
                 </p>
-                
-                <div class="progress-flow">
-                    <div class="progress-step">1</div>
-                    <div class="progress-arrow">→</div>
-                    <div class="progress-step">2</div>
-                    <div class="progress-arrow">→</div>
-                    <div class="progress-step">3</div>
-                    <div class="progress-arrow">→</div>
-                    <div class="progress-step">4</div>
-                    <div class="progress-arrow">→</div>
-                    <div class="progress-step">5</div>
-                    <div class="progress-arrow">→</div>
-                    <div class="progress-step">6</div>
-                </div>
 
                 <div class="modules-grid">
                     <div class="module-card">
@@ -409,109 +313,14 @@
 
                     <div class="module-card">
                         <div class="module-number">2</div>
-                        <h3>Your First Local Agent</h3>
-                        <p>Set up Ollama and create your first specialized AI agent. Learn how to give it specific roles and have it respond to the director.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 45 minutes</span>
-                            <span class="module-stat">📁 5 files</span>
-                            <span class="module-stat">🔧 Ollama + API</span>
-                        </div>
-                        <a href="#" class="module-link coming-soon">Coming Soon</a>
-                    </div>
-
-                    <div class="module-card">
-                        <div class="module-number">3</div>
-                        <h3>Making Them Talk</h3>
-                        <p>Implement basic communication between your director and agent. Create a simple protocol for task delegation and result reporting.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 1 hour</span>
-                            <span class="module-stat">📁 6 files</span>
-                            <span class="module-stat">🔧 Message Protocols</span>
-                        </div>
-                        <a href="#" class="module-link coming-soon">Coming Soon</a>
-                    </div>
-
-                    <div class="module-card">
-                        <div class="module-number">4</div>
-                        <h3>Simple Task Delegation</h3>
-                        <p>Build a workflow where the director assigns different types of tasks to appropriate agents and manages the results.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 1.5 hours</span>
-                            <span class="module-stat">📁 8 files</span>
-                            <span class="module-stat">🔧 Workflow Logic</span>
-                        </div>
-                        <a href="#" class="module-link coming-soon">Coming Soon</a>
-                    </div>
-
-                    <div class="module-card">
-                        <div class="module-number">5</div>
-                        <h3>Adding Docker Containers</h3>
-                        <p>Containerize your agents for better isolation and scalability. Learn to manage multiple agent containers through your director.</p>
+                        <h3>Professional AI Agent</h3>
+                        <p>Build a real AI agent using Pyantic AI with knowledge graphs, self-correction, and professional development workflows.</p>
                         <div class="module-stats">
                             <span class="module-stat">⏱️ 2 hours</span>
-                            <span class="module-stat">📁 12 files</span>
-                            <span class="module-stat">🔧 Docker + Orchestration</span>
-                        </div>
-                        <a href="#" class="module-link coming-soon">Coming Soon</a>
-                    </div>
-
-                    <div class="module-card">
-                        <div class="module-number">6</div>
-                        <h3>Real-World Integration</h3>
-                        <p>Connect your system to real tools like NotebookLM, APIs, and databases. Build a production-ready multi-agent platform.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 3 hours</span>
                             <span class="module-stat">📁 15+ files</span>
-                            <span class="module-stat">🔧 Full Integration</span>
+                            <span class="module-stat">🔧 Pyantic + Neo4j</span>
                         </div>
                         <a href="#" class="module-link coming-soon">Coming Soon</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="build" class="what-youll-build">
-            <div class="container">
-                <h2 class="section-title">What You'll Build</h2>
-                <p class="section-subtitle">
-                    By the end of this course, you'll have a complete multi-agent AI orchestration platform
-                </p>
-
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <span class="feature-icon">🧠</span>
-                        <h3>AI Director System</h3>
-                        <p>A central LLM that analyzes requests, makes decisions, and coordinates multiple specialized AI agents to accomplish complex tasks.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="feature-icon">🤖</span>
-                        <h3>Specialized Agent Network</h3>
-                        <p>Multiple Ollama-powered agents, each with specific skills - research, analysis, content creation, data processing, and more.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="feature-icon">🔗</span>
-                        <h3>Communication Protocols</h3>
-                        <p>Robust messaging systems using MCP and custom protocols that allow agents to collaborate and share information seamlessly.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="feature-icon">🐳</span>
-                        <h3>Containerized Deployment</h3>
-                        <p>Docker-based agent management for scalability, isolation, and easy deployment across different environments.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="feature-icon">🛠️</span>
-                        <h3>Tool Integration Hub</h3>
-                        <p>Connect to real-world tools like NotebookLM, APIs, databases, and services to create practical, useful workflows.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="feature-icon">📊</span>
-                        <h3>Monitoring Dashboard</h3>
-                        <p>Real-time visibility into agent performance, task progress, and system health with a beautiful web interface.</p>
                     </div>
                 </div>
             </div>
@@ -538,44 +347,6 @@
                     });
                 }
             });
-        });
-
-        // Module card animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, index) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, index * 100);
-                }
-            });
-        }, observerOptions);
-
-        // Initially hide cards for animation
-        document.querySelectorAll('.module-card, .feature-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
-            observer.observe(card);
-        });
-
-        // Dynamic progress flow
-        const progressSteps = document.querySelectorAll('.progress-step');
-        progressSteps.forEach((step, index) => {
-            setTimeout(() => {
-                step.style.transform = 'scale(1.1)';
-                step.style.background = 'linear-gradient(135deg, #1e3c72, #2a5298)';
-                step.style.color = 'white';
-                setTimeout(() => {
-                    step.style.transform = 'scale(1)';
-                }, 200);
-            }, index * 300);
         });
     </script>
 </body>
