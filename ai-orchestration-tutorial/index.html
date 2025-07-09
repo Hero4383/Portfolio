@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module 1: "Hello World" AI Director</title>
+    <title>AI Orchestration Platform - Learn to Build Multi-Agent Systems</title>
     <style>
         * {
             margin: 0;
@@ -14,858 +14,568 @@
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
             line-height: 1.6;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 10s ease infinite;
             color: #2c3e50;
             min-height: 100vh;
         }
         
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0 20px;
         }
         
         /* Header */
-        .header {
+        header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e3c72;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(30, 60, 114, 0.1);
+            color: #1e3c72;
+        }
+        
+        /* Hero Section */
+        .hero {
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .module-number {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 6rem 0;
             color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 1rem;
         }
         
-        h1 {
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero .subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cta-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+        
+        .cta-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Learning Path */
+        .learning-path {
+            padding: 6rem 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+        }
+        
+        .section-title {
+            text-align: center;
             font-size: 2.5rem;
             color: #2c3e50;
             margin-bottom: 1rem;
             font-weight: 700;
         }
         
-        .subtitle {
+        .section-subtitle {
+            text-align: center;
             font-size: 1.2rem;
             color: #7f8c8d;
-            margin-bottom: 1.5rem;
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
-        .learning-goals {
-            background: rgba(103, 126, 234, 0.1);
-            border-left: 4px solid #667eea;
-            padding: 1.5rem;
-            border-radius: 8px;
-        }
-        
-        .learning-goals h3 {
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-        
-        .learning-goals ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .learning-goals li {
-            padding: 0.3rem 0;
-            position: relative;
-            padding-left: 1.5rem;
-        }
-        
-        .learning-goals li:before {
-            content: "🎯";
-            position: absolute;
-            left: 0;
-        }
-        
-        /* Content Sections */
-        .section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 2.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .section h2 {
-            color: #2c3e50;
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .step {
-            background: rgba(103, 126, 234, 0.05);
-            border: 1px solid rgba(103, 126, 234, 0.2);
-            border-radius: 15px;
-            padding: 2rem;
-            margin: 1.5rem 0;
-        }
-        
-        .step h3 {
-            color: #667eea;
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-        }
-        
-        .code-block {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin: 1rem 0;
-            overflow-x: auto;
-            position: relative;
-        }
-        
-        .code-block::before {
-            content: "📋 Copy this code";
-            position: absolute;
-            top: 0.5rem;
-            right: 1rem;
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
-        
-        pre {
-            margin: 0;
-            white-space: pre-wrap;
-        }
-        
-        .checkpoint {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin: 1.5rem 0;
-        }
-        
-        .checkpoint h4 {
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .warning {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin: 1.5rem 0;
-        }
-        
-        .info {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin: 1.5rem 0;
-        }
-        
-        .demo-area {
-            background: #f8f9fa;
-            border: 2px dashed #667eea;
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            margin: 2rem 0;
-        }
-        
-        .demo-button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.5rem;
-        }
-        
-        .demo-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(103, 126, 234, 0.4);
-        }
-        
-        .nav-buttons {
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
             margin-top: 3rem;
         }
         
-        .nav-button {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
+        .module-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .module-number {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            padding: 1rem 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+        
+        .module-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .module-card p {
+            margin-bottom: 1.5rem;
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+        
+        .module-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .module-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .module-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 0.8rem 1.8rem;
             text-decoration: none;
             border-radius: 25px;
             font-weight: 600;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
         
-        .nav-button:hover {
+        .module-link:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
         }
         
-        .progress-bar {
-            background: rgba(255, 255, 255, 0.3);
-            height: 8px;
-            border-radius: 4px;
-            margin: 2rem 0;
-            overflow: hidden;
+        .module-link.coming-soon {
+            background: #bdc3c7;
+            cursor: not-allowed;
         }
         
-        .progress-fill {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            height: 100%;
-            width: 25%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
+        /* What You'll Build */
+        .what-youll-build {
+            padding: 6rem 0;
+            color: white;
         }
         
-        /* File structure display */
-        .file-tree {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 1.5rem;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            margin: 1rem 0;
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
         }
         
-        .file-tree .folder {
-            color: #f39c12;
-        }
-        
-        .file-tree .file {
-            color: #3498db;
-        }
-        
-        /* Interactive elements */
-        .interactive-demo {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
             padding: 2rem;
-            margin: 2rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
         }
         
-        .input-group {
-            margin: 1rem 0;
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
         }
         
-        .input-group label {
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #2c3e50;
         }
         
-        .input-group input, .input-group textarea {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: white;
         }
         
-        .input-group input:focus, .input-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
+        .feature-card p {
+            opacity: 0.9;
+            line-height: 1.6;
         }
         
-        .output-area {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            min-height: 100px;
-            font-family: 'Courier New', monospace;
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            text-align: center;
+            padding: 3rem 0;
+            color: rgba(255, 255, 255, 0.8);
         }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            h1 { font-size: 2rem; }
-            .nav-buttons { flex-direction: column; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero .subtitle { font-size: 1.2rem; }
+            .cta-buttons { flex-direction: column; align-items: center; }
+            .modules-grid { grid-template-columns: 1fr; }
+            .nav-links { gap: 1rem; }
+        }
+        
+        /* Progress Indicator */
+        .progress-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .progress-step {
+            background: rgba(30, 60, 114, 0.1);
+            border: 2px solid #1e3c72;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .progress-arrow {
+            color: #1e3c72;
+            font-size: 1.5rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="module-number">MODULE 1</div>
-            <h1>🧠 "Hello World" AI Director</h1>
-            <div class="subtitle">Build your first AI system that makes decisions and coordinates tasks</div>
-            
-            <div class="learning-goals">
-                <h3>🎯 What You'll Learn</h3>
-                <ul>
-                    <li>How to create an AI that analyzes requests and makes decisions</li>
-                    <li>Basic task delegation patterns</li>
-                    <li>Simple web interface for AI interaction</li>
-                    <li>Foundation concepts for multi-agent systems</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-
-        <div class="section">
-            <h2>🚀 Phase 1: Understanding the Concept</h2>
-            
-            <p>An <strong>AI Director</strong> is like a smart manager. When you give it a task, it:</p>
-            <ul>
-                <li>🤔 <strong>Analyzes</strong> what you're asking for</li>
-                <li>🎯 <strong>Decides</strong> what needs to be done</li>
-                <li>📋 <strong>Plans</strong> the steps to accomplish it</li>
-                <li>🤖 <strong>Coordinates</strong> different tools or agents to get it done</li>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">🤖 AI Orchestration Academy</a>
+            <ul class="nav-links">
+                <li><a href="#modules">Modules</a></li>
+                <li><a href="#build">What You'll Build</a></li>
+                <li><a href="#community">Community</a></li>
+                <li><a href="../">Portfolio</a></li>
             </ul>
-            
-            <div class="info">
-                <h4>💡 Real-World Example</h4>
-                <p><strong>User says:</strong> "I need to research AI trends and create a summary"</p>
-                <p><strong>AI Director thinks:</strong> "This needs research + analysis + writing. I'll assign these to different specialized agents."</p>
-            </div>
-        </div>
+        </nav>
+    </header>
 
-        <div class="section">
-            <h2>🛠️ Phase 2: Project Setup</h2>
-            
-            <div class="step">
-                <h3>Step 1: Create Your Project Folder</h3>
-                <p>Create a new folder on your computer called <code>ai-director-hello-world</code></p>
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>🧠 AI Orchestration Academy</h1>
+                <div class="subtitle">Learn to Build Multi-Agent AI Systems That Work Together</div>
+                <p class="hero-description">
+                    Start simple, build progressively. Learn how to create AI systems where multiple agents collaborate, 
+                    communicate, and accomplish complex tasks - from "Hello World" to production-ready orchestration platforms.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#modules" class="cta-button cta-primary">Start Learning</a>
+                    <a href="#build" class="cta-button cta-secondary">See What You'll Build</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="modules" class="learning-path">
+            <div class="container">
+                <h2 class="section-title">Progressive Learning Path</h2>
+                <p class="section-subtitle">
+                    Master AI orchestration step by step. Each module builds on the previous one, 
+                    starting simple and growing into powerful multi-agent systems.
+                </p>
                 
-                <div class="file-tree">
-ai-director-hello-world/
-├── <span class="file">index.html</span>         (Main interface)
-├── <span class="file">director.js</span>        (AI logic)
-├── <span class="file">style.css</span>          (Styling)
-└── <span class="file">config.js</span>          (Settings)
+                <div class="progress-flow">
+                    <div class="progress-step">1</div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step">2</div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step">3</div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step">4</div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step">5</div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step">6</div>
+                </div>
+
+                <div class="modules-grid">
+                    <div class="module-card">
+                        <div class="module-number">1</div>
+                        <h3>"Hello World" AI Director</h3>
+                        <p>Build your first AI decision-maker. Create a simple web interface where an LLM analyzes requests and decides what should happen next.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 30 minutes</span>
+                            <span class="module-stat">📁 3 files</span>
+                            <span class="module-stat">🔧 Basic HTML/JS</span>
+                        </div>
+                        <a href="modules/01-hello-world-director/" class="module-link">Start Module 1</a>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-number">2</div>
+                        <h3>Your First Local Agent</h3>
+                        <p>Set up Ollama and create your first specialized AI agent. Learn how to give it specific roles and have it respond to the director.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 45 minutes</span>
+                            <span class="module-stat">📁 5 files</span>
+                            <span class="module-stat">🔧 Ollama + API</span>
+                        </div>
+                        <a href="#" class="module-link coming-soon">Coming Soon</a>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-number">3</div>
+                        <h3>Making Them Talk</h3>
+                        <p>Implement basic communication between your director and agent. Create a simple protocol for task delegation and result reporting.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 1 hour</span>
+                            <span class="module-stat">📁 6 files</span>
+                            <span class="module-stat">🔧 Message Protocols</span>
+                        </div>
+                        <a href="#" class="module-link coming-soon">Coming Soon</a>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-number">4</div>
+                        <h3>Simple Task Delegation</h3>
+                        <p>Build a workflow where the director assigns different types of tasks to appropriate agents and manages the results.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 1.5 hours</span>
+                            <span class="module-stat">📁 8 files</span>
+                            <span class="module-stat">🔧 Workflow Logic</span>
+                        </div>
+                        <a href="#" class="module-link coming-soon">Coming Soon</a>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-number">5</div>
+                        <h3>Adding Docker Containers</h3>
+                        <p>Containerize your agents for better isolation and scalability. Learn to manage multiple agent containers through your director.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 2 hours</span>
+                            <span class="module-stat">📁 12 files</span>
+                            <span class="module-stat">🔧 Docker + Orchestration</span>
+                        </div>
+                        <a href="#" class="module-link coming-soon">Coming Soon</a>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-number">6</div>
+                        <h3>Real-World Integration</h3>
+                        <p>Connect your system to real tools like NotebookLM, APIs, and databases. Build a production-ready multi-agent platform.</p>
+                        <div class="module-stats">
+                            <span class="module-stat">⏱️ 3 hours</span>
+                            <span class="module-stat">📁 15+ files</span>
+                            <span class="module-stat">🔧 Full Integration</span>
+                        </div>
+                        <a href="#" class="module-link coming-soon">Coming Soon</a>
+                    </div>
                 </div>
             </div>
-            
-            <div class="step">
-                <h3>Step 2: Create the Main Interface (index.html)</h3>
-                <p>This will be your AI Director's control panel where users can submit requests.</p>
-                
-                <div class="code-block">
-<pre>&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-    &lt;meta charset="UTF-8"&gt;
-    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-    &lt;title&gt;AI Director - Hello World&lt;/title&gt;
-    &lt;link rel="stylesheet" href="style.css"&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;div class="container"&gt;
-        &lt;header&gt;
-            &lt;h1&gt;🧠 AI Director&lt;/h1&gt;
-            &lt;p&gt;Your intelligent task coordinator&lt;/p&gt;
-        &lt;/header&gt;
-        
-        &lt;main&gt;
-            &lt;div class="request-panel"&gt;
-                &lt;h2&gt;What do you need help with?&lt;/h2&gt;
-                &lt;textarea id="userRequest" placeholder="e.g., I need to research AI trends and create a summary"&gt;&lt;/textarea&gt;
-                &lt;button onclick="analyzeRequest()"&gt;🎯 Analyze Request&lt;/button&gt;
-            &lt;/div&gt;
-            
-            &lt;div class="analysis-panel" id="analysisPanel" style="display: none;"&gt;
-                &lt;h2&gt;🤔 Director's Analysis&lt;/h2&gt;
-                &lt;div id="analysisResult"&gt;&lt;/div&gt;
-                &lt;button onclick="executeplan()"&gt;🚀 Execute Plan&lt;/button&gt;
-            &lt;/div&gt;
-            
-            &lt;div class="execution-panel" id="executionPanel" style="display: none;"&gt;
-                &lt;h2&gt;⚡ Task Execution&lt;/h2&gt;
-                &lt;div id="executionResult"&gt;&lt;/div&gt;
-            &lt;/div&gt;
-        &lt;/main&gt;
-    &lt;/div&gt;
-    
-    &lt;script src="config.js"&gt;&lt;/script&gt;
-    &lt;script src="director.js"&gt;&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</pre>
-                </div>
-                
-                <div class="checkpoint">
-                    <h4>✅ Checkpoint</h4>
-                    <p>Save this as <code>index.html</code> in your project folder. You can open it in a browser to see the basic interface!</p>
+        </section>
+
+        <section id="build" class="what-youll-build">
+            <div class="container">
+                <h2 class="section-title">What You'll Build</h2>
+                <p class="section-subtitle">
+                    By the end of this course, you'll have a complete multi-agent AI orchestration platform
+                </p>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">🧠</span>
+                        <h3>AI Director System</h3>
+                        <p>A central LLM that analyzes requests, makes decisions, and coordinates multiple specialized AI agents to accomplish complex tasks.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🤖</span>
+                        <h3>Specialized Agent Network</h3>
+                        <p>Multiple Ollama-powered agents, each with specific skills - research, analysis, content creation, data processing, and more.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🔗</span>
+                        <h3>Communication Protocols</h3>
+                        <p>Robust messaging systems using MCP and custom protocols that allow agents to collaborate and share information seamlessly.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🐳</span>
+                        <h3>Containerized Deployment</h3>
+                        <p>Docker-based agent management for scalability, isolation, and easy deployment across different environments.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🛠️</span>
+                        <h3>Tool Integration Hub</h3>
+                        <p>Connect to real-world tools like NotebookLM, APIs, databases, and services to create practical, useful workflows.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">📊</span>
+                        <h3>Monitoring Dashboard</h3>
+                        <p>Real-time visibility into agent performance, task progress, and system health with a beautiful web interface.</p>
+                    </div>
                 </div>
             </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>🚀 Built with passion for AI orchestration • Part of Nathan Storms' Portfolio</p>
+            <p>Learn to build the future of collaborative AI systems</p>
         </div>
-
-        <div class="section">
-            <h2>🎨 Phase 3: Making It Look Good</h2>
-            
-            <div class="step">
-                <h3>Step 3: Add Styling (style.css)</h3>
-                <p>Let's make your AI Director look professional and modern.</p>
-                
-                <div class="code-block">
-<pre>* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    color: #333;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-header {
-    text-align: center;
-    color: white;
-    margin-bottom: 3rem;
-}
-
-header h1 {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-.request-panel, .analysis-panel, .execution-panel {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
-    border-radius: 20px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-textarea {
-    width: 100%;
-    height: 120px;
-    padding: 1rem;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    font-size: 1rem;
-    margin: 1rem 0;
-    resize: vertical;
-}
-
-textarea:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-button {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 25px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(103, 126, 234, 0.4);
-}
-
-.analysis-result, .execution-result {
-    background: #f8f9fa;
-    border-left: 4px solid #667eea;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-
-.task-item {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.task-status {
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.status-pending { background: #fff3cd; color: #856404; }
-.status-running { background: #d1ecf1; color: #0c5460; }
-.status-completed { background: #d4edda; color: #155724; }</pre>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🧠 Phase 4: The AI Brain</h2>
-            
-            <div class="step">
-                <h3>Step 4: Configuration (config.js)</h3>
-                <p>Set up the basic configuration for your AI Director.</p>
-                
-                <div class="code-block">
-<pre>// AI Director Configuration
-const CONFIG = {
-    // Simulated AI responses for demo
-    // In real implementation, you'd use an actual LLM API
-    useRealAI: false, 
-    
-    // Task categories the director can handle
-    taskTypes: {
-        'research': 'Research and information gathering',
-        'analysis': 'Data analysis and insights',
-        'content': 'Content creation and writing',
-        'planning': 'Project planning and organization',
-        'communication': 'Email and message composition'
-    },
-    
-    // Available "agents" (tools/capabilities)
-    availableAgents: {
-        'researcher': 'Can search web, gather information',
-        'analyst': 'Can process data, create insights',
-        'writer': 'Can create content, summaries, emails',
-        'planner': 'Can organize tasks, create schedules'
-    }
-};</pre>
-                </div>
-            </div>
-            
-            <div class="step">
-                <h3>Step 5: The Director Logic (director.js)</h3>
-                <p>This is where the magic happens - your AI Director's decision-making brain!</p>
-                
-                <div class="code-block">
-<pre>// AI Director - Decision Making Engine
-class AIDirector {
-    constructor() {
-        this.currentPlan = null;
-        this.tasks = [];
-    }
-    
-    // Main analysis function
-    async analyzeRequest(userInput) {
-        console.log('🧠 Director analyzing:', userInput);
-        
-        // Simulate AI thinking process
-        const analysis = this.simulateAIAnalysis(userInput);
-        
-        return {
-            intent: analysis.intent,
-            complexity: analysis.complexity,
-            requiredAgents: analysis.agents,
-            plan: analysis.plan,
-            estimatedTime: analysis.time
-        };
-    }
-    
-    // Simulate how an AI would analyze the request
-    simulateAIAnalysis(input) {
-        const keywords = input.toLowerCase();
-        
-        // Determine what type of task this is
-        let intent = 'general';
-        let agents = [];
-        let plan = [];
-        
-        if (keywords.includes('research') || keywords.includes('find') || keywords.includes('information')) {
-            intent = 'research';
-            agents.push('researcher');
-            plan.push('🔍 Gather relevant information');
-        }
-        
-        if (keywords.includes('summary') || keywords.includes('analyze') || keywords.includes('insights')) {
-            intent = 'analysis';
-            agents.push('analyst');
-            plan.push('📊 Analyze gathered data');
-        }
-        
-        if (keywords.includes('write') || keywords.includes('create') || keywords.includes('content')) {
-            intent = 'content';
-            agents.push('writer');
-            plan.push('✍️ Create content output');
-        }
-        
-        if (keywords.includes('plan') || keywords.includes('organize') || keywords.includes('schedule')) {
-            intent = 'planning';
-            agents.push('planner');
-            plan.push('📋 Organize and structure');
-        }
-        
-        // If no specific intent found, use general approach
-        if (plan.length === 0) {
-            plan = ['🤔 Understand the request', '🎯 Determine best approach', '⚡ Execute solution'];
-            agents = ['analyst', 'planner'];
-        }
-        
-        return {
-            intent: intent,
-            complexity: plan.length > 2 ? 'complex' : 'simple',
-            agents: agents,
-            plan: plan,
-            time: plan.length * 30 + ' seconds'
-        };
-    }
-    
-    // Execute the plan
-    async executePlan(analysis) {
-        console.log('🚀 Executing plan:', analysis.plan);
-        
-        const results = [];
-        
-        for (let i = 0; i < analysis.plan.length; i++) {
-            const step = analysis.plan[i];
-            
-            // Simulate task execution
-            await this.simulateTaskExecution(step);
-            
-            results.push({
-                step: step,
-                status: 'completed',
-                result: `✅ ${step} - Completed successfully`,
-                agent: analysis.requiredAgents[0] || 'director'
-            });
-            
-            // Update UI during execution
-            this.updateExecutionUI(results);
-            
-            // Simulate processing time
-            await this.delay(1000);
-        }
-        
-        return results;
-    }
-    
-    // Simulate an agent working on a task
-    async simulateTaskExecution(task) {
-        console.log('⚡ Executing:', task);
-        // In real implementation, this would call actual agents/APIs
-        return new Promise(resolve => {
-            setTimeout(resolve, 1000);
-        });
-    }
-    
-    // Helper function for delays
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    
-    // Update the UI during execution
-    updateExecutionUI(results) {
-        const executionPanel = document.getElementById('executionPanel');
-        const executionResult = document.getElementById('executionResult');
-        
-        executionPanel.style.display = 'block';
-        
-        let html = '<div class="execution-progress">';
-        results.forEach(result => {
-            html += `
-                <div class="task-item">
-                    <span>${result.result}</span>
-                    <span class="task-status status-${result.status}">${result.status}</span>
-                </div>
-            `;
-        });
-        html += '</div>';
-        
-        executionResult.innerHTML = html;
-    }
-}
-
-// Initialize the director
-const director = new AIDirector();
-
-// UI Functions
-async function analyzeRequest() {
-    const userInput = document.getElementById('userRequest').value;
-    
-    if (!userInput.trim()) {
-        alert('Please enter a request first!');
-        return;
-    }
-    
-    // Show analysis panel
-    const analysisPanel = document.getElementById('analysisPanel');
-    const analysisResult = document.getElementById('analysisResult');
-    
-    analysisPanel.style.display = 'block';
-    analysisResult.innerHTML = '<div class="loading">🧠 Director is analyzing your request...</div>';
-    
-    // Simulate thinking time
-    await director.delay(2000);
-    
-    // Get analysis
-    const analysis = await director.analyzeRequest(userInput);
-    director.currentPlan = analysis;
-    
-    // Display results
-    analysisResult.innerHTML = `
-        <div class="analysis-result">
-            <h3>📋 Analysis Complete</h3>
-            <p><strong>Task Type:</strong> ${analysis.intent}</p>
-            <p><strong>Complexity:</strong> ${analysis.complexity}</p>
-            <p><strong>Required Agents:</strong> ${analysis.requiredAgents.join(', ')}</p>
-            <p><strong>Estimated Time:</strong> ${analysis.estimatedTime}</p>
-            
-            <h4>📝 Execution Plan:</h4>
-            <ul>
-                ${analysis.plan.map(step => `<li>${step}</li>`).join('')}
-            </ul>
-        </div>
-    `;
-}
-
-async function executeplan() {
-    if (!director.currentPlan) {
-        alert('No plan to execute! Please analyze a request first.');
-        return;
-    }
-    
-    // Execute the plan
-    await director.executePlan(director.currentPlan);
-    
-    // Add completion message
-    const executionResult = document.getElementById('executionResult');
-    executionResult.innerHTML += `
-        <div class="task-item" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; margin-top: 1rem;">
-            <span>🎉 All tasks completed successfully!</span>
-            <span class="task-status" style="background: rgba(255,255,255,0.3);">FINISHED</span>
-        </div>
-    `;
-}</pre>
-                </div>
-                
-                <div class="checkpoint">
-                    <h4>✅ Checkpoint</h4>
-                    <p>Save all files and open <code>index.html</code> in your browser. Try entering different requests to see how your AI Director analyzes and plans!</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🎮 Phase 5: Test Your AI Director</h2>
-            
-            <div class="interactive-demo">
-                <h3>🧪 Interactive Demo</h3>
-                <p>Try these example requests to see how your AI Director works:</p>
-                
-                <div class="demo-area">
-                    <button class="demo-button" onclick="testRequest('I need to research AI trends and create a summary')">
-                        📊 Research Request
-                    </button>
-                    <button class="demo-button" onclick="testRequest('Help me plan a project timeline')">
-                        📋 Planning Request
-                    </button>
-                    <button class="demo-button" onclick="testRequest('Write an email about our meeting')">
-                        ✍️ Content Request
-                    </button>
-                </div>
-            </div>
-            
-            <div class="warning">
-                <h4>⚠️ Important Note</h4>
-                <p>This is a <strong>simulation</strong> using pre-programmed logic. In Module 2, you'll learn to connect real AI models like Claude or local Ollama agents!</p>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🎓 What You've Learned</h2>
-            
-            <div class="checkpoint">
-                <h4>🏆 Congratulations!</h4>
-                <p>You've built your first AI Director! You now understand:</p>
-                <ul>
-                    <li>✅ How AI systems can analyze and categorize requests</li>
-                    <li>✅ Basic task delegation and planning concepts</li>
-                    <li>✅ How to create interactive interfaces for AI systems</li>
-                    <li>✅ The foundation for building multi-agent orchestration</li>
-                </ul>
-            </div>
-            
-            <div class="info">
-                <h4>🚀 Next Steps</h4>
-                <p>In <strong>Module 2</strong>, you'll learn to build a real AI agent using Pyantic AI with:</p>
-                <ul>
-                    <li>🧠 Real LLM integration (Claude, GPT, Ollama)</li>
-                    <li>🕸️ Knowledge graphs for smarter decisions</li>
-                    <li>🔄 Self-correcting agent behaviors</li>
-                    <li>🛠️ Professional development tools and workflows</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="nav-buttons">
-            <a href="../" class="nav-button">
-                ← Back to Academy
-            </a>
-            <a href="../modules/02-pyantic-agent/" class="nav-button">
-                Module 2: Advanced Agents →
-            </a>
-        </div>
-    </div>
+    </footer>
 
     <script>
-        // Demo function for testing
-        function testRequest(request) {
-            document.getElementById('userRequest').value = request;
-            analyzeRequest();
-        }
-        
-        // Progress tracking
-        let progress = 25;
-        function updateProgress(newProgress) {
-            progress = newProgress;
-            document.querySelector('.progress-fill').style.width = progress + '%';
-        }
-        
-        // Track completion
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add scroll-based progress updates
-            window.addEventListener('scroll', function() {
-                const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                updateProgress(Math.min(scrolled, 100));
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
             });
+        });
+
+        // Module card animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, index * 100);
+                }
+            });
+        }, observerOptions);
+
+        // Initially hide cards for animation
+        document.querySelectorAll('.module-card, .feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // Dynamic progress flow
+        const progressSteps = document.querySelectorAll('.progress-step');
+        progressSteps.forEach((step, index) => {
+            setTimeout(() => {
+                step.style.transform = 'scale(1.1)';
+                step.style.background = 'linear-gradient(135deg, #1e3c72, #2a5298)';
+                step.style.color = 'white';
+                setTimeout(() => {
+                    step.style.transform = 'scale(1)';
+                }, 200);
+            }, index * 300);
         });
     </script>
 </body>
