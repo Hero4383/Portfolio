@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nathan Storms - Contextual Directive Database Architectural Engineer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #4a6741 50%, #2980b9 75%, #3498db 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            transform: translateY(-1px);
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 8rem 0 6rem;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero .title {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            font-weight: 400;
+            color: #ecf0f1;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #bdc3c7;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 1.2rem 3rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            border: 2px solid transparent;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9, #3498db);
+        }
+        
+        /* Projects Section */
+        .projects {
+            padding: 8rem 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .project-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            margin-top: 3rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .project-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(52, 73, 94, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(52, 73, 94, 0.08);
+        }
+        
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(52, 73, 94, 0.15);
+            border-color: rgba(52, 152, 219, 0.2);
+        }
+        
+        .project-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        
+        .project-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .project-card p {
+            margin-bottom: 2rem;
+            color: #5a6c7d;
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+        
+        .project-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(52, 73, 94, 0.2);
+        }
+        
+        .project-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 73, 94, 0.3);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+        }
+        
+        /* Tech Stack */
+        .tech-stack {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: rgba(52, 152, 219, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .tech-stack h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        
+        .tech-tag {
+            background: rgba(52, 152, 219, 0.1);
+            color: #2980b9;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        
+        /* About Section */
+        .about {
+            padding: 8rem 0;
+            color: white;
+        }
+        
+        .about-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .about h2 {
+            font-size: 2.8rem;
+            margin-bottom: 3rem;
+            font-weight: 700;
+        }
+        
+        .about-text {
+            display: grid;
+            gap: 2rem;
+            text-align: left;
+            margin-bottom: 3rem;
+        }
+        
+        .about-paragraph {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        /* Contact Section */
+        .contact {
+            padding: 8rem 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            text-align: center;
+        }
+        
+        .contact h2 {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+        
+        .contact p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .contact-link {
+            display: inline-block;
+            background: white;
+            color: #2c3e50;
+            padding: 1.2rem 2.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(52, 73, 94, 0.1);
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(52, 73, 94, 0.1);
+        }
+        
+        .contact-link:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            border-color: #3498db;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(15px);
+            text-align: center;
+            padding: 3rem 0;
+            color: #bdc3c7;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .footer-quote {
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: #ecf0f1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero .title {
+                font-size: 1.2rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .project-card {
+                padding: 2rem;
+            }
+            
+            .contact-links {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .about-text {
+                gap: 1.5rem;
+            }
+            
+            .about-paragraph {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .project-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Nathan Storms</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="container">
+                <h1>Nathan Storms</h1>
+                <div class="title">Contextual Directive Database Architectural Engineer</div>
+                <p>Building AI systems that don't just work, but work beautifully, reliably, and with intention</p>
+                <a href="#projects" class="cta-button">Explore My Work</a>
+            </div>
+        </section>
+
+        <section id="projects" class="projects">
+            <div class="container">
+                <h2 class="section-title fade-in">Featured Project</h2>
+                <p class="section-subtitle fade-in">Where human creativity meets cutting-edge technology</p>
+                
+                <div class="project-grid">
+                    <div class="project-card fade-in">
+                        <span class="project-icon">🧠</span>
+                        <h3>3D Model Viewer</h3>
+                        <p>Advanced UV-mapped 3D visualization system showcasing the intersection of medical technology and interactive design. Features real-time 3D rendering, PBR material systems, and contextual data integration - demonstrating how thoughtful engineering creates meaningful user experiences.</p>
+                        
+                        <div class="tech-stack">
+                            <h4>🛠️ Technologies & Frameworks</h4>
+                            <div class="tech-tags">
+                                <span class="tech-tag">Three.js</span>
+                                <span class="tech-tag">WebGL</span>
+                                <span class="tech-tag">PBR Rendering</span>
+                                <span class="tech-tag">UV Mapping</span>
+                                <span class="tech-tag">Real-time 3D</span>
+                                <span class="tech-tag">Interactive Systems</span>
+                                <span class="tech-tag">Contextual Design</span>
+                            </div>
+                        </div>
+                        
+                        <a href="3d-model-viewer/" class="project-link">Launch 3D Viewer</a>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 4rem;" class="fade-in">
+                    <div class="tech-stack" style="max-width: 800px; margin: 0 auto;">
+                        <h4>🎯 Core Technologies & Platforms</h4>
+                        <div class="tech-tags">
+                            <span class="tech-tag">LLMs</span>
+                            <span class="tech-tag">Emerging Framework Platforms</span>
+                            <span class="tech-tag">NotebookLM</span>
+                            <span class="tech-tag">Perplexity</span>
+                            <span class="tech-tag">Context7</span>
+                            <span class="tech-tag">AI Architecture</span>
+                            <span class="tech-tag">Directive Systems</span>
+                            <span class="tech-tag">Contextual Databases</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about">
+            <div class="container">
+                <div class="about-content fade-in">
+                    <h2>About Me</h2>
+                    <div class="about-text">
+                        <div class="about-paragraph">
+                            I'm driven by the belief that the most powerful systems emerge when human creativity meets divine inspiration and cutting-edge technology. As a passionate gamer, I've spent countless hours understanding how complex systems create engaging, meaningful experiences - insights I now apply to architecting AI directive frameworks that turn chaotic possibilities into purposeful outcomes.
+                        </div>
+                        
+                        <div class="about-paragraph">
+                            My journey as a software developer taught me that elegant code isn't just functional - it's a form of digital craftsmanship that honors both the creator and the created. This philosophy shapes how I approach Contextual Directive Database Architecture: building AI systems that don't just work, but work beautifully, reliably, and with intention.
+                        </div>
+                        
+                        <div class="about-paragraph">
+                            Rooted in my faith and love for Jesus, I believe we're called to be good stewards of the incredible technological capabilities we've been given. AI isn't something to fear - it's an opportunity to amplify human potential and solve problems that matter. Every directive architecture I design is guided by the conviction that technology should serve humanity's highest purposes.
+                        </div>
+                        
+                        <div class="about-paragraph">
+                            I'm energized by a future where AI agents don't just follow instructions, but truly understand context, learn from experience, and help us build a world that reflects our best intentions. Through systematic engineering of how we direct AI systems, we're not just writing better prompts - we're laying the foundation for a more thoughtful, capable, and beneficial AI-integrated future.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div class="container fade-in">
+                <h2>Let's Build the Future Together</h2>
+                <p>Ready to create AI systems that truly understand context and serve humanity's highest purposes? Let's discuss how we can turn your vision into reality.</p>
+                <div class="contact-links">
+                    <a href="mailto:ittnathanstorms@gmail.com" class="contact-link">📧 Email Me</a>
+                    <a href="https://github.com/Hero4383" class="contact-link">💻 GitHub</a>
+                    <a href="https://aistorms.wordpress.com" class="contact-link">📝 Blog</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-quote">"Technology should serve humanity's highest purposes"</p>
+                <p>&copy; 2025 Nathan Storms. Building AI systems with intention and faith.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        let lastScrollY = window.scrollY;
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const currentScrollY = window.scrollY;
+            
+            if (currentScrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+                header.style.boxShadow = '0 4px 30px rgba(52, 73, 94, 0.15)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+                header.style.boxShadow = '0 2px 20px rgba(52, 73, 94, 0.1)';
+            }
+            
+            lastScrollY = currentScrollY;
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all elements with fade-in class
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Add some dynamic interaction
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-12px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-8px) scale(1)';
+            });
+        });
+
+        // Dynamic gradient background interaction
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            document.body.style.backgroundPosition = 
+                `${50 + mouseX * 10}% ${50 + mouseY * 10}%`;
+        });
+    </script>
+</body>
+</html>
