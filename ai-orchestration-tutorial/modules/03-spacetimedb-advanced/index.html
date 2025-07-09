@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 3: Advanced SpacetimeDB AI Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+            background-size: 400% 400%;
+            animation: galaxyShift 25s ease infinite;
+            color: #ecf0f1;
+            min-height: 100vh;
+        }
+        
+        @keyframes galaxyShift {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 100% 100%; }
+            75% { background-position: 0% 100%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(83, 52, 131, 0.2);
+        }
+        
+        .module-number {
+            background: linear-gradient(135deg, #533483, #7b68ee);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(83, 52, 131, 0.4);
+        }
+        
+        .experimental-badge {
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #ecf0f1;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(83, 52, 131, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: #bdc3c7;
+            margin-bottom: 1.5rem;
+        }
+        
+        .learning-goals {
+            background: rgba(83, 52, 131, 0.2);
+            border-left: 4px solid #7b68ee;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(83, 52, 131, 0.3);
+        }
+        
+        .learning-goals h3 {
+            color: #7b68ee;
+            margin-bottom: 1rem;
+        }
+        
+        .learning-goals ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .learning-goals li {
+            padding: 0.3rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        .learning-goals li:before {
+            content: "🚀";
+            position: absolute;
+            left: 0;
+        }
+        
+        /* Warning Section */
+        .advanced-warning {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.2);
+        }
+        
+        /* Architecture sections */
+        .architecture-section {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .architecture-section h2 {
+            color: #7b68ee;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 2px solid #533483;
+            padding-bottom: 0.5rem;
+        }
+        
+        .pattern {
+            background: rgba(83, 52, 131, 0.1);
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .pattern h3 {
+            color: #9b59b6;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .code-block {
+            background: #1a1a1a;
+            color: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            border: 1px solid rgba(83, 52, 131, 0.3);
+        }
+        
+        .code-block::before {
+            content: "⚡ SpacetimeDB";
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: #7b68ee;
+        }
+        
+        .code-block.rust::before {
+            content: "🦀 Rust Reducer";
+        }
+        
+        .code-block.yaml::before {
+            content: "📋 Schema";
+        }
+        
+        .code-block.sql::before {
+            content: "🗃️ Database";
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+        
+        .table-design {
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .table-design table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #ecf0f1;
+        }
+        
+        .table-design th,
+        .table-design td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(83, 52, 131, 0.3);
+        }
+        
+        .table-design th {
+            background: rgba(83, 52, 131, 0.3);
+            color: #7b68ee;
+            font-weight: 600;
+        }
+        
+        .checkpoint {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .checkpoint h4 {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .advanced-concept {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .advanced-concept h4 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .implementation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .implementation-card {
+            background: rgba(83, 52, 131, 0.1);
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .implementation-card:hover {
+            background: rgba(83, 52, 131, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(83, 52, 131, 0.2);
+        }
+        
+        .implementation-card h4 {
+            color: #9b59b6;
+            margin-bottom: 1rem;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+        
+        .nav-button {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(52, 73, 94, 0.3);
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+        }
+        
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.5);
+            height: 12px;
+            border-radius: 6px;
+            margin: 2rem 0;
+            overflow: hidden;
+            border: 1px solid rgba(83, 52, 131, 0.3);
+        }
+        
+        .progress-fill {
+            background: linear-gradient(135deg, #533483, #7b68ee);
+            height: 100%;
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 20px rgba(83, 52, 131, 0.5);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 2.2rem; }
+            .nav-buttons { flex-direction: column; }
+            .implementation-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Special effects */
+        .cosmic-border {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cosmic-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #533483, #7b68ee, #9b59b6, #533483);
+            border-radius: inherit;
+            z-index: -1;
+            animation: cosmicRotate 4s linear infinite;
+        }
+        
+        @keyframes cosmicRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header cosmic-border">
+            <div class="module-number">MODULE 3</div>
+            <span class="experimental-badge">EXPERIMENTAL</span>
+            <h1>🌌 Advanced SpacetimeDB AI Architecture</h1>
+            <div class="subtitle">Cutting-edge database-driven AI orchestration with real-time feedback loops</div>
+            
+            <div class="learning-goals">
+                <h3>🎯 Advanced Concepts You'll Master</h3>
+                <ul>
+                    <li>Context engineering for LLMs with structured database schemas</li>
+                    <li>Real-time AI agent feedback loops using SpacetimeDB reducers</li>
+                    <li>Database-driven knowledge graphs for intelligent AI decision-making</li>
+                    <li>Self-correcting AI architectures with transaction-based validation</li>
+                    <li>Advanced task orchestration patterns with external service integration</li>
+                    <li>Production-scale AI constraint management and enforcement</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <div class="advanced-warning">
+            <h3>⚠️ Advanced Module Warning</h3>
+            <p><strong>Prerequisites:</strong> This module assumes you've completed Modules 1 & 2 and have experience with:</p>
+            <ul>
+                <li>Database design and SQL concepts</li>
+                <li>Rust programming fundamentals</li>
+                <li>Real-time systems and event-driven architectures</li>
+                <li>Advanced AI/LLM integration patterns</li>
+            </ul>
+            <p><strong>Difficulty:</strong> Expert level - suitable for production AI system architects</p>
+        </div>
+
+        <div class="architecture-section">
+            <h2>🧠 Part 1: Context Engineering for LLMs with SpacetimeDB</h2>
+            
+            <div class="advanced-concept">
+                <h4>🎯 Core Concept: Database-Driven Context</h4>
+                <p>Traditional AI agents lose context between sessions. SpacetimeDB creates persistent, queryable context that evolves with your project, enabling truly intelligent long-term decision making.</p>
+            </div>
+            
+            <div class="pattern">
+                <h3>Structured Schema Context</h3>
+                <p>Instead of static prompts, we provide dynamic schema information that updates as your database evolves.</p>
+                
+                <div class="code-block yaml">
+<pre>## Table: components
+- id: UUID (PK)
+- name: String  
+- type: Enum (service, module, ui)
+- properties: JSON
+- created_at: Timestamp
+- dependencies: JSON[]
+
+## Reducer: create_component
+- Params: type (Enum), properties (JSON)
+- Effect: Inserts new component into components table
+- Validation: Checks dependency constraints
+- Returns: component_id or error</pre>
+                </div>
+                
+                <div class="checkpoint">
+                    <h4>✅ Why This Works</h4>
+                    <p>OLLAMA can now understand your exact database structure and generate valid reducer calls instead of guessing API signatures.</p>
+                </div>
+            </div>
+            
+            <div class="pattern">
+                <h3>Knowledge Graph Design</h3>
+                <p>Model your entire software architecture as a queryable knowledge graph within SpacetimeDB.</p>
+                
+                <div class="table-design">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Table</th>
+                                <th>Purpose</th>
+                                <th>Key Relationships</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>components</code></td>
+                                <td>Software component registry</td>
+                                <td>→ component_relations</td>
+                            </tr>
+                            <tr>
+                                <td><code>component_relations</code></td>
+                                <td>Dependency & usage graph</td>
+                                <td>components ← → components</td>
+                            </tr>
+                            <tr>
+                                <td><code>patterns</code></td>
+                                <td>Design pattern definitions</td>
+                                <td>→ pattern_usage</td>
+                            </tr>
+                            <tr>
+                                <td><code>pattern_usage</code></td>
+                                <td>Which components use patterns</td>
+                                <td>components ← → patterns</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="code-block rust">
+<pre>// Intelligent graph queries
+pub fn get_component_dependencies(
+    ctx: &Context, 
+    component_id: Uuid
+) -> Result<Vec<Component>, Error> {
+    // Returns all components this one depends on
+    ctx.db.component_relations()
+        .filter(|r| r.from_component_id == component_id)
+        .map(|r| ctx.db.components().find(r.to_component_id))
+        .collect()
+}
+
+pub fn find_pattern_violations(
+    ctx: &Context,
+    pattern_name: String
+) -> Result<Vec<Violation>, Error> {
+    // AI can query for architectural violations
+    // and automatically suggest fixes
+}</pre>
+                </div>
+            </div>
+            
+            <div class="pattern">
+                <h3>Dynamic Context Injection</h3>
+                <p>Automatically generate context files from live database state.</p>
+                
+                <div class="implementation-grid">
+                    <div class="implementation-card">
+                        <h4>📋 CLAUDE.md</h4>
+                        <p>High-level rules and AI behavioral constraints stored in database and dynamically updated</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>🎯 INITIAL.md</h4>
+                        <p>Project architecture and meta-goals tracked as database entities with version history</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>📝 PRP Generation</h4>
+                        <p>Requirements prompts generated from current project state and constraint tables</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>🔄 Real-time Updates</h4>
+                        <p>Context automatically refreshes as database schema or project state changes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>🤖 Part 2: AI Agent Tooling & Self-Correction</h2>
+            
+            <div class="pattern">
+                <h3>Observation-Action-Correction Loop</h3>
+                <p>SpacetimeDB's real-time subscriptions enable continuous AI agent feedback and self-correction.</p>
+                
+                <div class="code-block rust">
+<pre>// Self-correcting reducer pattern
+pub fn ai_create_component(
+    ctx: &Context,
+    ai_agent_id: Uuid,
+    component_spec: ComponentSpec
+) -> Result<Uuid, Error> {
+    // 1. Validate against constraints
+    let violations = check_constraints(ctx, &component_spec)?;
+    if !violations.is_empty() {
+        log_constraint_violations(ctx, ai_agent_id, violations);
+        return Err(Error::ConstraintViolation);
+    }
+    
+    // 2. Create component
+    let component_id = create_component(ctx, component_spec)?;
+    
+    // 3. Log action for AI observation
+    log_ai_action(ctx, ai_agent_id, Action::CreateComponent {
+        component_id,
+        timestamp: ctx.timestamp,
+        success: true
+    });
+    
+    Ok(component_id)
+}
+
+pub fn observe_ai_actions(ctx: &Context, ai_agent_id: Uuid) -> Vec<ActionResult> {
+    // AI agent subscribes to its own action results
+    // and adjusts behavior based on success/failure patterns
+    ctx.db.ai_action_log()
+        .filter(|log| log.agent_id == ai_agent_id)
+        .filter(|log| log.timestamp > ctx.timestamp - Duration::minutes(10))
+        .collect()
+}</pre>
+                </div>
+                
+                <div class="checkpoint">
+                    <h4>✅ Self-Correction in Action</h4>
+                    <p>When the AI creates a component that violates constraints, it immediately sees the error, learns the constraint, and adjusts future actions automatically.</p>
+                </div>
+            </div>
+            
+            <div class="pattern">
+                <h3>Error Learning & Adaptation</h3>
+                <p>Persistent error logging enables AI agents to learn from mistakes over time.</p>
+                
+                <div class="table-design">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>error_id</code></td>
+                                <td>UUID</td>
+                                <td>Unique error identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>ai_agent_id</code></td>
+                                <td>UUID</td>
+                                <td>Which agent made the error</td>
+                            </tr>
+                            <tr>
+                                <td><code>reducer_name</code></td>
+                                <td>String</td>
+                                <td>What action was attempted</td>
+                            </tr>
+                            <tr>
+                                <td><code>error_pattern</code></td>
+                                <td>JSON</td>
+                                <td>Structured error details</td>
+                            </tr>
+                            <tr>
+                                <td><code>correction_applied</code></td>
+                                <td>JSON</td>
+                                <td>How the agent fixed it</td>
+                            </tr>
+                            <tr>
+                                <td><code>learned_constraint</code></td>
+                                <td>String</td>
+                                <td>New rule extracted from error</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>🔄 Part 3: External Service Orchestration</h2>
+            
+            <div class="advanced-concept">
+                <h4>🌐 Task Queue Pattern with SpacetimeDB</h4>
+                <p>Use SpacetimeDB as a distributed task queue to orchestrate Docker containers, external APIs, and AI services with full observability and error recovery.</p>
+            </div>
+            
+            <div class="pattern">
+                <h3>Dockerized Worker Integration</h3>
+                <p>External processes subscribe to SpacetimeDB task queues and report results back in real-time.</p>
+                
+                <div class="code-block rust">
+<pre>// Task orchestration reducer
+pub fn queue_external_task(
+    ctx: &Context,
+    task_type: TaskType,
+    payload: Json,
+    priority: Priority
+) -> Result<Uuid, Error> {
+    let task_id = Uuid::new_v4();
+    
+    ctx.db.task_queue().insert(TaskQueueEntry {
+        id: task_id,
+        task_type,
+        payload,
+        status: TaskStatus::Queued,
+        priority,
+        created_at: ctx.timestamp,
+        assigned_worker: None,
+        result: None,
+        retry_count: 0
+    })?;
+    
+    Ok(task_id)
+}
+
+// Worker picks up tasks
+pub fn claim_task(
+    ctx: &Context,
+    worker_id: Uuid,
+    capabilities: Vec<TaskType>
+) -> Option<TaskQueueEntry> {
+    // Atomic task claiming with capability matching
+    ctx.db.task_queue()
+        .filter(|task| task.status == TaskStatus::Queued)
+        .filter(|task| capabilities.contains(&task.task_type))
+        .order_by(|task| task.priority)
+        .take(1)
+        .update(|task| TaskQueueEntry {
+            status: TaskStatus::Running,
+            assigned_worker: Some(worker_id),
+            started_at: Some(ctx.timestamp),
+            ..task
+        })
+        .next()
+}</pre>
+                </div>
+                
+                <div class="implementation-grid">
+                    <div class="implementation-card">
+                        <h4>🐳 Docker Workers</h4>
+                        <p>Containerized services that poll task_queue and execute code analysis, testing, deployment</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>🔍 Real-time Monitoring</h4>
+                        <p>AI agents observe task progress and can intervene or retry failed operations</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>📊 Performance Analytics</h4>
+                        <p>Track task completion times, error rates, worker efficiency for optimization</p>
+                    </div>
+                    <div class="implementation-card">
+                        <h4>🔄 Auto-scaling</h4>
+                        <p>Dynamically spawn more workers based on queue depth and task urgency</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>🏗️ Part 4: Phase 0 Container Implementation</h2>
+            
+            <div class="pattern">
+                <h3>Intelligent Documentation Generator</h3>
+                <p>Automatically maintain project documentation that stays synchronized with code changes.</p>
+                
+                <div class="code-block rust">
+<pre>pub fn generate_documentation(
+    ctx: &Context,
+    project_id: Uuid
+) -> Result<(), Error> {
+    // Queue documentation generation task
+    let task_id = queue_external_task(
+        ctx,
+        TaskType::GenerateDocumentation,
+        json!({ "project_id": project_id }),
+        Priority::Normal
+    )?;
+    
+    // AI observes completion and updates documentation table
+    Ok(())
+}
+
+pub fn update_documentation_index(
+    ctx: &Context,
+    file_changes: Vec<FileChange>
+) -> Result<(), Error> {
+    for change in file_changes {
+        // Intelligently update documentation based on code changes
+        let doc_impact = analyze_documentation_impact(ctx, &change)?;
+        
+        if doc_impact.requires_update {
+            queue_documentation_update(ctx, change.file_path, doc_impact)?;
+        }
+    }
+    Ok(())
+}</pre>
+                </div>
+            </div>
+            
+            <div class="pattern">
+                <h3>AI Constraint Enforcement</h3>
+                <p>Database-driven constraint system that prevents AI agents from violating project rules.</p>
+                
+                <div class="table-design">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Constraint Type</th>
+                                <th>Example</th>
+                                <th>Enforcement Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Code Style</td>
+                                <td>"Never modify /core without approval"</td>
+                                <td>BLOCKING</td>
+                            </tr>
+                            <tr>
+                                <td>Architecture</td>
+                                <td>"UI components cannot import database modules"</td>
+                                <td>ERROR</td>
+                            </tr>
+                            <tr>
+                                <td>Performance</td>
+                                <td>"API response time must be < 200ms"</td>
+                                <td>WARNING</td>
+                            </tr>
+                            <tr>
+                                <td>Security</td>
+                                <td>"No hardcoded secrets in source code"</td>
+                                <td>BLOCKING</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>📋 Part 5: Complete Table Architecture</h2>
+            
+            <div class="advanced-concept">
+                <h4>🗄️ Production Database Schema</h4>
+                <p>This complete schema enables full AI agent lifecycle management, from context understanding to task execution and constraint enforcement.</p>
+            </div>
+            
+            <div class="table-design">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Table Name</th>
+                            <th>Purpose</th>
+                            <th>Key Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ai_agents</code></td>
+                            <td>Agent registry and state</td>
+                            <td>Capabilities, context, active sessions</td>
+                        </tr>
+                        <tr>
+                            <td><code>components</code></td>
+                            <td>Software component graph</td>
+                            <td>Dependencies, properties, metadata</td>
+                        </tr>
+                        <tr>
+                            <td><code>component_relations</code></td>
+                            <td>Knowledge graph edges</td>
+                            <td>Relationship types, weights, validity</td>
+                        </tr>
+                        <tr>
+                            <td><code>ai_constraints</code></td>
+                            <td>Rule enforcement system</td>
+                            <td>Scopes, enforcement levels, violations</td>
+                        </tr>
+                        <tr>
+                            <td><code>task_queue</code></td>
+                            <td>External task orchestration</td>
+                            <td>Priorities, workers, retry logic</td>
+                        </tr>
+                        <tr>
+                            <td><code>ai_action_log</code></td>
+                            <td>Agent action tracking</td>
+                            <td>Success/failure, learning data</td>
+                        </tr>
+                        <tr>
+                            <td><code>documentation</code></td>
+                            <td>Living project documentation</td>
+                            <td>Auto-generated, relationship-aware</td>
+                        </tr>
+                        <tr>
+                            <td><code>project_state</code></td>
+                            <td>Real-time system health</td>
+                            <td>File changes, build status, alerts</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="checkpoint">
+                <h4>🏆 Architecture Benefits</h4>
+                <ul>
+                    <li><strong>Persistent Intelligence:</strong> AI agents remember decisions across sessions</li>
+                    <li><strong>Real-time Feedback:</strong> Immediate error detection and correction</li>
+                    <li><strong>Scalable Orchestration:</strong> Handle complex multi-service workflows</li>
+                    <li><strong>Constraint Enforcement:</strong> Prevent architectural violations automatically</li>
+                    <li><strong>Knowledge Evolution:</strong> System becomes smarter over time</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>🚀 Implementation Roadmap</h2>
+            
+            <div class="implementation-grid">
+                <div class="implementation-card">
+                    <h4>Phase 1: Database Setup</h4>
+                    <ul>
+                        <li>Install SpacetimeDB</li>
+                        <li>Define core table schemas</li>
+                        <li>Create basic reducers</li>
+                        <li>Test real-time subscriptions</li>
+                    </ul>
+                </div>
+                <div class="implementation-card">
+                    <h4>Phase 2: AI Integration</h4>
+                    <ul>
+                        <li>Connect OLLAMA to database</li>
+                        <li>Implement context injection</li>
+                        <li>Create observation loops</li>
+                        <li>Test self-correction</li>
+                    </ul>
+                </div>
+                <div class="implementation-card">
+                    <h4>Phase 3: Task Orchestration</h4>
+                    <ul>
+                        <li>Design task queue system</li>
+                        <li>Create Docker workers</li>
+                        <li>Implement result feedback</li>
+                        <li>Add error recovery</li>
+                    </ul>
+                </div>
+                <div class="implementation-card">
+                    <h4>Phase 4: Production Scale</h4>
+                    <ul>
+                        <li>Add monitoring & metrics</li>
+                        <li>Implement auto-scaling</li>
+                        <li>Create deployment pipelines</li>
+                        <li>Add security layers</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="advanced-concept">
+                <h4>🎯 Success Metrics</h4>
+                <p>A successful implementation will demonstrate:</p>
+                <ul>
+                    <li><strong>Autonomous Operation:</strong> AI agents complete complex tasks without human intervention</li>
+                    <li><strong>Error Recovery:</strong> System automatically detects and corrects mistakes</li>
+                    <li><strong>Knowledge Retention:</strong> Agents learn from experience and apply lessons to new situations</li>
+                    <li><strong>Scalable Architecture:</strong> Adding new capabilities doesn't break existing functionality</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="../02-pyantic-agent/" class="nav-button">
+                ← Module 2: Pyantic Agent
+            </a>
+            <a href="../../" class="nav-button">
+                Back to Academy →
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced progress tracking with cosmic effects
+        function updateProgress() {
+            const scrolled = window.scrollY;
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const progress = (scrolled / maxScroll) * 100;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = Math.min(progress, 100) + '%';
+            
+            // Add cosmic glow effect based on progress
+            const intensity = Math.min(progress / 100, 1);
+            progressBar.style.boxShadow = `0 0 ${20 * intensity}px rgba(83, 52, 131, ${0.5 * intensity})`;
+        }
+        
+        window.addEventListener('scroll', updateProgress);
+        
+        // Add hover effects to implementation cards
+        document.querySelectorAll('.implementation-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(83, 52, 131, 0.25)';
+                this.style.borderColor = 'rgba(123, 104, 238, 0.5)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(83, 52, 131, 0.1)';
+                this.style.borderColor = 'rgba(83, 52, 131, 0.3)';
+            });
+        });
+        
+        // Add cosmic effects to code blocks
+        document.querySelectorAll('.code-block').forEach(block => {
+            block.addEventListener('mouseenter', function() {
+                this.style.borderColor = 'rgba(123, 104, 238, 0.6)';
+                this.style.boxShadow = '0 0 20px rgba(83, 52, 131, 0.3)';
+            });
+            
+            block.addEventListener('mouseleave', function() {
+                this.style.borderColor = 'rgba(83, 52, 131, 0.3)';
+                this.style.boxShadow = 'none';
+            });
+        });
+        
+        // Initialize effects
+        updateProgress();
+        
+        // Add experimental badge pulse effect
+        const badge = document.querySelector('.experimental-badge');
+        if (badge) {
+            setInterval(() => {
+                badge.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    badge.style.transform = 'scale(1)';
+                }, 200);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
