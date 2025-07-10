@@ -136,6 +136,79 @@
             box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
             background: linear-gradient(135deg, #2980b9, #3498db);
         }
+
+        /* Biblical Quote Styles */
+        .biblical-quote {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin: 3rem auto;
+            max-width: 700px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .biblical-quote-projects {
+            background: rgba(52, 152, 219, 0.08);
+            border: 1px solid rgba(52, 152, 219, 0.15);
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin: 4rem auto;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.1);
+        }
+
+        .biblical-quote::before,
+        .biblical-quote-projects::before {
+            content: '"';
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.3);
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            font-family: serif;
+            line-height: 1;
+        }
+
+        .biblical-quote-projects::before {
+            color: rgba(52, 152, 219, 0.2);
+        }
+
+        .quote-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-style: italic;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .quote-text-projects {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            font-style: italic;
+        }
+
+        .quote-reference {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .quote-reference-projects {
+            font-size: 1rem;
+            color: #3498db;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
         
         /* Projects Section */
         .projects {
@@ -396,6 +469,17 @@
             .about-paragraph {
                 padding: 1.5rem;
             }
+
+            .biblical-quote,
+            .biblical-quote-projects {
+                padding: 2rem;
+                margin: 2rem auto;
+            }
+
+            .quote-text,
+            .quote-text-projects {
+                font-size: 1.1rem;
+            }
         }
         
         /* Animations */
@@ -446,6 +530,12 @@
                 <h1>Nathan Storms</h1>
                 <div class="title">Contextual Directive Database Architectural Engineer</div>
                 <p>Building AI systems that don't just work, but work beautifully, reliably, and with intention</p>
+                
+                <div class="biblical-quote fade-in">
+                    <div class="quote-text">By wisdom a house is built, And by understanding it is established; And by knowledge the rooms are filled With all precious and pleasant riches.</div>
+                    <div class="quote-reference">— Proverbs 24:3–4 (LSB)</div>
+                </div>
+                
                 <a href="#projects" class="cta-button">Explore My Work</a>
             </div>
         </section>
@@ -478,26 +568,31 @@
                     </div>
                 </div>
                
-<div class="project-card fade-in">
-                        <span class="project-icon">🤖</span>
-                        <h3>AI Orchestration Academy</h3>
-                        <p>Interactive tutorial platform teaching multi-agent AI system development. Learn to build AI directors that coordinate specialized agents, from simple web interfaces to production-grade orchestration platforms.</p>
-                        
-                        <div class="tech-stack">
-                            <h4>🛠️ Technologies & Concepts</h4>
-                            <div class="tech-tags">
-                                <span class="tech-tag">Multi-Agent Systems</span>
-                                <span class="tech-tag">AI Orchestration</span>
-                                <span class="tech-tag">Pyantic AI</span>
-                                <span class="tech-tag">Knowledge Graphs</span>
-                                <span class="tech-tag">MCP Protocol</span>
-                                <span class="tech-tag">Self-Correcting Agents</span>
-                                <span class="tech-tag">Interactive Learning</span>
-                            </div>
+                <div class="project-card fade-in">
+                    <span class="project-icon">🤖</span>
+                    <h3>AI Orchestration Academy</h3>
+                    <p>Interactive tutorial platform teaching multi-agent AI system development. Learn to build AI directors that coordinate specialized agents, from simple web interfaces to production-grade orchestration platforms.</p>
+                    
+                    <div class="tech-stack">
+                        <h4>🛠️ Technologies & Concepts</h4>
+                        <div class="tech-tags">
+                            <span class="tech-tag">Multi-Agent Systems</span>
+                            <span class="tech-tag">AI Orchestration</span>
+                            <span class="tech-tag">Pyantic AI</span>
+                            <span class="tech-tag">Knowledge Graphs</span>
+                            <span class="tech-tag">MCP Protocol</span>
+                            <span class="tech-tag">Self-Correcting Agents</span>
+                            <span class="tech-tag">Interactive Learning</span>
                         </div>
-                        
-                        <a href="ai-orchestration-tutorial/" class="project-link">Start Learning</a>
                     </div>
+                    
+                    <a href="ai-orchestration-tutorial/" class="project-link">Start Learning</a>
+                </div>
+
+                <div class="biblical-quote-projects fade-in">
+                    <div class="quote-text-projects">And those who have insight will shine brightly like the brightness of the expanse of heaven, And those who lead the many to righteousness, like the stars forever and ever.</div>
+                    <div class="quote-reference-projects">— Daniel 12:3 (LSB)</div>
+                </div>
 
                 <div style="text-align: center; margin-top: 4rem;" class="fade-in">
                     <div class="tech-stack" style="max-width: 800px; margin: 0 auto;">
