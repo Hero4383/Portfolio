@@ -1996,11 +1996,17 @@ window.applyTextureBinding = applyTextureBinding;
 
             streamPc.onicecandidate = (event) => {
                 if (event.candidate) {
+                    const payload = event.candidate.toJSON ? event.candidate.toJSON() : {
+                        candidate: event.candidate.candidate,
+                        sdpMid: event.candidate.sdpMid,
+                        sdpMLineIndex: event.candidate.sdpMLineIndex,
+                        usernameFragment: event.candidate.usernameFragment
+                    };
                     streamChannel.postMessage({
                         type: 'ice',
                         role: 'viewer',
                         sessionId: streamSessionId,
-                        candidate: event.candidate
+                        candidate: payload
                     });
                 }
             };
@@ -2100,7 +2106,7 @@ window.applyTextureBinding = applyTextureBinding;
                     }
                 } else if (msg.type === 'ice' && msg.candidate && streamPc) {
                     try {
-                        await streamPc.addIceCandidate(msg.candidate);
+                        await streamPc.addIceCandidate(new RTCIceCandidate(msg.candidate));
                     } catch (error) {
                         console.warn('Stream ICE add failed', error);
                     }

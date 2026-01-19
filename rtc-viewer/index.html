@@ -306,11 +306,17 @@
 
             pc.onicecandidate = (event) => {
                 if (event.candidate && channel) {
+                    const payload = event.candidate.toJSON ? event.candidate.toJSON() : {
+                        candidate: event.candidate.candidate,
+                        sdpMid: event.candidate.sdpMid,
+                        sdpMLineIndex: event.candidate.sdpMLineIndex,
+                        usernameFragment: event.candidate.usernameFragment
+                    };
                     channel.postMessage({
                         type: 'ice',
                         role: 'rtc',
                         sessionId: currentSessionId,
-                        candidate: event.candidate
+                        candidate: payload
                     });
                 }
             };
@@ -361,7 +367,7 @@
                     handleOffer(msg);
                 } else if (msg.type === 'ice' && msg.sessionId === currentSessionId && msg.candidate) {
                     if (pc) {
-                        pc.addIceCandidate(msg.candidate).catch(() => {});
+                        pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
                     }
                 } else if (msg.type === 'stop' && msg.sessionId === currentSessionId) {
                     closePeer('stopped by sender');
