@@ -145,38 +145,73 @@
             animation: drift 12s ease infinite;
         }
 
-        #remoteVideo {
+        #streamOverlay {
+            position: absolute;
             width: 260px;
             height: 180px;
             right: 18px;
             bottom: 18px;
             left: auto;
             top: auto;
-            border: 1px solid var(--green);
-            border-radius: 10px;
-            object-fit: contain;
-            background: rgba(0, 0, 0, 0.6);
+            cursor: grab;
+            touch-action: none;
         }
 
-        .stage.full #remoteVideo {
+        #streamOverlay.dragging {
+            cursor: grabbing;
+        }
+
+        #remoteVideo {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: contain;
+            background: transparent;
+            mix-blend-mode: screen;
+        }
+
+        .stream-label {
+            position: absolute;
+            right: 0;
+            top: -18px;
+            font-size: 11px;
+            color: rgba(0, 255, 65, 0.9);
+            text-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
+            pointer-events: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            right: 0;
+            bottom: 0;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 65, 0.4);
+            background: rgba(0, 255, 65, 0.15);
+            cursor: nwse-resize;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        #streamOverlay:hover .resize-handle {
+            opacity: 1;
+        }
+
+        .stage.full #streamOverlay {
             inset: 0;
             width: 100%;
             height: 100%;
+            cursor: default;
+        }
+
+        .stage.full #remoteVideo {
             border-radius: 0;
+            mix-blend-mode: normal;
         }
 
-        .watermark-label {
-            position: absolute;
-            right: 24px;
-            bottom: 210px;
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--panel-border);
-        }
-
-        .stage.full .watermark-label {
+        .stage.full .resize-handle,
+        .stage.full .stream-label {
             display: none;
         }
 
@@ -232,8 +267,11 @@
             <div class="stage" id="stage">
                 <div id="bgPlaceholder"></div>
                 <video id="backgroundVideo" autoplay muted loop playsinline></video>
-                <video id="remoteVideo" autoplay muted playsinline></video>
-                <div class="watermark-label">3D Model Stream</div>
+                <div id="streamOverlay">
+                    <video id="remoteVideo" autoplay muted playsinline></video>
+                    <div class="stream-label">3D Model Stream</div>
+                    <div id="resizeHandle" class="resize-handle" title="Drag to resize"></div>
+                </div>
                 <div id="noStream" class="overlay">Waiting for stream...</div>
             </div>
         </div>
@@ -253,11 +291,16 @@
         const disconnectBtn = document.getElementById('disconnectBtn');
         const watermarkToggle = document.getElementById('watermarkToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
+        const streamOverlay = document.getElementById('streamOverlay');
+        const resizeHandle = document.getElementById('resizeHandle');
 
         let pc = null;
         let currentSessionId = null;
         let tickTimer = null;
         const tickIntervalMs = 1000 / 30;
+        let dragState = null;
+        let resizeState = null;
+        const minOverlaySize = { width: 160, height: 120 };
 
         function setStatus(message) {
             statusEl.textContent = `Status: ${message}`;
@@ -305,6 +348,89 @@
 
         function showStream(active) {
             noStream.style.display = active ? 'none' : 'grid';
+        }
+
+        function getOverlayBounds() {
+            const stageRect = stageEl.getBoundingClientRect();
+            const overlayRect = streamOverlay.getBoundingClientRect();
+            return { stageRect, overlayRect };
+        }
+
+        function setOverlayPosition(left, top) {
+            const { stageRect, overlayRect } = getOverlayBounds();
+            const maxLeft = Math.max(0, stageRect.width - overlayRect.width);
+            const maxTop = Math.max(0, stageRect.height - overlayRect.height);
+            const clampedLeft = Math.min(Math.max(left, 0), maxLeft);
+            const clampedTop = Math.min(Math.max(top, 0), maxTop);
+            streamOverlay.style.left = `${clampedLeft}px`;
+            streamOverlay.style.top = `${clampedTop}px`;
+            streamOverlay.style.right = 'auto';
+            streamOverlay.style.bottom = 'auto';
+        }
+
+        function beginDrag(event) {
+            if (stageEl.classList.contains('full')) return;
+            if (event.button !== 0) return;
+            const { stageRect, overlayRect } = getOverlayBounds();
+            dragState = {
+                startX: event.clientX,
+                startY: event.clientY,
+                baseLeft: overlayRect.left - stageRect.left,
+                baseTop: overlayRect.top - stageRect.top
+            };
+            streamOverlay.setPointerCapture(event.pointerId);
+            streamOverlay.classList.add('dragging');
+        }
+
+        function onDrag(event) {
+            if (!dragState) return;
+            const deltaX = event.clientX - dragState.startX;
+            const deltaY = event.clientY - dragState.startY;
+            setOverlayPosition(dragState.baseLeft + deltaX, dragState.baseTop + deltaY);
+        }
+
+        function endDrag(event) {
+            if (!dragState) return;
+            streamOverlay.releasePointerCapture(event.pointerId);
+            streamOverlay.classList.remove('dragging');
+            dragState = null;
+        }
+
+        function beginResize(event) {
+            if (stageEl.classList.contains('full')) return;
+            event.stopPropagation();
+            const { stageRect, overlayRect } = getOverlayBounds();
+            resizeState = {
+                startX: event.clientX,
+                startY: event.clientY,
+                baseWidth: overlayRect.width,
+                baseHeight: overlayRect.height,
+                maxWidth: stageRect.width - (overlayRect.left - stageRect.left),
+                maxHeight: stageRect.height - (overlayRect.top - stageRect.top)
+            };
+            resizeHandle.setPointerCapture(event.pointerId);
+        }
+
+        function onResize(event) {
+            if (!resizeState) return;
+            const deltaX = event.clientX - resizeState.startX;
+            const deltaY = event.clientY - resizeState.startY;
+            const nextWidth = Math.min(
+                Math.max(resizeState.baseWidth + deltaX, minOverlaySize.width),
+                resizeState.maxWidth
+            );
+            const nextHeight = Math.min(
+                Math.max(resizeState.baseHeight + deltaY, minOverlaySize.height),
+                resizeState.maxHeight
+            );
+            streamOverlay.style.width = `${nextWidth}px`;
+            streamOverlay.style.height = `${nextHeight}px`;
+        }
+
+        function endResize(event) {
+            if (!resizeState) return;
+            resizeHandle.releasePointerCapture(event.pointerId);
+            resizeState = null;
         }
 
         function closePeer(reason) {
@@ -437,6 +563,19 @@
                 stageEl.classList.add('full');
             }
         });
+
+        streamOverlay.addEventListener('pointerdown', (event) => {
+            if (event.target === resizeHandle) return;
+            beginDrag(event);
+        });
+        streamOverlay.addEventListener('pointermove', onDrag);
+        streamOverlay.addEventListener('pointerup', endDrag);
+        streamOverlay.addEventListener('pointercancel', endDrag);
+
+        resizeHandle.addEventListener('pointerdown', beginResize);
+        resizeHandle.addEventListener('pointermove', onResize);
+        resizeHandle.addEventListener('pointerup', endResize);
+        resizeHandle.addEventListener('pointercancel', endResize);
 
         bgVideoInput.addEventListener('change', (event) => {
             const file = event.target.files && event.target.files[0];
