@@ -289,10 +289,6 @@
                         <input type="checkbox" id="watermarkToggle" checked>
                         <label for="watermarkToggle">Watermark mode (overlay)</label>
                     </div>
-                    <div class="toggle">
-                        <input type="checkbox" id="outlineToggle" checked>
-                        <label for="outlineToggle">Show overlay outline</label>
-                    </div>
                 </div>
 
                 <div class="file-input">Optional background video:</div>
@@ -329,7 +325,6 @@
         const requestBtn = document.getElementById('requestBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
         const watermarkToggle = document.getElementById('watermarkToggle');
-        const outlineToggle = document.getElementById('outlineToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
         const streamOverlay = document.getElementById('streamOverlay');
         const resizeHandle = document.getElementById('resizeHandle');
@@ -349,6 +344,8 @@
         const keyThreshold = 28;
         const workCanvas = document.createElement('canvas');
         const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+        let outlineHideTimer = null;
+        const outlineDelayMs = 1800;
 
         function setStatus(message) {
             statusEl.textContent = `Status: ${message}`;
@@ -401,6 +398,17 @@
         function setOutlineVisible(visible) {
             streamOverlay.classList.toggle('outline-hidden', !visible);
             streamOverlay.classList.toggle('stream-outline-visible', visible);
+        }
+
+        function showOutlineTemporarily() {
+            setOutlineVisible(true);
+            if (outlineHideTimer) {
+                clearTimeout(outlineHideTimer);
+            }
+            outlineHideTimer = setTimeout(() => {
+                if (resizeEnabled || dragState || resizeState) return;
+                setOutlineVisible(false);
+            }, outlineDelayMs);
         }
 
         function getContentBoundsInOverlay() {
@@ -724,22 +732,21 @@
                 stageEl.classList.add('full');
             }
         });
-
-        outlineToggle.addEventListener('change', () => {
-            setOutlineVisible(outlineToggle.checked);
-        });
-
-        setOutlineVisible(outlineToggle.checked);
+        setOutlineVisible(false);
 
         streamOverlay.addEventListener('pointerdown', (event) => {
             if (event.target === resizeHandle) return;
             beginDrag(event);
+            showOutlineTemporarily();
         });
         streamOverlay.addEventListener('pointermove', onDrag);
         streamOverlay.addEventListener('pointerup', endDrag);
         streamOverlay.addEventListener('pointercancel', endDrag);
 
-        resizeHandle.addEventListener('pointerdown', beginResize);
+        resizeHandle.addEventListener('pointerdown', (event) => {
+            showOutlineTemporarily();
+            beginResize(event);
+        });
         resizeHandle.addEventListener('pointermove', onResize);
         resizeHandle.addEventListener('pointerup', endResize);
         resizeHandle.addEventListener('pointercancel', endResize);
@@ -748,7 +755,10 @@
             event.stopPropagation();
             resizeEnabled = !resizeEnabled;
             streamOverlay.classList.toggle('resize-active', resizeEnabled);
+            showOutlineTemporarily();
         });
+
+        stageEl.addEventListener('pointermove', showOutlineTemporarily);
 
         bgVideoInput.addEventListener('change', (event) => {
             const file = event.target.files && event.target.files[0];
