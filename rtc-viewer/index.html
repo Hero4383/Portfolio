@@ -75,6 +75,17 @@
             margin-bottom: 12px;
         }
 
+        .control-select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--green);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
         .status {
             padding: 10px;
             border-radius: 8px;
@@ -131,8 +142,9 @@
             border: 1px solid var(--panel-border);
             border-radius: 16px;
             overflow: hidden;
-            height: min(70vh, 640px);
-            min-height: 360px;
+            width: 100%;
+            height: min(78vh, 900px);
+            min-height: 420px;
         }
 
         #backgroundVideo,
@@ -293,6 +305,13 @@
 
                 <div class="file-input">Optional background video:</div>
                 <input type="file" id="bgVideoInput" accept="video/*">
+                <div class="file-input" style="margin-top:12px;">Background canvas size:</div>
+                <select id="resolutionSelect" class="control-select">
+                    <option value="auto" selected>Auto (fit)</option>
+                    <option value="1280x720">1280 x 720</option>
+                    <option value="1920x1080">1920 x 1080</option>
+                    <option value="2560x1440">2560 x 1440</option>
+                </select>
                 <p>Tip: leave the 3D viewer open while exploring this view to simulate a remote thin-client stream.</p>
             </div>
 
@@ -326,6 +345,7 @@
         const disconnectBtn = document.getElementById('disconnectBtn');
         const watermarkToggle = document.getElementById('watermarkToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
+        const resolutionSelect = document.getElementById('resolutionSelect');
         const streamOverlay = document.getElementById('streamOverlay');
         const resizeHandle = document.getElementById('resizeHandle');
 
@@ -778,6 +798,36 @@
         });
 
         stageEl.addEventListener('pointermove', showOutlineTemporarily);
+
+        const resolutionMap = {
+            '1280x720': { width: 1280, height: 720 },
+            '1920x1080': { width: 1920, height: 1080 },
+            '2560x1440': { width: 2560, height: 1440 }
+        };
+
+        function applyStageResolution() {
+            const value = resolutionSelect.value;
+            if (value === 'auto') {
+                stageEl.style.width = '100%';
+                stageEl.style.height = 'min(78vh, 900px)';
+                return;
+            }
+
+            const target = resolutionMap[value];
+            if (!target) return;
+
+            const layoutRect = stageEl.parentElement.getBoundingClientRect();
+            const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+            const maxWidth = layoutRect.width;
+            const maxHeight = Math.max(320, window.innerHeight - headerHeight - 140);
+            const scale = Math.min(maxWidth / target.width, maxHeight / target.height, 1);
+            stageEl.style.width = `${Math.floor(target.width * scale)}px`;
+            stageEl.style.height = `${Math.floor(target.height * scale)}px`;
+        }
+
+        resolutionSelect.addEventListener('change', applyStageResolution);
+        window.addEventListener('resize', applyStageResolution);
+        applyStageResolution();
 
         bgVideoInput.addEventListener('change', (event) => {
             const file = event.target.files && event.target.files[0];
