@@ -470,6 +470,8 @@
         let streamOfferSdp = null;
         let streamOfferTimer = null;
         let streamOfferAttempts = 0;
+        let hiddenRenderTimer = null;
+        const hiddenRenderIntervalMs = 1000 / 30;
         // ===== Uploaded Texture Registry (global) =====
         // Keyed by lowercase basename (e.g. "checker_albedo.png", "foo.dds")
         const __uploadedTexFilesByBasename = new Map();     // basename -> File
@@ -2057,6 +2059,10 @@ window.applyTextureBinding = applyTextureBinding;
             setStreamButtons(true);
             sendStreamOffer();
 
+            if (document.hidden) {
+                startHiddenRenderLoop();
+            }
+
             streamOfferTimer = setInterval(() => {
                 if (!streamPc || streamPc.signalingState === 'closed') return;
                 if (streamOfferAttempts >= 5) {
@@ -2078,6 +2084,7 @@ window.applyTextureBinding = applyTextureBinding;
                 streamOfferTimer = null;
             }
             streamOfferAttempts = 0;
+            stopHiddenRenderLoop();
 
             if (streamChannel && streamSessionId) {
                 sendStreamMessage({
@@ -2137,6 +2144,15 @@ window.applyTextureBinding = applyTextureBinding;
                 }
             };
         }
+
+        document.addEventListener('visibilitychange', () => {
+            if (!streamLocalStream) return;
+            if (document.hidden) {
+                startHiddenRenderLoop();
+            } else {
+                stopHiddenRenderLoop();
+            }
+        });
         
         
         function showAwaitTextures() {
@@ -3954,16 +3970,14 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
             }
         }
         
-        function animate() {
-            requestAnimationFrame(animate);
-            
+        function renderFrame() {
             if (rotating && brainModel) {
                 // Horizontal rotation only (around Y-axis)
                 brainModel.rotation.y += 0.01;
                 // Keep the tilt constant during rotation
                 brainModel.rotation.x = currentTilt * (Math.PI / 180);
             }
-            
+
             renderer.render(scene, camera);
 
             if (streamLocalStream) {
@@ -3971,6 +3985,34 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                 if (track && typeof track.requestFrame === 'function') {
                     track.requestFrame();
                 }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (document.hidden && hiddenRenderTimer) {
+                return;
+            }
+
+            renderFrame();
+        }
+
+        function startHiddenRenderLoop() {
+            if (hiddenRenderTimer || !renderer) return;
+            hiddenRenderTimer = setInterval(() => {
+                if (!document.hidden) {
+                    stopHiddenRenderLoop();
+                    return;
+                }
+                renderFrame();
+            }, hiddenRenderIntervalMs);
+        }
+
+        function stopHiddenRenderLoop() {
+            if (hiddenRenderTimer) {
+                clearInterval(hiddenRenderTimer);
+                hiddenRenderTimer = null;
             }
         }
         
