@@ -74,6 +74,13 @@
             background: rgba(0, 255, 65, 0.4);
             box-shadow: 0 0 10px #00ff41;
         }
+
+        button:disabled {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
         
         #textureControls {
             position: absolute;
@@ -184,6 +191,13 @@
             font-size: 12px;
             text-align: center;
             margin-top: 5px;
+        }
+
+        .control-note {
+            font-size: 11px;
+            margin-top: 6px;
+            opacity: 0.85;
+            max-width: 260px;
         }
 
         #xrayCanvasToggle { accent-color: #00ff41; }
@@ -311,6 +325,10 @@
             <button onclick="resetCamera()">Reset View</button>
             <button onclick="exportModel()">Export Model</button>
             <button onclick="loadNewFiles()">Load New</button>
+            <button id="startStreamBtn" onclick="startStream()">Start Stream</button>
+            <button id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
+            <div id="streamStatus" class="control-note">Stream: idle</div>
+            <div class="control-note">Make sure your model and textures are fully loaded before starting the stream.</div>
         </div>
         
         <div id="attribution">
@@ -442,6 +460,15 @@
         
         // Three.js setup
         let scene, camera, renderer, brainModel;
+        // Thin RTC demo (canvas stream -> RTC viewer via BroadcastChannel)
+        const streamChannelName = 'portfolio-rtc-demo';
+        const streamChannel = ('BroadcastChannel' in window) ? new BroadcastChannel(streamChannelName) : null;
+        let streamPc = null;
+        let streamLocalStream = null;
+        let streamSessionId = null;
+        let streamOfferSdp = null;
+        let streamOfferTimer = null;
+        let streamOfferAttempts = 0;
         // ===== Uploaded Texture Registry (global) =====
         // Keyed by lowercase basename (e.g. "checker_albedo.png", "foo.dds")
         const __uploadedTexFilesByBasename = new Map();     // basename -> File
@@ -1913,6 +1940,174 @@ window.applyTextureBinding = applyTextureBinding;
                 errorDiv.textContent = message;
                 errorContainer.appendChild(errorDiv);
             }
+        }
+
+        function updateStreamStatus(message) {
+            const statusEl = document.getElementById('streamStatus');
+            if (statusEl) statusEl.textContent = message;
+        }
+
+        function setStreamButtons(isStreaming) {
+            const startBtn = document.getElementById('startStreamBtn');
+            const stopBtn = document.getElementById('stopStreamBtn');
+            if (startBtn) startBtn.disabled = isStreaming;
+            if (stopBtn) stopBtn.disabled = !isStreaming;
+        }
+
+        function sendStreamOffer() {
+            if (!streamChannel || !streamOfferSdp || !streamSessionId) return;
+            streamChannel.postMessage({
+                type: 'offer',
+                role: 'viewer',
+                sessionId: streamSessionId,
+                sdp: streamOfferSdp
+            });
+        }
+
+        async function startStream() {
+            if (!renderer || !renderer.domElement) {
+                updateStreamStatus('Stream: renderer not ready');
+                return;
+            }
+            if (!streamChannel) {
+                updateStreamStatus('Stream: BroadcastChannel unsupported');
+                return;
+            }
+
+            stopStream('Stream: restarting');
+
+            streamSessionId = Math.random().toString(36).slice(2);
+            streamOfferAttempts = 0;
+
+            try {
+                streamLocalStream = renderer.domElement.captureStream(30);
+            } catch (error) {
+                updateStreamStatus('Stream: captureStream failed');
+                return;
+            }
+
+            streamPc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+
+            streamLocalStream.getTracks().forEach((track) => {
+                streamPc.addTrack(track, streamLocalStream);
+            });
+
+            streamPc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    streamChannel.postMessage({
+                        type: 'ice',
+                        role: 'viewer',
+                        sessionId: streamSessionId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+
+            streamPc.oniceconnectionstatechange = () => {
+                if (!streamPc) return;
+                updateStreamStatus(`Stream: ${streamPc.iceConnectionState}`);
+                if (streamPc.iceConnectionState === 'connected') {
+                    if (streamOfferTimer) {
+                        clearInterval(streamOfferTimer);
+                        streamOfferTimer = null;
+                    }
+                }
+            };
+
+            try {
+                const offer = await streamPc.createOffer();
+                await streamPc.setLocalDescription(offer);
+                streamOfferSdp = offer.sdp;
+            } catch (error) {
+                updateStreamStatus('Stream: offer failed');
+                return;
+            }
+
+            updateStreamStatus('Stream: waiting for RTC viewer');
+            setStreamButtons(true);
+            sendStreamOffer();
+
+            streamOfferTimer = setInterval(() => {
+                if (!streamPc || streamPc.signalingState === 'closed') return;
+                if (streamOfferAttempts >= 5) {
+                    if (streamOfferTimer) {
+                        clearInterval(streamOfferTimer);
+                        streamOfferTimer = null;
+                    }
+                    updateStreamStatus('Stream: waiting for RTC viewer (open rtc-viewer)');
+                    return;
+                }
+                streamOfferAttempts += 1;
+                sendStreamOffer();
+            }, 3000);
+        }
+
+        function stopStream(message) {
+            if (streamOfferTimer) {
+                clearInterval(streamOfferTimer);
+                streamOfferTimer = null;
+            }
+            streamOfferAttempts = 0;
+
+            if (streamChannel && streamSessionId) {
+                streamChannel.postMessage({
+                    type: 'stop',
+                    role: 'viewer',
+                    sessionId: streamSessionId
+                });
+            }
+
+            if (streamPc) {
+                streamPc.onicecandidate = null;
+                streamPc.oniceconnectionstatechange = null;
+                streamPc.close();
+                streamPc = null;
+            }
+
+            if (streamLocalStream) {
+                streamLocalStream.getTracks().forEach((track) => track.stop());
+                streamLocalStream = null;
+            }
+
+            streamSessionId = null;
+            streamOfferSdp = null;
+            setStreamButtons(false);
+            updateStreamStatus(message || 'Stream: idle');
+        }
+
+        if (streamChannel) {
+            streamChannel.onmessage = async (event) => {
+                const msg = event.data || {};
+                if (msg.role === 'viewer') return;
+
+                if (msg.type === 'request-offer') {
+                    if (streamPc && streamOfferSdp && streamSessionId) {
+                        sendStreamOffer();
+                    }
+                    return;
+                }
+
+                if (!streamSessionId || msg.sessionId !== streamSessionId) return;
+
+                if (msg.type === 'answer' && msg.sdp && streamPc) {
+                    try {
+                        await streamPc.setRemoteDescription({ type: 'answer', sdp: msg.sdp });
+                        updateStreamStatus('Stream: connected');
+                    } catch (error) {
+                        updateStreamStatus('Stream: answer failed');
+                    }
+                } else if (msg.type === 'ice' && msg.candidate && streamPc) {
+                    try {
+                        await streamPc.addIceCandidate(msg.candidate);
+                    } catch (error) {
+                        console.warn('Stream ICE add failed', error);
+                    }
+                } else if (msg.type === 'stop') {
+                    stopStream('Stream: stopped by RTC viewer');
+                }
+            };
         }
         
         
@@ -4540,6 +4735,7 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
         
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
+            stopStream('Stream: closing');
             if (brainModel) {
                 brainModel.geometry.dispose();
                 brainModel.material.dispose();
