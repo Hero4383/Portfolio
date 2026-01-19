@@ -1950,6 +1950,10 @@ window.applyTextureBinding = applyTextureBinding;
             if (statusEl) statusEl.textContent = message;
         }
 
+        function isDockedView() {
+            return window.location.search.includes('dock=1');
+        }
+
         function sendStreamMessage(payload) {
             if (!streamChannel) return;
             try {
@@ -4801,6 +4805,13 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
             
             initMatrix(); // Start with matrix effect by default
             initThreeJS();
+
+            if (isDockedView()) {
+                const infoNote = document.getElementById('streamStatus');
+                if (infoNote) {
+                    infoNote.textContent = 'Stream: docked view ready';
+                }
+            }
             
             // Show helpful tips
             setTimeout(() => {
