@@ -581,7 +581,8 @@
             } catch (error) {
                 setStatus('offer failed');
             }
-        
+        }
+
         function processFrame() {
             if (!frameLoopActive) return;
             if (!remoteVideo.videoWidth || !remoteVideo.videoHeight) {
@@ -659,7 +660,6 @@
             frameLoopActive = false;
         }
 
-}
 
         if (channel) {
             channel.onmessage = (event) => {
