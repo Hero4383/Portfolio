@@ -466,10 +466,13 @@
         const streamChannel = ('BroadcastChannel' in window) ? new BroadcastChannel(streamChannelName) : null;
         let streamPc = null;
         let streamLocalStream = null;
+        let streamCanvas = null;
+        let streamCtx = null;
         let streamSessionId = null;
         let streamOfferSdp = null;
         let streamOfferTimer = null;
         let streamOfferAttempts = 0;
+        const streamKeyColor = { r: 255, g: 0, b: 255 };
         // ===== Uploaded Texture Registry (global) =====
         // Keyed by lowercase basename (e.g. "checker_albedo.png", "foo.dds")
         const __uploadedTexFilesByBasename = new Map();     // basename -> File
@@ -2004,7 +2007,11 @@ window.applyTextureBinding = applyTextureBinding;
             streamOfferAttempts = 0;
 
             try {
-                streamLocalStream = renderer.domElement.captureStream(30);
+                streamCanvas = document.createElement('canvas');
+                streamCtx = streamCanvas.getContext('2d');
+                streamCanvas.width = renderer.domElement.width;
+                streamCanvas.height = renderer.domElement.height;
+                streamLocalStream = streamCanvas.captureStream(30);
             } catch (error) {
                 updateStreamStatus('Stream: captureStream failed');
                 return;
@@ -2100,6 +2107,8 @@ window.applyTextureBinding = applyTextureBinding;
                 streamLocalStream.getTracks().forEach((track) => track.stop());
                 streamLocalStream = null;
             }
+            streamCanvas = null;
+            streamCtx = null;
 
             streamSessionId = null;
             streamOfferSdp = null;
@@ -3979,7 +3988,16 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
 
             renderer.render(scene, camera);
 
-            if (streamLocalStream) {
+            if (streamLocalStream && streamCanvas && streamCtx) {
+                const targetWidth = renderer.domElement.width;
+                const targetHeight = renderer.domElement.height;
+                if (streamCanvas.width !== targetWidth || streamCanvas.height !== targetHeight) {
+                    streamCanvas.width = targetWidth;
+                    streamCanvas.height = targetHeight;
+                }
+                streamCtx.fillStyle = `rgb(${streamKeyColor.r}, ${streamKeyColor.g}, ${streamKeyColor.b})`;
+                streamCtx.fillRect(0, 0, streamCanvas.width, streamCanvas.height);
+                streamCtx.drawImage(renderer.domElement, 0, 0, streamCanvas.width, streamCanvas.height);
                 const track = streamLocalStream.getVideoTracks()[0];
                 if (track && typeof track.requestFrame === 'function') {
                     track.requestFrame();
