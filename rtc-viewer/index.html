@@ -48,11 +48,6 @@
             gap: 20px;
         }
 
-        .stream-stack {
-            display: grid;
-            gap: 16px;
-        }
-
         .panel {
             background: var(--panel);
             border: 1px solid var(--panel-border);
@@ -131,31 +126,6 @@
             overflow: hidden;
             height: min(70vh, 640px);
             min-height: 360px;
-        }
-
-        .stream-stack.docked .stage {
-            height: min(45vh, 420px);
-            min-height: 300px;
-        }
-
-        .dock {
-            display: none;
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            overflow: hidden;
-            background: rgba(0, 0, 0, 0.35);
-            height: min(45vh, 480px);
-            min-height: 260px;
-        }
-
-        .dock.visible {
-            display: block;
-        }
-
-        .dock iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
         }
 
         #backgroundVideo,
@@ -254,27 +224,17 @@
                     <label for="watermarkToggle">Watermark mode (overlay)</label>
                 </div>
 
-                <div class="toggle">
-                    <input type="checkbox" id="dockToggle">
-                    <label for="dockToggle">Dock 3D Viewer (single-tab mode)</label>
-                </div>
-
                 <div class="file-input">Optional background video:</div>
                 <input type="file" id="bgVideoInput" accept="video/*">
-                <p>Tip: browsers throttle hidden tabs. Docking keeps the 3D viewer active for a smooth stream.</p>
+                <p>Tip: leave the 3D viewer open while exploring this view to simulate a remote thin-client stream.</p>
             </div>
 
-            <div class="stream-stack" id="streamStack">
-                <div class="stage" id="stage">
-                    <div id="bgPlaceholder"></div>
-                    <video id="backgroundVideo" autoplay muted loop playsinline></video>
-                    <video id="remoteVideo" autoplay muted playsinline></video>
-                    <div class="watermark-label">3D Model Stream</div>
-                    <div id="noStream" class="overlay">Waiting for stream...</div>
-                </div>
-                <div class="dock" id="dockPane">
-                    <iframe id="dockFrame" title="Docked 3D Viewer" src="../3d-model-viewer/index.html?dock=1"></iframe>
-                </div>
+            <div class="stage" id="stage">
+                <div id="bgPlaceholder"></div>
+                <video id="backgroundVideo" autoplay muted loop playsinline></video>
+                <video id="remoteVideo" autoplay muted playsinline></video>
+                <div class="watermark-label">3D Model Stream</div>
+                <div id="noStream" class="overlay">Waiting for stream...</div>
             </div>
         </div>
     </div>
@@ -293,9 +253,6 @@
         const disconnectBtn = document.getElementById('disconnectBtn');
         const watermarkToggle = document.getElementById('watermarkToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
-        const dockToggle = document.getElementById('dockToggle');
-        const dockPane = document.getElementById('dockPane');
-        const streamStack = document.getElementById('streamStack');
 
         let pc = null;
         let currentSessionId = null;
@@ -458,16 +415,6 @@
                 stageEl.classList.remove('full');
             } else {
                 stageEl.classList.add('full');
-            }
-        });
-
-        dockToggle.addEventListener('change', () => {
-            if (dockToggle.checked) {
-                dockPane.classList.add('visible');
-                streamStack.classList.add('docked');
-            } else {
-                dockPane.classList.remove('visible');
-                streamStack.classList.remove('docked');
             }
         });
 
