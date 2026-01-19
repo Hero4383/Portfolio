@@ -342,8 +342,8 @@
         let contentBounds = null;
         const keyColor = { r: 255, g: 0, b: 255 };
         const keyThreshold = 28;
-        const keySoftness = 40;
-        const despillStrength = 0.85;
+        const keySoftness = 30;
+        const despillStrength = 0.8;
         const workCanvas = document.createElement('canvas');
         const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
         let outlineHideTimer = null;
@@ -664,11 +664,13 @@
                 }
 
                 if (alpha > 0) {
-                    const spill = Math.min(r, b) - g;
-                    if (spill > 0) {
-                        const reduce = spill * despillStrength;
-                        data[i] = Math.max(0, r - reduce);
-                        data[i + 2] = Math.max(0, b - reduce);
+                    if (dist <= keyThreshold + keySoftness) {
+                        const spill = Math.min(r, b) - g;
+                        if (spill > 0) {
+                            const reduce = spill * despillStrength;
+                            data[i] = Math.max(0, r - reduce);
+                            data[i + 2] = Math.max(0, b - reduce);
+                        }
                     }
                     data[i + 3] = alpha;
                     hasContent = true;
