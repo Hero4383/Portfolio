@@ -341,9 +341,9 @@
         let frameLoopActive = false;
         let contentBounds = null;
         const keyColor = { r: 255, g: 0, b: 255 };
-        const keyThreshold = 24;
-        const keySoftness = 24;
-        const despillStrength = 0.6;
+        const keyThreshold = 28;
+        const keySoftness = 40;
+        const despillStrength = 0.85;
         const workCanvas = document.createElement('canvas');
         const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
         let outlineHideTimer = null;
