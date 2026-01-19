@@ -256,6 +256,8 @@
 
         let pc = null;
         let currentSessionId = null;
+        let tickTimer = null;
+        const tickIntervalMs = 1000 / 30;
 
         function setStatus(message) {
             statusEl.textContent = `Status: ${message}`;
@@ -282,6 +284,21 @@
             return data;
         }
 
+        function startTickLoop() {
+            if (tickTimer || !channel || !currentSessionId) return;
+            tickTimer = setInterval(() => {
+                if (!channel || !currentSessionId) return;
+                sendChannelMessage({ type: 'tick', role: 'rtc', sessionId: currentSessionId });
+            }, tickIntervalMs);
+        }
+
+        function stopTickLoop() {
+            if (tickTimer) {
+                clearInterval(tickTimer);
+                tickTimer = null;
+            }
+        }
+
         function setConnected(connected) {
             disconnectBtn.disabled = !connected;
         }
@@ -294,6 +311,7 @@
             if (channel && currentSessionId) {
                 sendChannelMessage({ type: 'stop', role: 'rtc', sessionId: currentSessionId });
             }
+            stopTickLoop();
             if (pc) {
                 pc.ontrack = null;
                 pc.onicecandidate = null;
@@ -350,6 +368,7 @@
                 setConnected(state === 'connected');
                 if (state === 'failed' || state === 'closed' || state === 'disconnected') {
                     showStream(false);
+                    stopTickLoop();
                 }
             };
 
@@ -375,6 +394,7 @@
                     sessionId: currentSessionId,
                     sdp: answer.sdp
                 });
+                startTickLoop();
                 setStatus('answer sent');
             } catch (error) {
                 setStatus('offer failed');
