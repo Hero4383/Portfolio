@@ -570,6 +570,8 @@
         let colorIndex = 0;
         let currentFileName = '';
         let loadedTextures = {};
+        let lastRenderTime = null;
+        const rotationSpeed = 0.6; // radians per second (matches ~0.01/frame at 60fps)
 
         // ===== CAPS / DDS =====
         window.__viewerCaps = window.__viewerCaps || {};
@@ -3960,9 +3962,17 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
         }
         
         function renderFrame() {
+            const now = performance.now();
+            let deltaSec = 0;
+            if (lastRenderTime !== null) {
+                deltaSec = (now - lastRenderTime) / 1000;
+                if (deltaSec > 0.1) deltaSec = 0.1;
+            }
+            lastRenderTime = now;
+
             if (rotating && brainModel) {
                 // Horizontal rotation only (around Y-axis)
-                brainModel.rotation.y += 0.01;
+                brainModel.rotation.y += rotationSpeed * deltaSec;
                 // Keep the tilt constant during rotation
                 brainModel.rotation.x = currentTilt * (Math.PI / 180);
             }
