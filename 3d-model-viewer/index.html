@@ -461,7 +461,7 @@
         // Three.js setup
         let scene, camera, renderer, brainModel;
         // Thin RTC demo (canvas stream -> RTC viewer via BroadcastChannel)
-        const streamChannelName = 'portfolio-rtc-demo';
+        const streamChannelName = 'portfolio-rtc-demo-v2';
         const streamChannel = ('BroadcastChannel' in window) ? new BroadcastChannel(streamChannelName) : null;
         let streamPc = null;
         let streamLocalStream = null;
@@ -1947,6 +1947,27 @@ window.applyTextureBinding = applyTextureBinding;
             if (statusEl) statusEl.textContent = message;
         }
 
+        function sendStreamMessage(payload) {
+            if (!streamChannel) return;
+            try {
+                streamChannel.postMessage(JSON.stringify(payload));
+            } catch (error) {
+                console.warn('Stream channel send failed', error);
+            }
+        }
+
+        function readStreamMessage(event) {
+            const data = event.data;
+            if (typeof data === 'string') {
+                try {
+                    return JSON.parse(data);
+                } catch (error) {
+                    return null;
+                }
+            }
+            return data;
+        }
+
         function setStreamButtons(isStreaming) {
             const startBtn = document.getElementById('startStreamBtn');
             const stopBtn = document.getElementById('stopStreamBtn');
@@ -1956,7 +1977,7 @@ window.applyTextureBinding = applyTextureBinding;
 
         function sendStreamOffer() {
             if (!streamChannel || !streamOfferSdp || !streamSessionId) return;
-            streamChannel.postMessage({
+            sendStreamMessage({
                 type: 'offer',
                 role: 'viewer',
                 sessionId: streamSessionId,
@@ -2002,7 +2023,7 @@ window.applyTextureBinding = applyTextureBinding;
                         sdpMLineIndex: event.candidate.sdpMLineIndex,
                         usernameFragment: event.candidate.usernameFragment
                     };
-                    streamChannel.postMessage({
+                    sendStreamMessage({
                         type: 'ice',
                         role: 'viewer',
                         sessionId: streamSessionId,
@@ -2058,7 +2079,7 @@ window.applyTextureBinding = applyTextureBinding;
             streamOfferAttempts = 0;
 
             if (streamChannel && streamSessionId) {
-                streamChannel.postMessage({
+                sendStreamMessage({
                     type: 'stop',
                     role: 'viewer',
                     sessionId: streamSessionId
@@ -2085,7 +2106,7 @@ window.applyTextureBinding = applyTextureBinding;
 
         if (streamChannel) {
             streamChannel.onmessage = async (event) => {
-                const msg = event.data || {};
+                const msg = readStreamMessage(event) || {};
                 if (msg.role === 'viewer') return;
 
                 if (msg.type === 'request-offer') {

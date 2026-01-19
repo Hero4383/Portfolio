@@ -240,7 +240,7 @@
     </div>
 
     <script>
-        const channelName = 'portfolio-rtc-demo';
+        const channelName = 'portfolio-rtc-demo-v2';
         const channel = ('BroadcastChannel' in window) ? new BroadcastChannel(channelName) : null;
 
         const statusEl = document.getElementById('status');
@@ -261,6 +261,27 @@
             statusEl.textContent = `Status: ${message}`;
         }
 
+        function sendChannelMessage(payload) {
+            if (!channel) return;
+            try {
+                channel.postMessage(JSON.stringify(payload));
+            } catch (error) {
+                console.warn('RTC channel send failed', error);
+            }
+        }
+
+        function readChannelMessage(event) {
+            const data = event.data;
+            if (typeof data === 'string') {
+                try {
+                    return JSON.parse(data);
+                } catch (error) {
+                    return null;
+                }
+            }
+            return data;
+        }
+
         function setConnected(connected) {
             disconnectBtn.disabled = !connected;
         }
@@ -271,7 +292,7 @@
 
         function closePeer(reason) {
             if (channel && currentSessionId) {
-                channel.postMessage({ type: 'stop', role: 'rtc', sessionId: currentSessionId });
+                sendChannelMessage({ type: 'stop', role: 'rtc', sessionId: currentSessionId });
             }
             if (pc) {
                 pc.ontrack = null;
@@ -312,7 +333,7 @@
                         sdpMLineIndex: event.candidate.sdpMLineIndex,
                         usernameFragment: event.candidate.usernameFragment
                     };
-                    channel.postMessage({
+                    sendChannelMessage({
                         type: 'ice',
                         role: 'rtc',
                         sessionId: currentSessionId,
@@ -347,7 +368,7 @@
                 await pc.setRemoteDescription({ type: 'offer', sdp: msg.sdp });
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
-                channel.postMessage({
+                sendChannelMessage({
                     type: 'answer',
                     role: 'rtc',
                     sessionId: currentSessionId,
@@ -361,7 +382,7 @@
 
         if (channel) {
             channel.onmessage = (event) => {
-                const msg = event.data || {};
+                const msg = readChannelMessage(event) || {};
                 if (msg.role === 'rtc') return;
                 if (msg.type === 'offer') {
                     handleOffer(msg);
@@ -381,7 +402,7 @@
         requestBtn.addEventListener('click', () => {
             if (!channel) return;
             setStatus('requesting stream');
-            channel.postMessage({ type: 'request-offer', role: 'rtc' });
+            sendChannelMessage({ type: 'request-offer', role: 'rtc' });
         });
 
         disconnectBtn.addEventListener('click', () => {
