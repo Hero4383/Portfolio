@@ -329,6 +329,7 @@
             <button id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
             <div id="streamStatus" class="control-note">Stream: idle</div>
             <div class="control-note">Make sure your model and textures are fully loaded before starting the stream.</div>
+            <div class="control-note">For smooth streaming, keep this tab visible (not in the background).</div>
         </div>
         
         <div id="attribution">
@@ -3964,6 +3965,13 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
             }
             
             renderer.render(scene, camera);
+
+            if (streamLocalStream) {
+                const track = streamLocalStream.getVideoTracks()[0];
+                if (track && typeof track.requestFrame === 'function') {
+                    track.requestFrame();
+                }
+            }
         }
         
         // Enhanced Controls

@@ -321,6 +321,7 @@
             pc.ontrack = (event) => {
                 if (event.streams && event.streams[0]) {
                     remoteVideo.srcObject = event.streams[0];
+                    remoteVideo.play().catch(() => {});
                     showStream(true);
                 }
             };
@@ -424,6 +425,10 @@
             backgroundVideo.src = url;
             backgroundVideo.play().catch(() => {});
             bgPlaceholder.style.display = 'none';
+        });
+
+        remoteVideo.addEventListener('loadedmetadata', () => {
+            remoteVideo.play().catch(() => {});
         });
 
         window.addEventListener('beforeunload', () => {
