@@ -1,0 +1,41 @@
+# Cube with UVs - sample OBJ+MTL
+mtllib cube.mtl
+o Cube
+usemtl CheckerMat
+
+v -0.5 -0.5  0.5
+v  0.5 -0.5  0.5
+v  0.5  0.5  0.5
+v -0.5  0.5  0.5
+v -0.5 -0.5 -0.5
+v  0.5 -0.5 -0.5
+v  0.5  0.5 -0.5
+v -0.5  0.5 -0.5
+
+# UVs (0..1)
+vt 0.0 0.0
+vt 1.0 0.0
+vt 1.0 1.0
+vt 0.0 1.0
+
+# Normals (one per axis)
+vn 0 0 1
+vn 0 0 -1
+vn 0 1 0
+vn 0 -1 0
+vn 1 0 0
+vn -1 0 0
+
+# Faces (quads) with vt/vn
+# Front (+Z)
+f 1/1/1 2/2/1 3/3/1 4/4/1
+# Back (-Z)
+f 5/1/2 8/4/2 7/3/2 6/2/2
+# Top (+Y)
+f 4/1/3 3/2/3 7/3/3 8/4/3
+# Bottom (-Y)
+f 1/1/4 5/4/4 6/3/4 2/2/4
+# Right (+X)
+f 2/1/5 6/2/5 7/3/5 3/4/5
+# Left (-X)
+f 5/1/6 1/2/6 4/3/6 8/4/6

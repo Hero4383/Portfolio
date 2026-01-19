@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed UV Mapped Brain Viewer</title>
+    <title>3D Model Viewer</title>
     <style>
         body {
             margin: 0;
@@ -185,6 +185,9 @@
             text-align: center;
             margin-top: 5px;
         }
+
+        #xrayCanvasToggle { accent-color: #00ff41; }
+
     </style>
 </head>
 <body>
@@ -193,30 +196,31 @@
         <div id="brain-container"></div>
         
         <div id="loading">
-            <h2>🧠 UV MAPPED BRAIN VIEWER</h2>
+            <h2>🧠 3D MODEL VIEWER</h2>
             <p>Advanced UV Mapping & PBR Textures</p>
             <p id="loadingProgress">Ready to load model and textures...</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
             <div class="file-input-section" onclick="document.getElementById('daeFile').click()">
-                📁 Load DAE Model<br>
-                <small>Select your brain model.dae file</small>
+                📁 Load Model<br>
+                <small>Select your desired model file(s)</small>
             </div>
-            <input type="file" id="daeFile" accept=".dae,.xml" onchange="handleDAESelect(event)">
+            <input type="file" id="daeFile" accept=".dae,.xml,.glb,.gltf,.obj,.stl,.ply" onchange="handleDAESelect(event)">
             
             <div class="file-input-section" onclick="document.getElementById('textureFiles').click()" style="margin-top: 10px;">
                 🎨 Load Textures<br>
                 <small>Select albedo, normal, roughness, AO textures</small>
             </div>
-            <input type="file" id="textureFiles" multiple accept=".jpg,.jpeg,.png,.tga,.bmp" onchange="handleTextureSelect(event)">
+            <input type="file" id="textureFiles" multiple accept=".jpg,.jpeg,.png,.tga,.bmp,.webp,.dds,.mtl" onchange="handleTextureSelect(event)">
+            <button id="continueFromLoadingBtn" style="margin-top:10px; width:100%; display:none;" onclick="continueFromLoading()">Continue without textures</button>
             
             <p id="loadingDetails">Proper UV mapping for realistic texture application</p>
             <div id="errorContainer"></div>
         </div>
         
         <div id="info" style="display: none;">
-            <h2>🧠 UV MAPPED BRAIN MODEL</h2>
+            <h2>🧠 3D MODEL VIEWER</h2>
             <p>PBR + Proper UV Mapping</p>
             <p id="status">Model with UV coordinates loaded!</p>
             <p id="modelStats">Analyzing geometry...</p>
@@ -225,6 +229,13 @@
         
         <div id="textureControls" style="display: none;">
             <h3>🎨 TEXTURE CONTROLS</h3>
+            <div style="margin: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <div class="texture-info" style="margin:0;">X-Ray Canvas</div>
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+                    <input type="checkbox" id="xrayCanvasToggle" checked>
+                    <span style="font-size: 12px; opacity: 0.9;" title="When enabled, texture alpha can reveal the canvas background through 3D objects.">X-Ray Canvas</span>
+                </label>
+            </div>
             <div id="texturePreview">
                 <div class="texture-info">Loaded Textures:</div>
                 <div id="texturePreviews"></div>
@@ -232,7 +243,62 @@
             <button onclick="togglePBR()" style="width: 100%; margin: 10px 0;">Toggle PBR Mode</button>
             <button onclick="cycleTextureSet()" style="width: 100%; margin: 5px 0;">Cycle Texture Set</button>
             <button onclick="adjustIntensity()" style="width: 100%; margin: 5px 0;">Adjust Intensity</button>
-        </div>
+
+<button onclick="verifyTextureStateUI()" style="width: 100%; margin: 5px 0;">Verify Texture State</button>
+<button onclick="dumpTextureStateUI()" style="width: 100%; margin: 5px 0;">Dump Texture State</button>
+        
+<hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
+<div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">🧩 Bindings Inspector (Phase E)</div>
+<div id="bindingStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Bindings: 0</div>
+<button onclick="verifyBindingsUI()" style="width: 100%; margin: 5px 0;">Verify Bindings</button>
+<button onclick="dumpBindingsUI()" style="width: 100%; margin: 5px 0;">Dump Bindings</button>
+<input id="bindingSearch" placeholder="Search bindings (path / slot / textureId)" style="width:100%; box-sizing:border-box; margin:6px 0; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:12px;">
+<div id="bindingTable" style="max-height: 220px; overflow:auto; border:1px solid rgba(0,255,65,0.18); border-radius:8px; padding:6px; background:rgba(0,0,0,0.35);">
+  <div style="font-size:12px; opacity:0.75;">No bindings yet.</div>
+</div>
+
+<hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
+<div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">📡 WebRTC DataChannel (Phase F)</div>
+<div id="dcStatus" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">DataChannel: disconnected</div>
+<div style="display:flex; gap:6px;">
+  <button onclick="rtcCreateOfferUI()" style="flex:1; margin: 5px 0;">Create Offer</button>
+  <button onclick="rtcCreateAnswerUI()" style="flex:1; margin: 5px 0;">Create Answer</button>
+</div>
+<button onclick="rtcSetRemoteSDPUI()" style="width:100%; margin: 5px 0;">Set Remote SDP</button>
+<button onclick="rtcCloseUI()" style="width:100%; margin: 5px 0;">Close RTC</button>
+<div style="font-size:11px; opacity:0.8; margin-top:6px;">Local SDP (copy)</div>
+<textarea id="rtcLocalSDP" rows="5" style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:11px;"></textarea>
+<div style="font-size:11px; opacity:0.8; margin-top:6px;">Remote SDP (paste)</div>
+<textarea id="rtcRemoteSDP" rows="5" style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:11px;"></textarea>
+<button onclick="rtcSendTestDeltaUI()" style="width:100%; margin: 8px 0;">Send Test Delta (local apply + if connected send)</button>
+
+<hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
+<div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">🧑‍🏫 Teacher Mode (Phase G/H)</div>
+<div id="entityStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Entities: 0</div>
+<div style="display:flex; gap:6px; margin: 6px 0;">
+  <button onclick="registerCurrentModelAsEntityUI()" style="flex:1; margin: 5px 0;">Register Current Model</button>
+  <button onclick="duplicateEntityUI()" style="flex:1; margin: 5px 0;">Duplicate Entity</button>
+</div>
+<div style="display:flex; gap:6px; margin: 6px 0;">
+  <button onclick="dumpEntitiesUI()" style="flex:1; margin: 5px 0;">Dump Entities</button>
+  <button onclick="verifyEntitiesUI()" style="flex:1; margin: 5px 0;">Verify Entities</button>
+</div>
+
+<hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
+<div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">📸 Dataset Export (Phase H)</div>
+<div id="teacherCaptureStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Last capture: none</div>
+<button onclick="captureTeacherFrameUI()" style="width: 100%; margin: 5px 0;">Capture Frame (PNG + JSON)</button>
+<label style="display:flex; gap:6px; align-items:center; font-size:12px; opacity:0.9; margin-top:6px;">
+  <span style="flex:1;">Include 2D bboxes</span>
+  <input id="teacherIncludeBboxes" type="checkbox" checked />
+</label>
+<label style="display:flex; gap:6px; align-items:center; font-size:12px; opacity:0.9; margin-top:6px;">
+  <span style="flex:1;">Include bindings snapshot</span>
+  <input id="teacherIncludeBindings" type="checkbox" checked />
+</label>
+
+</div>
+</div>
         
         <div id="controls" style="display: none;">
             <button onclick="toggleRotation()">Toggle Rotation</button>
@@ -248,13 +314,18 @@
         </div>
         
         <div id="attribution">
-            UV Mapped Brain Viewer v4.0<br>
+            3D Model Viewer v4.0<br>
             Proper texture coordinate mapping<br>
             Advanced PBR material system
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         // Matrix background effect
@@ -371,18 +442,1436 @@
         
         // Three.js setup
         let scene, camera, renderer, brainModel;
+        // ===== Uploaded Texture Registry (global) =====
+        // Keyed by lowercase basename (e.g. "checker_albedo.png", "foo.dds")
+        const __uploadedTexFilesByBasename = new Map();     // basename -> File
+        const __uploadedTexBlobUrlByBasename = new Map();   // basename -> blob: URL (images)
+        const __uploadedTexThreeByBasename = new Map();     // basename -> THREE.Texture (DDS or already loaded)
+        const __pendingMtlTextureRefs = [];                 // { material, slot, basename }
+
+        function __basenameLower(p) {
+            try {
+                const s = String(p || '');
+                const parts = s.split(/[\\/]/);
+                return (parts[parts.length - 1] || '').toLowerCase();
+            } catch (e) { return ''; }
+        }
+
+        function __registerUploadedTextureFile(file) {
+            if (!file || !file.name) return;
+            const b = __basenameLower(file.name);
+            if (!b) return;
+            __uploadedTexFilesByBasename.set(b, file);
+
+            // Pre-create blob URLs for non-DDS images so MTL can load without file:// CORS.
+            const lower = b;
+            if (!lower.endsWith('.dds')) {
+                if (!__uploadedTexBlobUrlByBasename.has(b)) {
+                    const url = URL.createObjectURL(file);
+                    __uploadedTexBlobUrlByBasename.set(b, url);
+                }
+            }
+        }
+
+        async function __getOrCreateThreeTextureForBasename(basenameLower) {
+            const b = (basenameLower || '').toLowerCase();
+            if (!b) return null;
+
+            if (__uploadedTexThreeByBasename.has(b)) return __uploadedTexThreeByBasename.get(b);
+
+            const f = __uploadedTexFilesByBasename.get(b);
+            if (!f) return null;
+
+            // DDS decode path
+            if (b.endsWith('.dds')) {
+                const tex = await parseDDSFileToThreeTexture(f);
+                __uploadedTexThreeByBasename.set(b, tex);
+                return tex;
+            }
+
+            // Image path: load from blob URL
+            const blobUrl = __uploadedTexBlobUrlByBasename.get(b) || URL.createObjectURL(f);
+            __uploadedTexBlobUrlByBasename.set(b, blobUrl);
+
+            const tl = new THREE.TextureLoader();
+            const tex = await new Promise((resolve, reject) => {
+                tl.load(blobUrl, resolve, undefined, reject);
+            });
+
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.flipY = false;
+            tex.needsUpdate = true;
+
+            __uploadedTexThreeByBasename.set(b, tex);
+            return tex;
+        }
+
+        async function __tryResolvePendingMtlTextures() {
+            if (!__pendingMtlTextureRefs.length) return { resolved: 0, pending: 0 };
+            let resolved = 0;
+
+            for (let i = __pendingMtlTextureRefs.length - 1; i >= 0; i--) {
+                const ref = __pendingMtlTextureRefs[i];
+                const tex = await __getOrCreateThreeTextureForBasename(ref.basename);
+                if (tex && ref.material) {
+                    if (ref.slot === 'map') ref.material.map = tex;
+                    else if (ref.slot === 'normalMap') ref.material.normalMap = tex;
+                    else if (ref.slot === 'roughnessMap') ref.material.roughnessMap = tex;
+                    else if (ref.slot === 'metalnessMap') ref.material.metalnessMap = tex;
+                    else if (ref.slot === 'aoMap') ref.material.aoMap = tex;
+                    else if (ref.slot === 'emissiveMap') ref.material.emissiveMap = tex;
+
+                    ref.material.needsUpdate = true;
+                    __pendingMtlTextureRefs.splice(i, 1);
+                    resolved++;
+                }
+            }
+
+            if (resolved > 0 && typeof syncTexturesToSceneState === "function") {
+                syncTexturesToSceneState();
+            }
+
+            console.log("[MTL] pending resolve:", { resolved, pending: __pendingMtlTextureRefs.length });
+            return { resolved, pending: __pendingMtlTextureRefs.length };
+        }
+
         let rotating = true;
         let wireframeMode = false;
         let pbrMode = true;
         let colorIndex = 0;
         let currentFileName = '';
         let loadedTextures = {};
+
+        // ===== CAPS / DDS =====
+        window.__viewerCaps = window.__viewerCaps || {};
+        window.__viewerCaps.hasDDS = false;
+
+
+        // -----------------------------
+        // Canonical Scene State (v0) + Delta API (v0)
+        // -----------------------------
+        // Single source of truth for objects/geometry/material/texture metadata
+        window.sceneState = {
+            version: '0.1.0',
+            rootId: '__root',
+            objects: new Map(),      // id -> ObjectNode
+            geometries: new Map(),   // id -> Geometry
+            materials: new Map(),    // id -> Material
+            textures: new Map(),     // id -> Texture
+            activeCamera: {
+                position: [0, 0, 5],
+                target: [0, 0, 0],
+                fov: 75,
+                near: 0.1,
+                far: 1000
+            }
+        };
+
+        const dirtyFlags = {
+            transforms: new Set(),
+            materials: new Set(),
+            textures: new Set(),
+            geometry: new Set()
+        };
+
+        // id -> THREE.Object3D for fast delta application
+        const deltaObjectTable = new Map();
+
+        // Object3D -> stable ID mapping (for canonical state + delta API)
+        const objectIdMap = new WeakMap();
+
+        function _normalizeName(raw) {
+            // Turn prior auto-generated names like "node_damagedHelmet_-6514" into "damagedHelmet"
+            const s = (raw || '').toString().trim();
+            if (!s) return '';
+            // common fallback patterns
+            let m = s.match(/^node_(.+?)(?:_[\-]?[0-9]+)?$/i);
+            if (m && m[1]) return m[1];
+            m = s.match(/^mesh_(.+?)(?:_[\-]?[0-9]+)?$/i);
+            if (m && m[1]) return m[1];
+            return s;
+        }
+
+        function _sanitizeIdPart(s) {
+            const norm = _normalizeName(s);
+            return (norm || '')
+                .toString()
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-zA-Z0-9_\-\.]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_+|_+$/g, '');
+        }
+
+        function _shortHash(str) {
+            // small deterministic suffix for collisions
+            let h = 2166136261;
+            for (let i = 0; i < str.length; i++) {
+                h ^= str.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+        }
+
+        function _computeStablePathId(node) {
+            // Build a stable, human-readable path-based ID from brainModel root to node.
+            // Root is always __root (brainModel itself maps to __root).
+            if (!node) return '__root';
+            if (node === brainModel) return '__root';
+
+            const parts = [];
+            let cur = node;
+            let guard = 0;
+            while (cur && cur !== brainModel && guard++ < 128) {
+                const name = _sanitizeIdPart(cur.name);
+                if (name) {
+                    parts.push(name);
+                } else {
+                    // fallback segment: type + local index among siblings (stable-ish)
+                    let sibIndex = 0;
+                    if (cur.parent && cur.parent.children) {
+                        sibIndex = cur.parent.children.indexOf(cur);
+                        if (sibIndex < 0) sibIndex = 0;
+                    }
+                    parts.push(`${cur.type || 'Node'}_${sibIndex}`);
+                }
+                cur = cur.parent;
+            }
+            parts.reverse();
+            let id = '__root/' + parts.join('/');
+
+            // Keep IDs short-ish for console usability
+            if (id.length > 160) {
+                id = id.slice(0, 140) + '…' + _shortHash(id);
+            }
+            return id;
+        }
+
+
+
+        function _safeArray3(v, fallback=[0,0,0]) {
+            if (!v) return fallback.slice();
+            if (Array.isArray(v)) return [v[0]||0, v[1]||0, v[2]||0];
+            return [v.x||0, v.y||0, v.z||0];
+        }
+        function _safeArray4(v, fallback=[0,0,0,1]) {
+            if (!v) return fallback.slice();
+            if (Array.isArray(v)) return [v[0]||0, v[1]||0, v[2]||0, (v[3]===undefined?1:v[3])];
+            return [v.x||0, v.y||0, v.z||0, (v.w===undefined?1:v.w)];
+        }
+
+        function buildDeltaRegistryFromBrainModel() {
+            deltaObjectTable.clear();
+            // Clear old WeakMap entries by recreating mapping for current traversal
+            if (!brainModel) return;
+
+            // Root mapping
+            deltaObjectTable.set('__root', brainModel);
+            objectIdMap.set(brainModel, '__root');
+
+            // Track used IDs to resolve collisions deterministically
+            const used = new Map(); // id -> count
+
+            // First pass: assign path IDs
+            brainModel.traverse((n) => {
+                if (!n || !n.isObject3D) return;
+                if (n === brainModel) return;
+
+                let id = _computeStablePathId(n);
+                // Collision resolution: append deterministic hash of full computed path + occurrence
+                if (deltaObjectTable.has(id)) {
+                    const base = id;
+                    const count = (used.get(base) || 1) + 1;
+                    used.set(base, count);
+                    id = `${base}#${_shortHash(base + '|' + count)}`;
+                } else {
+                    used.set(id, 1);
+                }
+
+                deltaObjectTable.set(id, n);
+                objectIdMap.set(n, id);
+            });
+        }
+
+        function _hashString(str) {
+            // lightweight stable digest for debug/sync
+            let h = 2166136261;
+            for (let i = 0; i < str.length; i++) {
+                h ^= str.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+        }
+
+        function buildCanonicalSceneStateFromThree() {
+            // Rebuild canonical state from current brainModel (DAE + GLB/GLTF paths)
+            window.sceneState.objects.clear();
+            window.sceneState.geometries.clear();
+            window.sceneState.materials.clear();
+            // textures are kept; synced separately
+
+            if (!brainModel) return;
+
+            // Ensure delta registry exists so objectIdMap is populated
+            try { buildDeltaRegistryFromBrainModel(); } catch(e) {}
+
+            // Root node
+            window.sceneState.objects.set('__root', {
+                id: '__root',
+                name: 'root',
+                parentId: null,
+                children: [],
+                transform: {
+                    position: _safeArray3(brainModel.position),
+                    quaternion: _safeArray4(brainModel.quaternion),
+                    scale: _safeArray3(brainModel.scale, [1,1,1])
+                },
+                meshRef: null,
+                materialRef: null,
+                bounds: null,
+                tags: ['root']
+            });
+
+            // Helper to ensure node exists
+            function _ensureNode(id, partial) {
+                if (!window.sceneState.objects.has(id)) {
+                    window.sceneState.objects.set(id, Object.assign({
+                        id,
+                        name: id,
+                        parentId: '__root',
+                        children: [],
+                        transform: { position:[0,0,0], quaternion:[0,0,0,1], scale:[1,1,1] },
+                        meshRef: null,
+                        materialRef: null,
+                        bounds: null,
+                        tags: []
+                    }, partial||{}));
+                }
+                return window.sceneState.objects.get(id);
+            }
+
+            let geomCounter = 0;
+            let matCounter = 0;
+
+            // Capture root mesh if brainModel itself is a Mesh
+            try {
+                if (brainModel.isMesh && brainModel.geometry) {
+                    const g = brainModel.geometry;
+                    const posAttr = g.attributes && g.attributes.position;
+                    const norAttr = g.attributes && g.attributes.normal;
+                    const uvAttr  = g.attributes && g.attributes.uv;
+                    const idxAttr = g.index;
+
+                    const vCount = posAttr ? posAttr.count : 0;
+                    const iCount = idxAttr ? idxAttr.count : 0;
+                    const sig = JSON.stringify([vCount, iCount, uvAttr?1:0, norAttr?1:0]);
+                    const geomId = `geom_root_${geomCounter++}_${_hashString(sig)}`;
+
+                    window.sceneState.geometries.set(geomId, {
+                        id: geomId,
+                        positions: posAttr ? new Float32Array(posAttr.array) : new Float32Array(),
+                        normals: norAttr ? new Float32Array(norAttr.array) : undefined,
+                        uv0: uvAttr ? new Float32Array(uvAttr.array) : undefined,
+                        indices: idxAttr ? new Uint32Array(idxAttr.array) : undefined,
+                        topology: 'triangles',
+                        lods: undefined
+                    });
+
+                    const mat = Array.isArray(brainModel.material) ? brainModel.material[0] : brainModel.material;
+                    const matSig = JSON.stringify([mat && mat.type, mat && mat.color ? mat.color.getHexString() : null, mat && mat.roughness, mat && mat.metalness]);
+                    const materialId = `mat_root_${matCounter++}_${_hashString(matSig)}`;
+
+                    window.sceneState.materials.set(materialId, {
+                        id: materialId,
+                        model: 'PBR_MIN',
+                        params: {
+                            baseColor: mat && mat.color ? [mat.color.r, mat.color.g, mat.color.b] : [0.6,0.6,0.6],
+                            roughness: (mat && typeof mat.roughness === 'number') ? mat.roughness : 0.8,
+                            metallic:  (mat && typeof mat.metalness === 'number') ? mat.metalness : 0.1,
+                            aoIntensity: intensityLevel || 1.0,
+                            opacity: (mat && typeof mat.opacity === 'number') ? mat.opacity : 1.0
+                        },
+                        textures: {
+                            albedo: loadedTextures.albedo ? 'albedo' : undefined,
+                            normal: loadedTextures.normal ? 'normal' : undefined,
+                            roughness: loadedTextures.roughness ? 'roughness' : undefined,
+                            ao: loadedTextures.ao ? 'ao' : undefined,
+                            metallic: loadedTextures.metallic ? 'metallic' : undefined,
+                            scatter: loadedTextures.scatter ? 'scatter' : undefined
+                        }
+                    });
+
+                    const rootNode = window.sceneState.objects.get('__root');
+                    rootNode.meshRef = geomId;
+                    rootNode.materialRef = materialId;
+                }
+            } catch(e) {
+                console.warn('Root mesh canonical capture failed', e);
+            }
+
+            // Traverse and capture children nodes + meshes
+            brainModel.traverse((n) => {
+                if (!n || !n.isObject3D || n === brainModel) return;
+
+                const id = objectIdMap.get(n) || _computeStablePathId(n);
+                const parentId = (n.parent === brainModel) ? '__root' : (objectIdMap.get(n.parent) || '__root');
+
+                const node = _ensureNode(id, {
+                    id,
+                    name: (n.name && n.name.trim()) ? n.name.trim() : id,
+                    parentId,
+                    transform: {
+                        position: _safeArray3(n.position),
+                        quaternion: _safeArray4(n.quaternion),
+                        scale: _safeArray3(n.scale, [1,1,1])
+                    }
+                });
+
+                const p = _ensureNode(parentId, {});
+                if (!p.children.includes(id)) p.children.push(id);
+
+                if (n.isMesh && n.geometry) {
+                    const g = n.geometry;
+                    const posAttr = g.attributes && g.attributes.position;
+                    const norAttr = g.attributes && g.attributes.normal;
+                    const uvAttr  = g.attributes && g.attributes.uv;
+                    const idxAttr = g.index;
+
+                    const vCount = posAttr ? posAttr.count : 0;
+                    const iCount = idxAttr ? idxAttr.count : 0;
+                    const sig = JSON.stringify([vCount, iCount, uvAttr?1:0, norAttr?1:0]);
+                    const geomId = `geom_${geomCounter++}_${_hashString(sig)}`;
+
+                    window.sceneState.geometries.set(geomId, {
+                        id: geomId,
+                        positions: posAttr ? new Float32Array(posAttr.array) : new Float32Array(),
+                        normals: norAttr ? new Float32Array(norAttr.array) : undefined,
+                        uv0: uvAttr ? new Float32Array(uvAttr.array) : undefined,
+                        indices: idxAttr ? new Uint32Array(idxAttr.array) : undefined,
+                        topology: 'triangles',
+                        lods: undefined
+                    });
+
+                    node.meshRef = geomId;
+
+                    const mat = Array.isArray(n.material) ? n.material[0] : n.material;
+                    const matSig = JSON.stringify([mat && mat.type, mat && mat.color ? mat.color.getHexString() : null, mat && mat.roughness, mat && mat.metalness]);
+                    const materialId = `mat_${matCounter++}_${_hashString(matSig)}`;
+
+                    window.sceneState.materials.set(materialId, {
+                        id: materialId,
+                        model: 'PBR_MIN',
+                        params: {
+                            baseColor: mat && mat.color ? [mat.color.r, mat.color.g, mat.color.b] : [0.6,0.6,0.6],
+                            roughness: (mat && typeof mat.roughness === 'number') ? mat.roughness : 0.8,
+                            metallic:  (mat && typeof mat.metalness === 'number') ? mat.metalness : 0.1,
+                            aoIntensity: intensityLevel || 1.0,
+                            opacity: (mat && typeof mat.opacity === 'number') ? mat.opacity : 1.0
+                        },
+                        textures: {
+                            albedo: loadedTextures.albedo ? 'albedo' : undefined,
+                            normal: loadedTextures.normal ? 'normal' : undefined,
+                            roughness: loadedTextures.roughness ? 'roughness' : undefined,
+                            ao: loadedTextures.ao ? 'ao' : undefined,
+                            metallic: loadedTextures.metallic ? 'metallic' : undefined,
+                            scatter: loadedTextures.scatter ? 'scatter' : undefined
+                        }
+                    });
+
+                    node.materialRef = materialId;
+                }
+            });
+
+            // Sync camera (best effort)
+            try {
+                window.sceneState.activeCamera.position = _safeArray3(camera.position);
+                if (controls && controls.target) window.sceneState.activeCamera.target = _safeArray3(controls.target);
+                window.sceneState.activeCamera.fov = camera.fov;
+                window.sceneState.activeCamera.near = camera.near;
+                window.sceneState.activeCamera.far = camera.far;
+            } catch(e) {}
+        }
+
+        
+function _getTextureSourceName(tex) {
+    try {
+        if (!tex) return 'unknown';
+        if (tex.userData && tex.userData.__dds && tex.userData.__dds.name) return tex.userData.__dds.name;
+        if (typeof tex.name === 'string' && tex.name.trim()) return tex.name.trim();
+        const img = tex.image;
+        if (img && typeof img.src === 'string' && img.src) return basename(img.src);
+    } catch(e) {}
+    return 'unknown';
+}
+
+function _getTextureEncoding(tex) {
+    try {
+        if (!tex) return 'unknown';
+        if (tex.userData && tex.userData.__dds && tex.userData.__dds.format) return 'DDS:' + tex.userData.__dds.format;
+    } catch(e) {}
+    return 'image';
+}
+
+function _getTextureDims(tex) {
+    let w = 0, h = 0;
+    try {
+        const img = tex && tex.image;
+        if (img) {
+            w = img.width || img.videoWidth || 0;
+            h = img.height || img.videoHeight || 0;
+        }
+    } catch(e) {}
+    return { w, h };
+}
+
+function _makeTextureFingerprint(slot, tex) {
+    const name = _getTextureSourceName(tex);
+    const enc = _getTextureEncoding(tex);
+    const d = _getTextureDims(tex);
+    const sig = JSON.stringify([slot || 'unknown', name, enc, d.w, d.h, !!(tex && tex.flipY)]);
+    return _hashString(sig);
+}
+
+// Canonical payload hash: exclude slot + key naming so the same texture discovered via different paths merges.
+function _makeTexturePayloadHash(tex) {
+    const name = _getTextureSourceName(tex);
+    const enc = _getTextureEncoding(tex);
+    const d = _getTextureDims(tex);
+    const sig = JSON.stringify([name, enc, d.w, d.h, !!(tex && tex.flipY)]);
+    return _hashString(sig);
+}
+
+function _canonicalTextureKey(slot, tex) {
+    const d = _getTextureDims(tex);
+    const payloadHash = _makeTexturePayloadHash(tex);
+    return `${slot || 'unknown'}:${payloadHash}:${d.w}x${d.h}`;
+}
+
+function _registerTextureCanonical(slot, tex, aliasKey, ref) {
+    if (!window.sceneState || !window.sceneState.textures || !tex) return { canonicalKey: null, merged: false, added: false };
+
+    // Ensure alias index exists
+    if (!window.sceneState.textureAliases) window.sceneState.textureAliases = new Map();
+
+    const name = _getTextureSourceName(tex);
+    const enc = _getTextureEncoding(tex);
+    const d = _getTextureDims(tex);
+    const payloadHash = _makeTexturePayloadHash(tex);
+    const canonicalKey = _canonicalTextureKey(slot, tex);
+
+    const existing = window.sceneState.textures.get(canonicalKey);
+    if (existing) {
+        let didMerge = false;
+
+        // Merge provenance (dedupe)
+        existing.refs = existing.refs || [];
+        if (ref) {
+            const rk = `${ref.kind || 'ref'}:${ref.key || ''}`;
+            const hasRef = existing.refs.some(r => `${r.kind || 'ref'}:${r.key || ''}` === rk);
+            if (!hasRef) {
+                existing.refs.push(ref);
+                didMerge = true;
+            }
+        }
+
+        existing.aliases = existing.aliases || [];
+        if (aliasKey && !existing.aliases.includes(aliasKey)) {
+            existing.aliases.push(aliasKey);
+            didMerge = true;
+        }
+
+        // Keep most informative sourceName (prefer real name over unknown)
+        if ((existing.sourceName === 'unknown' || !existing.sourceName) && name && name !== 'unknown') {
+            existing.sourceName = name;
+            didMerge = true;
+        }
+
+        // Update last-seen meta (safe)
+        existing.meta = existing.meta || {};
+        existing.meta.width = d.w;
+        existing.meta.height = d.h;
+
+        if (aliasKey) window.sceneState.textureAliases.set(aliasKey, canonicalKey);
+        dirtyFlags.textures.add(canonicalKey);
+
+        return { canonicalKey, merged: didMerge, added: false };
+    }
+
+    const record = {
+        id: canonicalKey,
+        textureId: `tex:${payloadHash}`, // stable across alias/key renames
+        slot: slot || 'unknown',
+        sourceName: name,
+        encoding: enc,
+        width: d.w,
+        height: d.h,
+        aliases: aliasKey ? [aliasKey] : [],
+        refs: ref ? [ref] : [],
+        meta: {
+            channels: 4,
+            flipY: !!tex.flipY,
+            wrapS: tex.wrapS,
+            wrapT: tex.wrapT,
+            minFilter: tex.minFilter,
+            magFilter: tex.magFilter
+        }
+    };
+
+    window.sceneState.textures.set(canonicalKey, record);
+    if (aliasKey) window.sceneState.textureAliases.set(aliasKey, canonicalKey);
+
+    dirtyFlags.textures.add(canonicalKey);
+    return { canonicalKey, merged: false, added: true };
+}
+
+function syncTexturesToSceneState() {
+    // Phase C.1: Canonical texture registry with deduplication.
+    // Goal: sceneState.textures contains ONE entry per unique texture payload (per slot), regardless of discovery path.
+    // We keep provenance via `aliases` and `refs`.
+
+    if (!window.sceneState) return;
+    if (!window.sceneState.textures) window.sceneState.textures = new Map();
+    if (!window.sceneState.textureAliases) window.sceneState.textureAliases = new Map();
+
+    let added = 0;
+    let merged = 0;
+
+    // 1) Register slot-based textures (loadedTextures) with aliasKey = slot.
+    const slots = ['albedo','normal','roughness','ao','metallic','scatter','mixedAO'];
+    for (const s of slots) {
+        const tex = loadedTextures[s];
+        if (!tex) continue;
+        const res = _registerTextureCanonical(s, tex, s, { kind: 'slot', key: s });
+        if (res.added) added++;
+        if (res.merged) merged++;
+    }
+
+    // 2) Scan live model materials (covers MTL-applied textures + any per-mesh assignments).
+    if (typeof brainModel !== 'undefined' && brainModel) {
+        const props = [
+            ['map','albedo'],
+            ['normalMap','normal'],
+            ['roughnessMap','roughness'],
+            ['metalnessMap','metallic'],
+            ['aoMap','ao'],
+            ['alphaMap','alpha'],
+            ['emissiveMap','emissive']
+        ];
+
+        brainModel.traverse((node) => {
+            if (!node || !node.isMesh) return;
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            for (const mat of mats) {
+                if (!mat) continue;
+                for (const [prop, slot] of props) {
+                    const tex = mat[prop];
+                    if (!tex) continue;
+
+                    const name = _getTextureSourceName(tex);
+                    const base = (name && name !== 'unknown') ? _sanitizeIdPart(name) : '';
+                    const payloadHash = _makeTexturePayloadHash(tex);
+                    const alias = base ? `tex_${slot}_${base}` : `tex_${slot}_${payloadHash}`;
+
+                    const res = _registerTextureCanonical(slot, tex, alias, { kind: 'material', key: alias, prop, mesh: node.name || node.uuid });
+                    if (res.added) added++;
+                    if (res.merged) merged++;
+                }
+            }
+        });
+    }
+
+    // 3) Store stats for UI + debugging
+    window.sceneState._lastTextureSyncStats = {
+        size: window.sceneState.textures.size,
+        aliases: window.sceneState.textureAliases.size,
+        added,
+        merged
+    };
+
+    // 4) Debug/verification log (non-fatal)
+    try {
+        const st = window.sceneState._lastTextureSyncStats;
+        console.log("[STATE] sceneState.textures.size =", st.size, "| aliases =", st.aliases, "| added =", st.added, "| merged =", st.merged);
+    } catch(e) {}
+}
+
+// Verification helpers (Phase C)
+window.__verifyTextureState = function() {
+    try {
+        const out = [];
+        if (!window.sceneState || !window.sceneState.textures) return { size: 0, textures: out };
+
+        for (const [k,v] of window.sceneState.textures.entries()) {
+            out.push({
+                key: k,
+                slot: v.slot,
+                sourceName: v.sourceName,
+                encoding: v.encoding,
+                width: v.meta?.width || 0,
+                height: v.meta?.height || 0,
+                textureId: v.textureId,
+                aliasesCount: (v.aliases || []).length,
+                refsCount: (v.refs || []).length,
+                aliases: v.aliases || []
+            });
+        }
+
+        const stats = window.sceneState._lastTextureSyncStats || {};
+        return {
+            size: window.sceneState.textures.size,
+            aliases: window.sceneState.textureAliases ? window.sceneState.textureAliases.size : 0,
+            added: stats.added || 0,
+            merged: stats.merged || 0,
+            textures: out
+        };
+    } catch (e) {
+        console.error("__verifyTextureState error", e);
+        return { size: -1, error: String(e) };
+    }
+};
+
+// Public Delta API
+
+        window.applyDelta = function(delta) {
+            try {
+                if (!delta) return false;
+                const id = delta.id || '__root';
+                const obj3 = deltaObjectTable.get(id);
+                const node = window.sceneState.objects.get(id);
+                if (!obj3 || !node) return false;
+
+                if (delta.position) {
+                    const p = _safeArray3(delta.position);
+                    obj3.position.set(p[0], p[1], p[2]);
+                    node.transform.position = p;
+                }
+                if (delta.quaternion) {
+                    const q = _safeArray4(delta.quaternion);
+                    obj3.quaternion.set(q[0], q[1], q[2], q[3]);
+                    node.transform.quaternion = q;
+                }
+                if (delta.scale) {
+                    const s = _safeArray3(delta.scale, [1,1,1]);
+                    obj3.scale.set(s[0], s[1], s[2]);
+                    node.transform.scale = s;
+                }
+
+                dirtyFlags.transforms.add(id);
+                return true;
+            } catch (e) {
+                console.error('applyDelta error', e);
+                return false;
+            }
+        };
+
+        window.applyDeltas = function(deltas) {
+            if (!Array.isArray(deltas)) return 0;
+            let ok = 0;
+            for (const d of deltas) if (window.applyDelta(d)) ok++;
+            return ok;
+        };
+
+        window.listDeltaIds = function() {
+            return Array.from(deltaObjectTable.keys());
+        };
+
+        window.getSceneDigest = function() {
+            // Stable-ish digest for debugging/sync (not cryptographic)
+            const objIds = Array.from(window.sceneState.objects.keys()).sort();
+            const geomIds = Array.from(window.sceneState.geometries.keys()).sort();
+            const matIds  = Array.from(window.sceneState.materials.keys()).sort();
+            const texIds  = Array.from(window.sceneState.textures.keys()).sort();
+            return _hashString(JSON.stringify({ objIds, geomIds, matIds, texIds }));
+        };
+
+
         let textureSetIndex = 0;
         let intensityLevel = 1.0;
         let currentTilt = 0; // Track current tilt angle in degrees
         let lightingLevel = 1; // Track lighting intensity level (1-4)
         let backgroundMode = 0; // Track background effect mode (0=matrix, 1=gradient, 2=stars, 3=medical, 4=solid)
+
+        // Viewer settings (keep UI names user-friendly; keep internal names explicit)
+        const viewerSettings = {
+            // UI label: "X-Ray Canvas"
+            // true  => allow texture alpha to affect canvas compositing (background can show through)
+            // false => force mesh fragments to output alpha=1.0 when a map is present (opaque objects)
+            xrayCanvas: true
+        };
+        window.__viewerSettings = viewerSettings;
+
         
+        function applyXRayCanvasToMaterial(material, xrayEnabled) {
+            if (!material || !material.isMaterial) return;
+            material.userData = material.userData || {};
+
+            // Preserve original hook once so we can restore it cleanly.
+            if (!('___origOnBeforeCompile' in material.userData)) {
+                material.userData.___origOnBeforeCompile = material.onBeforeCompile || null;
+            }
+            const base = material.userData.___origOnBeforeCompile;
+
+            // If the material is intentionally transparent (e.g. glass/scatter), never override it.
+            const intentionallyTransparent =
+                !!material.transparent ||
+                (typeof material.opacity === 'number' && material.opacity < 0.999);
+
+            // X-Ray ON: allow texture alpha to affect canvas compositing (restore original shader hook).
+            // X-Ray OFF: force fragment alpha to 1.0 for opaque materials (ignore texture alpha).
+            if (xrayEnabled || intentionallyTransparent) {
+                material.onBeforeCompile = (typeof base === 'function') ? base : null;
+            } else {
+                material.onBeforeCompile = function (shader) {
+                    if (typeof base === 'function') base(shader);
+                    // Force diffuse alpha to 1.0 even if map has alpha (prevents DOM/canvas compositing bleed-through)
+                    shader.fragmentShader = shader.fragmentShader.replace(
+                        '#include <map_fragment>',
+                        '#include <map_fragment>\n  diffuseColor.a = 1.0;'
+                    );
+                };
+            }
+
+            material.needsUpdate = true;
+        }
+
+        function applyXRayCanvas(enabled) {
+            if (typeof brainModel === "undefined" || !brainModel) return;
+
+            const seen = new Set();
+            brainModel.traverse((n) => {
+                if (!n || !n.isMesh) return;
+                const mats = Array.isArray(n.material) ? n.material : [n.material];
+                for (const m of mats) {
+                    if (m && !seen.has(m)) {
+                        seen.add(m);
+                        applyXRayCanvasToMaterial(m, enabled);
+                    }
+                }
+            });
+
+            // Ensure immediate effect (forces program recompile)
+            if (renderer && scene && camera && typeof renderer.compile === 'function') {
+                try { renderer.compile(scene, camera); } catch (_) {}
+            }
+        }
+
+        function setXRayCanvas(enabled) {
+            viewerSettings.xrayCanvas = !!enabled;
+            applyXRayCanvas(viewerSettings.xrayCanvas);
+        }
+
+
+        
+function verifyTextureStateUI() {
+    try {
+        syncTexturesToSceneState();
+        const r = window.__verifyTextureState ? window.__verifyTextureState() : { size: (window.sceneState?.textures?.size || 0) };
+        console.log("[VERIFY] Texture State", r);
+
+        const textureStatsEl = document.getElementById('textureStats');
+        if (textureStatsEl) {
+            const loadedSlots = Object.keys(loadedTextures || {}).length;
+            const aliases = (typeof r.aliases === 'number') ? r.aliases : (window.sceneState?.textureAliases?.size || 0);
+            const merged = (typeof r.merged === 'number') ? r.merged : 0;
+            const added = (typeof r.added === 'number') ? r.added : 0;
+            textureStatsEl.textContent = `Textures (state): ${r.size} | Aliases: ${aliases} | Added: ${added} | Merged: ${merged} | Loaded slots: ${loadedSlots}`;
+        }
+        return r;
+    } catch (e) {
+        console.error("verifyTextureStateUI error", e);
+        return null;
+    }
+}
+
+function dumpTextureStateUI() {
+    const r = verifyTextureStateUI();
+    if (r && r.textures) {
+        console.table(r.textures);
+    }
+    return r;
+}
+
+
+// ===== Phase E: Stable texture bindings (delta-ready) =====
+if (!window.sceneState) window.sceneState = {};
+if (!sceneState.textures) sceneState.textures = new Map();
+if (!sceneState.textureAliases) sceneState.textureAliases = new Map(); // alias -> canonicalKey
+sceneState.textureBindings = sceneState.textureBindings || new Map();   // bindingId -> bindingRecord
+sceneState._bindingIndex = sceneState._bindingIndex || { nodeByPath: new Map() };
+sceneState._textureObjects = sceneState._textureObjects || new Map();  // textureId -> THREE.Texture (live object)
+
+// Slot -> material property mapping
+const __bindingSlotProps = [
+  ['albedo', 'map'],
+  ['normal', 'normalMap'],
+  ['roughness', 'roughnessMap'],
+  ['metallic', 'metalnessMap'],
+  ['ao', 'aoMap'],
+  ['emissive', 'emissiveMap'],
+  ['alpha', 'alphaMap'],
+  ['scatter', 'userData.__scatterMap'] // optional custom
+];
+
+function _getTextureIdFromTexture(tex) {
+  const payloadHash = _makeTexturePayloadHash(tex);
+  return 'tex:' + payloadHash;
+}
+
+function _ensureTextureObjectCache(slot, tex) {
+  try {
+    const textureId = _getTextureIdFromTexture(tex);
+    sceneState._textureObjects.set(textureId, tex);
+
+    // If this texture isn't registered yet, register minimally (won't duplicate due to canonical key logic)
+    const canonicalKey = _canonicalTextureKey(slot, tex);
+    if (!sceneState.textures.has(canonicalKey)) {
+      const d = _getTextureDims(tex);
+      const rec = {
+        key: canonicalKey,
+        slot,
+        sourceName: _getTextureSourceName(tex),
+        encoding: _getTextureEncoding(tex),
+        width: d.w,
+        height: d.h,
+        textureId,
+        aliasesCount: 0,
+        refsCount: 0,
+        aliases: [],
+        refs: []
+      };
+      sceneState.textures.set(canonicalKey, rec);
+    }
+    return { textureId, canonicalKey };
+  } catch (e) {
+    return { textureId: null, canonicalKey: null };
+  }
+}
+
+function _computeObjectPath(node) {
+  // Prefer the existing stable scene id builder; it anchors at brainModel (__root).
+  try { return _computeStablePathId(node); } catch(e) {}
+  // Fallback
+  try { return (node && node.uuid) ? ('uuid:' + node.uuid) : '__root'; } catch(e) {}
+  return '__root';
+}
+
+function _buildBindingId(objectPath, materialIndex, slot) {
+  return `bind:${objectPath}:${materialIndex}:${slot}`;
+}
+
+function syncBindingsToSceneState() {
+  if (!brainModel) return { count: 0, added: 0, updated: 0 };
+
+  const bindings = new Map();
+  const nodeByPath = new Map();
+  let added = 0, updated = 0;
+
+  brainModel.traverse((node) => {
+    if (!node || !node.isMesh) return;
+
+    const objectPath = _computeObjectPath(node);
+    nodeByPath.set(objectPath, node);
+
+    const mats = Array.isArray(node.material) ? node.material : [node.material];
+    mats.forEach((mat, matIndex) => {
+      if (!mat) return;
+
+      for (const [slot, prop] of __bindingSlotProps) {
+        let tex = null;
+
+        if (prop.startsWith('userData.')) {
+          // optional custom map in userData
+          const key = prop.split('.').slice(1).join('.');
+          tex = mat.userData ? mat.userData[key] : null;
+        } else {
+          tex = mat[prop];
+        }
+
+        if (!tex || !tex.isTexture) continue;
+
+        const { textureId, canonicalKey } = _ensureTextureObjectCache(slot, tex);
+        const bindingId = _buildBindingId(objectPath, matIndex, slot);
+
+        const rec = {
+          bindingId,
+          objectPath,
+          materialIndex: matIndex,
+          slot,
+          prop,
+          textureId,
+          textureKey: canonicalKey,
+          sourceName: _getTextureSourceName(tex),
+          encoding: _getTextureEncoding(tex),
+          width: _getTextureDims(tex).w,
+          height: _getTextureDims(tex).h
+        };
+
+        const prev = sceneState.textureBindings.get(bindingId);
+        if (!prev) added++;
+        else {
+          // count as updated only if something actually changed
+          const changed = (prev.textureId !== rec.textureId) || (prev.textureKey !== rec.textureKey);
+          if (changed) updated++;
+        }
+        bindings.set(bindingId, rec);
+      }
+    });
+  });
+
+  sceneState.textureBindings = bindings;
+  sceneState._bindingIndex.nodeByPath = nodeByPath;
+
+  const stats = { count: bindings.size, added, updated };
+  sceneState._lastBindingSyncStats = stats;
+  const el = document.getElementById('bindingStats');
+  if (el) el.textContent = `Bindings: ${stats.count} | added: ${stats.added} | updated: ${stats.updated}`;
+
+  // Render table
+  _renderBindingsTable();
+
+  return stats;
+}
+
+function __verifyBindings() {
+  const stats = syncBindingsToSceneState();
+  const list = Array.from(sceneState.textureBindings.values());
+  console.log('[VERIFY] Bindings', { ...stats, bindings: list });
+  return { ...stats, bindings: list };
+}
+window.__verifyBindings = __verifyBindings;
+
+// ===== Phase F: WebRTC DataChannel Transport (manual SDP signaling) =====
+let __rtcPC = null;
+let __rtcDC = null;
+let __rtcRole = null; // 'offerer' or 'answerer'
+
+function __setDCStatus(msg) {
+  const el = document.getElementById('dcStatus');
+  if (el) el.textContent = `DataChannel: ${msg}`;
+}
+
+function __ensureSceneStateChannels() {
+  if (!window.sceneState) return;
+  sceneState.transport = sceneState.transport || {};
+  sceneState.transport.webrtc = sceneState.transport.webrtc || { connected:false, lastMessageAt:null, lastTick:null, rxCount:0, txCount:0 };
+}
+
+function __createPeerConnection() {
+  __ensureSceneStateChannels();
+  if (__rtcPC) try { __rtcPC.close(); } catch(_) {}
+
+  // Public STUN only; you can swap to your TURN later
+  __rtcPC = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  __rtcPC.oniceconnectionstatechange = () => {
+    __setDCStatus(`ice=${__rtcPC.iceConnectionState}`);
+  };
+
+  __rtcPC.onconnectionstatechange = () => {
+    __setDCStatus(`conn=${__rtcPC.connectionState}`);
+  };
+
+  __rtcPC.onicegatheringstatechange = () => {
+    // When complete, update local SDP box
+    if (__rtcPC.iceGatheringState === 'complete') {
+      const sdp = __rtcPC.localDescription ? __rtcPC.localDescription.sdp : '';
+      const el = document.getElementById('rtcLocalSDP');
+      if (el) el.value = sdp || '';
+    }
+  };
+
+  __rtcPC.ondatachannel = (ev) => {
+    __rtcDC = ev.channel;
+    __wireDataChannel(__rtcDC);
+  };
+
+  return __rtcPC;
+}
+
+function __wireDataChannel(dc) {
+  __ensureSceneStateChannels();
+  __rtcDC = dc;
+
+  dc.onopen = () => {
+    sceneState.transport.webrtc.connected = true;
+    __setDCStatus(`open (${dc.label})`);
+    console.log('[RTC] DataChannel open', dc.label);
+  };
+  dc.onclose = () => {
+    sceneState.transport.webrtc.connected = false;
+    __setDCStatus('closed');
+    console.log('[RTC] DataChannel closed');
+  };
+  dc.onerror = (e) => {
+    __setDCStatus('error');
+    console.warn('[RTC] DataChannel error', e);
+  };
+  dc.onmessage = (ev) => {
+    sceneState.transport.webrtc.rxCount++;
+    sceneState.transport.webrtc.lastMessageAt = Date.now();
+    __handleIncomingDeltaMessage(ev.data);
+  };
+}
+
+async function __waitIceGatheringComplete(pc) {
+  if (pc.iceGatheringState === 'complete') return;
+  await new Promise((resolve) => {
+    const onState = () => {
+      if (pc.iceGatheringState === 'complete') {
+        pc.removeEventListener('icegatheringstatechange', onState);
+        resolve();
+      }
+    };
+    pc.addEventListener('icegatheringstatechange', onState);
+  });
+}
+
+async function rtcCreateOfferUI() {
+  try {
+    __rtcRole = 'offerer';
+    const pc = __createPeerConnection();
+
+    // Create datachannel as offerer
+    __rtcDC = pc.createDataChannel('deltas');
+    __wireDataChannel(__rtcDC);
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await __waitIceGatheringComplete(pc);
+
+    document.getElementById('rtcLocalSDP').value = pc.localDescription.sdp;
+    __setDCStatus('offer created (copy Local SDP)');
+    console.log('[RTC] Offer created');
+  } catch (e) {
+    console.error('[RTC] Create offer failed', e);
+    __setDCStatus('offer failed');
+  }
+}
+
+async function rtcCreateAnswerUI() {
+  try {
+    __rtcRole = 'answerer';
+    const pc = __createPeerConnection();
+
+    const remoteSdp = (document.getElementById('rtcRemoteSDP').value || '').trim();
+    if (!remoteSdp) {
+      alert('Paste Remote SDP offer first.');
+      return;
+    }
+
+    await pc.setRemoteDescription({ type: 'offer', sdp: remoteSdp });
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await __waitIceGatheringComplete(pc);
+
+    document.getElementById('rtcLocalSDP').value = pc.localDescription.sdp;
+    __setDCStatus('answer created (copy Local SDP)');
+    console.log('[RTC] Answer created');
+  } catch (e) {
+    console.error('[RTC] Create answer failed', e);
+    __setDCStatus('answer failed');
+  }
+}
+
+async function rtcSetRemoteSDPUI() {
+  try {
+    const pc = __rtcPC;
+    if (!pc) {
+      alert('Create offer or answer first.');
+      return;
+    }
+    const remoteSdp = (document.getElementById('rtcRemoteSDP').value || '').trim();
+    if (!remoteSdp) {
+      alert('Paste Remote SDP first.');
+      return;
+    }
+
+    // If we created an offer, remote must be answer
+    const type = (__rtcRole === 'offerer') ? 'answer' : 'offer';
+    await pc.setRemoteDescription({ type, sdp: remoteSdp });
+    __setDCStatus(`remote ${type} set`);
+    console.log('[RTC] Remote SDP set', type);
+  } catch (e) {
+    console.error('[RTC] Set remote SDP failed', e);
+    __setDCStatus('set remote failed');
+  }
+}
+
+function rtcCloseUI() {
+  try {
+    if (__rtcDC) { try { __rtcDC.close(); } catch(_) {} }
+    if (__rtcPC) { try { __rtcPC.close(); } catch(_) {} }
+  } finally {
+    __rtcDC = null;
+    __rtcPC = null;
+    __rtcRole = null;
+    __ensureSceneStateChannels();
+    if (window.sceneState) sceneState.transport.webrtc.connected = false;
+    __setDCStatus('disconnected');
+    console.log('[RTC] closed');
+  }
+}
+
+function __sendDataChannelJSON(obj) {
+  __ensureSceneStateChannels();
+  if (!__rtcDC || __rtcDC.readyState !== 'open') return false;
+  const s = JSON.stringify(obj);
+  __rtcDC.send(s);
+  sceneState.transport.webrtc.txCount++;
+  return true;
+}
+
+// ---- Delta ingest ----
+function __handleIncomingDeltaMessage(data) {
+  let msg = data;
+  try {
+    if (typeof data === 'string') msg = JSON.parse(data);
+  } catch (_) {
+    // treat as raw string command
+  }
+
+  try {
+    ingestDeltaPacket(msg);
+  } catch (e) {
+    console.error('[DELTA] ingest failed', e, msg);
+  }
+}
+
+// Minimal ingest for now: setTextureBinding, setTransform, setXRayCanvas
+function ingestDeltaPacket(packet) {
+  __ensureSceneStateChannels();
+  if (packet && typeof packet === 'object') {
+    const tick = packet.tick ?? packet.timestamp ?? null;
+    if (tick != null) sceneState.transport.webrtc.lastTick = tick;
+
+    // Allow either {ops:[...]} or {op:...}
+    const ops = Array.isArray(packet.ops) ? packet.ops : (packet.op ? [packet] : []);
+
+    for (const op of ops) {
+      if (!op) continue;
+      const t = op.type || op.op || op.kind;
+
+      if (t === 'setTextureBinding') {
+        if (op.bindingId && op.textureId) applyTextureBinding(op.bindingId, op.textureId);
+      } else if (t === 'clearTextureBinding') {
+        if (op.bindingId) applyTextureBinding(op.bindingId, null);
+      } else if (t === 'setTransform') {
+        // target by objectPath (preferred) or entityId (maps to main model root)
+        const targetPath = op.objectPath || null;
+        const obj = targetPath ? findObjectByPath(targetPath) : (window.brainModel || brainModel);
+        if (obj) {
+          if (op.position && Array.isArray(op.position) && op.position.length === 3) obj.position.set(op.position[0], op.position[1], op.position[2]);
+          if (op.rotation_quat && Array.isArray(op.rotation_quat) && op.rotation_quat.length === 4) obj.quaternion.set(op.rotation_quat[0], op.rotation_quat[1], op.rotation_quat[2], op.rotation_quat[3]);
+          if (op.scale && Array.isArray(op.scale) && op.scale.length === 3) obj.scale.set(op.scale[0], op.scale[1], op.scale[2]);
+        }
+      } else if (t === 'setXRayCanvas') {
+        const enabled = !!op.enabled;
+        const cb = document.getElementById('xrayCanvasToggle');
+        if (cb) cb.checked = enabled;
+        try { applyXRayCanvas(enabled); } catch(_) {}
+      }
+    }
+
+    // update state if needed
+    try { syncTexturesToSceneState(); } catch(_) {}
+    try { syncTextureBindingsToSceneState(); } catch(_) {}
+  }
+}
+
+window.ingestDeltaPacket = ingestDeltaPacket;
+
+// Find object by our stable path format used in bindings (best-effort)
+function findObjectByPath(path) {
+  if (!path) return null;
+  // Our paths start with __root; ignore it
+  const parts = String(path).split('/').filter(Boolean);
+  const clean = parts[0] === '__root' ? parts.slice(1) : parts;
+
+  let cur = null;
+  // Prefer brainModel root if present
+  cur = (typeof brainModel !== 'undefined' && brainModel) ? brainModel : (window.brainModel || null);
+  if (!cur) cur = scene;
+  if (!cur) return null;
+
+  for (const seg of clean) {
+    if (!cur || !cur.children) return null;
+    const next = cur.children.find(ch => (ch.name || '').replace(/\s+/g,'_') === seg) || cur.children.find(ch => (ch.name||'') === seg);
+    if (next) cur = next;
+    else return null;
+  }
+  return cur;
+}
+
+function rtcSendTestDeltaUI() {
+  // Local apply (always)
+  const binding = Array.from(sceneState.textureBindings.values())[0];
+  const tex = Array.from(sceneState.textures.values())[0];
+  const payload = {
+    tick: Date.now(),
+    ops: [
+      binding && tex ? { type:'setTextureBinding', bindingId: binding.bindingId, textureId: tex.textureId } : null,
+      { type:'setTransform', objectPath: (binding ? binding.objectPath : '__root'), rotation_quat: [0, Math.sin(0.15), 0, Math.cos(0.15)] }
+    ].filter(Boolean)
+  };
+
+  ingestDeltaPacket(payload);
+
+  // Send if connected
+  const ok = __sendDataChannelJSON(payload);
+  console.log('[RTC] Test delta', ok ? 'sent' : 'not sent (dc not open)', payload);
+}
+
+window.rtcCreateOfferUI = rtcCreateOfferUI;
+window.rtcCreateAnswerUI = rtcCreateAnswerUI;
+window.rtcSetRemoteSDPUI = rtcSetRemoteSDPUI;
+window.rtcCloseUI = rtcCloseUI;
+window.rtcSendTestDeltaUI = rtcSendTestDeltaUI;
+
+
+function __dumpBindings() {
+  const v = __verifyBindings();
+  if (v && v.bindings) console.table(v.bindings.map(b => ({
+    bindingId: b.bindingId,
+    objectPath: b.objectPath,
+    materialIndex: b.materialIndex,
+    slot: b.slot,
+    textureId: b.textureId,
+    sourceName: b.sourceName,
+    encoding: b.encoding,
+    w: b.width,
+    h: b.height
+  })));
+  return v;
+}
+window.__dumpBindings = __dumpBindings;
+
+function verifyBindingsUI() { return __verifyBindings(); }
+function dumpBindingsUI() { return __dumpBindings(); }
+
+// Highlight selection
+let __bindingBoxHelper = null;
+function _highlightNode(node) {
+  try {
+    if (__bindingBoxHelper && scene) {
+      scene.remove(__bindingBoxHelper);
+      __bindingBoxHelper = null;
+    }
+    if (!node || !node.isMesh || !scene) return;
+
+    __bindingBoxHelper = new THREE.BoxHelper(node, 0x00ff41);
+    scene.add(__bindingBoxHelper);
+  } catch(e) {}
+}
+
+function selectBinding(bindingId) {
+  const b = sceneState.textureBindings.get(bindingId);
+  if (!b) return;
+  const node = sceneState._bindingIndex.nodeByPath.get(b.objectPath);
+  _highlightNode(node);
+  console.log('[BINDING] selected', b);
+}
+window.__selectBinding = selectBinding;
+
+// Table rendering + filtering
+function _renderBindingsTable() {
+  const table = document.getElementById('bindingTable');
+  if (!table) return;
+
+  const search = (document.getElementById('bindingSearch')?.value || '').toLowerCase().trim();
+  const bindings = Array.from(sceneState.textureBindings.values());
+
+  const filtered = !search ? bindings : bindings.filter(b => {
+    return (b.bindingId || '').toLowerCase().includes(search) ||
+           (b.objectPath || '').toLowerCase().includes(search) ||
+           (b.slot || '').toLowerCase().includes(search) ||
+           (b.textureId || '').toLowerCase().includes(search) ||
+           (b.sourceName || '').toLowerCase().includes(search);
+  });
+
+  if (filtered.length === 0) {
+    table.innerHTML = '<div style="font-size:12px; opacity:0.75;">No bindings match.</div>';
+    return;
+  }
+
+  const rows = filtered.slice(0, 200).map(b => {
+    const path = (b.objectPath || '').replace(/^__root\//, '');
+    return `
+      <div data-binding-id="${b.bindingId}"
+           style="display:grid; grid-template-columns: 1fr 56px 1fr; gap:8px; padding:6px; border-bottom:1px solid rgba(0,255,65,0.12); cursor:pointer;"
+           title="${b.bindingId}">
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${path || '__root'}</div>
+        <div style="text-align:center; opacity:0.9;">${b.slot}</div>
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:0.9;">${b.sourceName || b.textureId}</div>
+      </div>
+    `;
+  }).join('');
+
+  table.innerHTML = rows;
+
+  table.querySelectorAll('[data-binding-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-binding-id');
+      selectBinding(id);
+    });
+  });
+}
+
+document.addEventListener('input', (e) => {
+  if (e && e.target && e.target.id === 'bindingSearch') _renderBindingsTable();
+});
+
+// Ensure bindings stay in sync when textures sync
+const __origSyncTexturesToSceneState = window.syncTexturesToSceneState;
+window.syncTexturesToSceneState = function() {
+  const r = __origSyncTexturesToSceneState ? __origSyncTexturesToSceneState.apply(this, arguments) : undefined;
+  try { syncBindingsToSceneState(); } catch(e) {}
+  return r;
+};
+try { syncTexturesToSceneState = window.syncTexturesToSceneState; } catch(e) {}
+
+
+// API: apply a binding by bindingId + textureId (delta-friendly)
+function applyTextureBinding(bindingId, textureId) {
+  const b = sceneState.textureBindings.get(bindingId);
+  if (!b) throw new Error('Unknown bindingId: ' + bindingId);
+  const node = sceneState._bindingIndex.nodeByPath.get(b.objectPath);
+  if (!node || !node.isMesh) throw new Error('Target node missing for: ' + b.objectPath);
+  const mats = Array.isArray(node.material) ? node.material : [node.material];
+  const mat = mats[b.materialIndex];
+  if (!mat) throw new Error('Material index missing: ' + b.materialIndex);
+
+  const tex = sceneState._textureObjects.get(textureId);
+  if (!tex) throw new Error('Texture not found in cache: ' + textureId);
+
+  // Apply to correct property
+  const prop = b.prop;
+  if (prop.startsWith('userData.')) {
+    const key = prop.split('.').slice(1).join('.');
+    mat.userData = mat.userData || {};
+    mat.userData[key] = tex;
+  } else {
+    mat[prop] = tex;
+  }
+  mat.needsUpdate = true;
+
+  // Update binding record
+  b.textureId = textureId;
+  b.textureKey = _canonicalTextureKey(b.slot, tex);
+  sceneState.textureBindings.set(bindingId, b);
+
+  syncTexturesToSceneState(); // will also resync bindings
+  return true;
+}
+window.applyTextureBinding = applyTextureBinding;
+
+
+
+
+
         const medicalColors = [
             0xffc0cb, // Medical brain pink
             0x00ff41, // Matrix green
@@ -426,11 +1915,41 @@
             }
         }
         
-        function hideLoading() {
+        
+        function showAwaitTextures() {
+            // Keep the loading overlay visible so the user can choose textures next.
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('info').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('textureControls').style.display = 'none';
+            const btn = document.getElementById('continueFromLoadingBtn');
+            if (btn) btn.style.display = 'block';
+            updateLoadingProgress('Model loaded. Now load textures (or continue without textures).', 100);
+        }
+
+        function continueFromLoading() {
+            const btn = document.getElementById('continueFromLoadingBtn');
+            if (btn) btn.style.display = 'none';
+            buildDeltaRegistryFromBrainModel();
+            buildCanonicalSceneStateFromThree();
+            syncTexturesToSceneState();
+            hideLoading();
+            updateModelInfo();
+        }
+
+function hideLoading() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('info').style.display = 'block';
             document.getElementById('controls').style.display = 'block';
             document.getElementById('textureControls').style.display = 'block';
+
+            // Wire X-Ray Canvas toggle (near texture controls)
+            const xrayToggle = document.getElementById('xrayCanvasToggle');
+            if (xrayToggle) {
+                xrayToggle.checked = !!viewerSettings.xrayCanvas;
+                xrayToggle.onchange = () => setXRayCanvas(xrayToggle.checked);
+            }
+
         }
         
         function showLoading() {
@@ -508,102 +2027,1251 @@
             }
         }
         
-        function handleDAESelect(event) {
+        
+
+// ===== DDS DECODER (Global) : BC1/DXT1 + BC3/DXT5 (file:// safe) =====
+(function(){
+    "use strict";
+    function fourCCToString(v) {
+        return String.fromCharCode(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF);
+    }
+    function rgb565ToRgb888(c) {
+        const r = ((c >> 11) & 0x1F) * 255 / 31;
+        const g = ((c >> 5) & 0x3F) * 255 / 63;
+        const b = (c & 0x1F) * 255 / 31;
+        return [r|0, g|0, b|0];
+    }
+    function decodeDXT1(width, height, dv, dataOffset) {
+        const out = new Uint8Array(width * height * 4);
+        const blocksX = Math.ceil(width / 4);
+        const blocksY = Math.ceil(height / 4);
+        let off = dataOffset;
+        for (let by = 0; by < blocksY; by++) {
+            for (let bx = 0; bx < blocksX; bx++) {
+                const c0 = dv.getUint16(off, true);
+                const c1 = dv.getUint16(off + 2, true);
+                const bits = dv.getUint32(off + 4, true);
+                off += 8;
+
+                const [r0,g0,b0] = rgb565ToRgb888(c0);
+                const [r1,g1,b1] = rgb565ToRgb888(c1);
+
+                const colors = new Array(4);
+                colors[0] = [r0,g0,b0,255];
+                colors[1] = [r1,g1,b1,255];
+
+                if (c0 > c1) {
+                    colors[2] = [((2*r0 + r1)/3)|0, ((2*g0 + g1)/3)|0, ((2*b0 + b1)/3)|0, 255];
+                    colors[3] = [((r0 + 2*r1)/3)|0, ((g0 + 2*g1)/3)|0, ((b0 + 2*b1)/3)|0, 255];
+                } else {
+                    colors[2] = [((r0 + r1)/2)|0, ((g0 + g1)/2)|0, ((b0 + b1)/2)|0, 255];
+                    colors[3] = [0,0,0,0];
+                }
+
+                for (let py = 0; py < 4; py++) {
+                    for (let px = 0; px < 4; px++) {
+                        const x = bx*4 + px;
+                        const y = by*4 + py;
+                        if (x >= width || y >= height) continue;
+                        const idx2 = (bits >> (2*(py*4 + px))) & 0x3;
+                        const c = colors[idx2];
+                        const o = (y*width + x)*4;
+                        out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = c[3];
+                    }
+                }
+            }
+        }
+        return out;
+    }
+    function decodeDXT5(width, height, dv, dataOffset) {
+        const out = new Uint8Array(width * height * 4);
+        const blocksX = Math.ceil(width / 4);
+        const blocksY = Math.ceil(height / 4);
+        let off = dataOffset;
+
+        for (let by = 0; by < blocksY; by++) {
+            for (let bx = 0; bx < blocksX; bx++) {
+                const a0 = dv.getUint8(off);
+                const a1 = dv.getUint8(off + 1);
+                const aBitsLo = dv.getUint32(off + 2, true);
+                const aBitsHi = dv.getUint16(off + 6, true);
+                off += 8;
+
+                const alphas = new Array(8);
+                alphas[0] = a0; alphas[1] = a1;
+                if (a0 > a1) {
+                    for (let i = 2; i < 8; i++) alphas[i] = (((8-i)*a0 + (i-1)*a1)/7)|0;
+                } else {
+                    for (let i = 2; i < 6; i++) alphas[i] = (((6-i)*a0 + (i-1)*a1)/5)|0;
+                    alphas[6] = 0; alphas[7] = 255;
+                }
+
+                const c0 = dv.getUint16(off, true);
+                const c1 = dv.getUint16(off + 2, true);
+                const bits = dv.getUint32(off + 4, true);
+                off += 8;
+
+                const [r0,g0,b0] = rgb565ToRgb888(c0);
+                const [r1,g1,b1] = rgb565ToRgb888(c1);
+
+                const colors = new Array(4);
+                colors[0] = [r0,g0,b0];
+                colors[1] = [r1,g1,b1];
+                colors[2] = [((2*r0 + r1)/3)|0, ((2*g0 + g1)/3)|0, ((2*b0 + b1)/3)|0];
+                colors[3] = [((r0 + 2*r1)/3)|0, ((g0 + 2*g1)/3)|0, ((b0 + 2*b1)/3)|0];
+
+                for (let py = 0; py < 4; py++) {
+                    for (let px = 0; px < 4; px++) {
+                        const x = bx*4 + px;
+                        const y = by*4 + py;
+                        if (x >= width || y >= height) continue;
+
+                        const ci = (bits >> (2*(py*4 + px))) & 0x3;
+                        const aIndexBit = 3*(py*4 + px);
+                        let aIndex;
+                        if (aIndexBit < 32) aIndex = (aBitsLo >> aIndexBit) & 0x7;
+                        else aIndex = (aBitsHi >> (aIndexBit - 32)) & 0x7;
+
+                        const o = (y*width + x)*4;
+                        out[o] = colors[ci][0];
+                        out[o+1] = colors[ci][1];
+                        out[o+2] = colors[ci][2];
+                        out[o+3] = alphas[aIndex];
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    // Expose a single global entry point (required by loadTextures)
+    window.parseDDSFileToThreeTexture = async function parseDDSFileToThreeTexture(file) {
+        const buffer = await file.arrayBuffer();
+        const dv = new DataView(buffer);
+        if (dv.getUint32(0, true) !== 0x20534444) throw new Error("Not a DDS file");
+        const height = dv.getUint32(12, true);
+        const width  = dv.getUint32(16, true);
+        const pfFlags = dv.getUint32(80, true);
+        const fourCC = dv.getUint32(84, true);
+        const fourCCStr = fourCCToString(fourCC);
+        const dataOffset = 128;
+
+        let rgba;
+        if ((pfFlags & 0x4) && fourCCStr === "DXT1") rgba = decodeDXT1(width, height, dv, dataOffset);
+        else if ((pfFlags & 0x4) && fourCCStr === "DXT5") rgba = decodeDXT5(width, height, dv, dataOffset);
+        else throw new Error("DDS format not supported (need DXT1 or DXT5). Found: " + fourCCStr);
+
+        const tex = new THREE.DataTexture(rgba, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+        tex.flipY = false;
+        tex.needsUpdate = true;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+
+        tex.userData = tex.userData || {};
+        tex.userData.__dds = { format: fourCCStr, width, height, name: (file && file.name) ? file.name : "dds" };
+        return tex;
+    };
+
+    window.__testDDS = async function(file){
+        const tex = await window.parseDDSFileToThreeTexture(file);
+        console.log("DDS decoded", {w: tex.image.width, h: tex.image.height, type: tex.constructor.name, fmt: tex.userData?.__dds?.format});
+        return tex;
+    };
+
+    window.__viewerCaps = window.__viewerCaps || {};
+    window.__viewerCaps.hasDDS = (typeof window.parseDDSFileToThreeTexture === "function");
+    console.log("[CAPS] DDS:", window.__viewerCaps.hasDDS);
+window.__buildTag = "v3_47 TEACHER+RTC (Phase G/H + Phase F)";
+console.log("[BUILD]", window.__buildTag);
+})();
+
+        async function loadGLTFModel(file) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const ext = (file.name.split('.').pop() || '').toLowerCase();
+                    const loader = new THREE.GLTFLoader();
+
+                    if (ext === 'glb') {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            try {
+                                const arrayBuffer = reader.result;
+                                loader.parse(arrayBuffer, '', (gltf) => resolve(gltf), (err) => reject(err));
+                            } catch (e) { reject(e); }
+                        };
+                        reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+                        reader.readAsArrayBuffer(file);
+                        return;
+                    }
+
+                    // .gltf: use object URL so external references (relative) have a base URL
+                    const url = URL.createObjectURL(file);
+                    loader.load(url, (gltf) => {
+                        URL.revokeObjectURL(url);
+                        resolve(gltf);
+                    }, undefined, (err) => {
+                        URL.revokeObjectURL(url);
+                        reject(err);
+                    });
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        async function loadOBJModel(file) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const loader = new THREE.OBJLoader();
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const text = reader.result;
+                            window.__lastObjSource = { name: file.name.replace(/\.[^/.]+$/, ''), text };
+                            const obj = loader.parse(text);
+                            resolve(obj);
+                        } catch (e) { reject(e); }
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+                    reader.readAsText(file);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        async function loadOBJWithMTLAndTextures(objFile, mtlFile, textureFiles) {
+                        const texByName = new Map();
+            const __texByBasename = new Map(); // basename -> THREE.Texture
+
+            // Merge: textures passed into this call + any textures uploaded previously
+            const mergedTextureFiles = [];
+            (textureFiles || []).forEach(f => { if (f) mergedTextureFiles.push(f); });
+            for (const f of __uploadedTexFilesByBasename.values()) mergedTextureFiles.push(f);
+
+            // Index merged files
+            mergedTextureFiles.forEach(f => {
+                const name = __basenameLower(f.name);
+                if (!name) return;
+                texByName.set(name, f);
+                __registerUploadedTextureFile(f);
+            });
+
+            function fileToText(file) {
+                return new Promise((resolve, reject) => {
+                    const r = new FileReader();
+                    r.onload = () => resolve(r.result);
+                    r.onerror = () => reject(r.error || new Error('FileReader error'));
+                    r.readAsText(file);
+                });
+            }
+
+            function fileToObjectURL(file) {
+                return Promise.resolve(URL.createObjectURL(file));
+            }
+
+
+
+            
+        // =========================
+        // DDS (BC1/DXT1 + BC3/DXT5) loader (in-memory, file:// safe)
+        // =========================
+        function fourCCToString(v) {
+            return String.fromCharCode(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF);
+        }
+        function rgb565ToRgb888(c) {
+            const r = ((c >> 11) & 0x1F) * 255 / 31;
+            const g = ((c >> 5) & 0x3F) * 255 / 63;
+            const b = (c & 0x1F) * 255 / 31;
+            return [r|0, g|0, b|0];
+        }
+        function decodeDXT1(width, height, dv, dataOffset) {
+            const out = new Uint8Array(width * height * 4);
+            const blocksX = Math.ceil(width / 4);
+            const blocksY = Math.ceil(height / 4);
+            let off = dataOffset;
+            for (let by = 0; by < blocksY; by++) {
+                for (let bx = 0; bx < blocksX; bx++) {
+                    const c0 = dv.getUint16(off, true);
+                    const c1 = dv.getUint16(off + 2, true);
+                    const bits = dv.getUint32(off + 4, true);
+                    off += 8;
+
+                    const [r0,g0,b0] = rgb565ToRgb888(c0);
+                    const [r1,g1,b1] = rgb565ToRgb888(c1);
+
+                    const colors = new Array(4);
+                    colors[0] = [r0,g0,b0,255];
+                    colors[1] = [r1,g1,b1,255];
+
+                    if (c0 > c1) {
+                        colors[2] = [((2*r0 + r1)/3)|0, ((2*g0 + g1)/3)|0, ((2*b0 + b1)/3)|0, 255];
+                        colors[3] = [((r0 + 2*r1)/3)|0, ((g0 + 2*g1)/3)|0, ((b0 + 2*b1)/3)|0, 255];
+                    } else {
+                        colors[2] = [((r0 + r1)/2)|0, ((g0 + g1)/2)|0, ((b0 + b1)/2)|0, 255];
+                        colors[3] = [0,0,0,0];
+                    }
+
+                    for (let py = 0; py < 4; py++) {
+                        for (let px = 0; px < 4; px++) {
+                            const x = bx*4 + px;
+                            const y = by*4 + py;
+                            if (x >= width || y >= height) continue;
+                            const idx2 = (bits >> (2*(py*4 + px))) & 0x3;
+                            const c = colors[idx2];
+                            const o = (y*width + x)*4;
+                            out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = c[3];
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+        function decodeDXT5(width, height, dv, dataOffset) {
+            const out = new Uint8Array(width * height * 4);
+            const blocksX = Math.ceil(width / 4);
+            const blocksY = Math.ceil(height / 4);
+            let off = dataOffset;
+
+            for (let by = 0; by < blocksY; by++) {
+                for (let bx = 0; bx < blocksX; bx++) {
+                    const a0 = dv.getUint8(off);
+                    const a1 = dv.getUint8(off + 1);
+                    const aBitsLo = dv.getUint32(off + 2, true);
+                    const aBitsHi = dv.getUint16(off + 6, true);
+                    off += 8;
+
+                    const alphas = new Array(8);
+                    alphas[0] = a0; alphas[1] = a1;
+                    if (a0 > a1) {
+                        for (let i = 2; i < 8; i++) alphas[i] = (((8-i)*a0 + (i-1)*a1)/7)|0;
+                    } else {
+                        for (let i = 2; i < 6; i++) alphas[i] = (((6-i)*a0 + (i-1)*a1)/5)|0;
+                        alphas[6] = 0; alphas[7] = 255;
+                    }
+
+                    const c0 = dv.getUint16(off, true);
+                    const c1 = dv.getUint16(off + 2, true);
+                    const bits = dv.getUint32(off + 4, true);
+                    off += 8;
+
+                    const [r0,g0,b0] = rgb565ToRgb888(c0);
+                    const [r1,g1,b1] = rgb565ToRgb888(c1);
+
+                    const colors = new Array(4);
+                    colors[0] = [r0,g0,b0];
+                    colors[1] = [r1,g1,b1];
+                    colors[2] = [((2*r0 + r1)/3)|0, ((2*g0 + g1)/3)|0, ((2*b0 + b1)/3)|0];
+                    colors[3] = [((r0 + 2*r1)/3)|0, ((g0 + 2*g1)/3)|0, ((b0 + 2*b1)/3)|0];
+
+                    for (let py = 0; py < 4; py++) {
+                        for (let px = 0; px < 4; px++) {
+                            const x = bx*4 + px;
+                            const y = by*4 + py;
+                            if (x >= width || y >= height) continue;
+
+                            const ci = (bits >> (2*(py*4 + px))) & 0x3;
+                            const aIndexBit = 3*(py*4 + px);
+                            let aIndex;
+                            if (aIndexBit < 32) aIndex = (aBitsLo >> aIndexBit) & 0x7;
+                            else aIndex = (aBitsHi >> (aIndexBit - 32)) & 0x7;
+
+                            const o = (y*width + x)*4;
+                            out[o] = colors[ci][0];
+                            out[o+1] = colors[ci][1];
+                            out[o+2] = colors[ci][2];
+                            out[o+3] = alphas[aIndex];
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+        async function parseDDSFileToThreeTexture(file) {
+            const buffer = await file.arrayBuffer();
+            const dv = new DataView(buffer);
+            if (dv.getUint32(0, true) !== 0x20534444) throw new Error("Not a DDS file");
+            const height = dv.getUint32(12, true);
+            const width  = dv.getUint32(16, true);
+            const pfFlags = dv.getUint32(80, true);
+            const fourCC = dv.getUint32(84, true);
+            const fourCCStr = fourCCToString(fourCC);
+            const dataOffset = 128;
+
+            let rgba;
+            if ((pfFlags & 0x4) && fourCCStr === "DXT1") rgba = decodeDXT1(width, height, dv, dataOffset);
+            else if ((pfFlags & 0x4) && fourCCStr === "DXT5") rgba = decodeDXT5(width, height, dv, dataOffset);
+            else throw new Error("DDS format not supported (need DXT1 or DXT5). Found: " + fourCCStr);
+
+            const tex = new THREE.DataTexture(rgba, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+            tex.flipY = false;
+            tex.needsUpdate = true;
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+function basename(p) { return (p || '').split(/[\\/]/).pop(); }
+
+            function parseMtlMaps(mtlText) {
+                const lines = (mtlText || '').split(/\r?\n/);
+                const mats = new Map();
+                let cur = null;
+                for (const raw of lines) {
+                    const line = raw.trim();
+                    if (!line || line.startsWith('#')) continue;
+                    const parts = line.split(/\s+/);
+                    const key = parts[0];
+                    const rest = line.slice(key.length).trim();
+                    if (key === 'newmtl') {
+                        cur = rest.trim();
+                        if (cur) mats.set(cur, {});
+                    } else if (cur && (key === 'map_Kd' || key === 'map_Ks' || key === 'map_Bump' || key === 'bump' || key === 'map_d' || key === 'map_Ns')) {
+                        const entry = mats.get(cur) || {};
+                        const tokens = rest.split(/\s+/);
+                        const fileTok = tokens[tokens.length - 1];
+                        if (key === 'bump') entry.map_Bump = fileTok;
+                        else entry[key] = fileTok;
+                        mats.set(cur, entry);
+                    }
+                }
+                return mats;
+            }
+
+            async function makeTextureMap(mtlMaps) {
+                const urlByBasename = new Map();
+                const needed = new Set();
+                for (const [,v] of mtlMaps.entries()) {
+                    for (const k of ['map_Kd','map_Ks','map_Bump','map_d','map_Ns']) {
+                        if (v && v[k]) needed.add(basename(v[k]).toLowerCase());
+                    }
+                }
+                for (const name of needed) {
+                    const f = texByName.get(name);
+                    if (f && (f.name||'').toLowerCase().endsWith('.dds')) {
+                        const tex = await parseDDSFileToThreeTexture(f);
+                        __texByBasename.set(name, tex);
+                        continue;
+                    }
+                    if (f) {
+                        const dataUrl = await fileToObjectURL(f);
+                        urlByBasename.set(name, dataUrl);
+                    }
+                }
+                return urlByBasename;
+            }
+
+            const [objText, mtlText] = await Promise.all([fileToText(objFile), fileToText(mtlFile)]);
+            const mtlMaps = parseMtlMaps(mtlText);
+            const urlByName = await makeTextureMap(mtlMaps);
+
+            const mtlLoader = new THREE.MTLLoader();
+            const materialsCreator = mtlLoader.parse(mtlText, '');
+            
+            // Intercept MTLLoader texture requests so opening this HTML via file:// works (no CORS).
+            // We map MTL map_* filenames to uploaded File blobs (blob: URLs) from urlByName.
+            const __origLoadTexture = materialsCreator.loadTexture ? materialsCreator.loadTexture.bind(materialsCreator) : null;
+            materialsCreator.loadTexture = function(url, mapping, onLoad, onProgress, onError) {
+                try {
+                    const b = __basenameLower(url);
+                    // Prefer already-decoded / already-loaded textures (DDS or images)
+                    const directTex = __texByBasename.get(b) || __uploadedTexThreeByBasename.get(b) || null;
+                    if (directTex) return directTex;
+
+                    // If we have an uploaded file, load via blob URL to avoid file:// CORS.
+                    const f = texByName.get(b) || __uploadedTexFilesByBasename.get(b) || null;
+                    if (f) {
+                        // DDS textures should have been pre-decoded in makeTextureMap; if not, return placeholder.
+                        if (b.endsWith('.dds')) {
+                            console.warn('[MTL] DDS referenced but not pre-decoded:', b);
+                            return __make1x1Texture();
+                        }
+
+                        __registerUploadedTextureFile(f);
+                        const blobUrl = __uploadedTexBlobUrlByBasename.get(b);
+                        if (blobUrl) {
+                            const tl = new THREE.TextureLoader();
+                            const tex = tl.load(blobUrl, onLoad, onProgress, onError);
+                            tex.wrapS = THREE.RepeatWrapping;
+                            tex.wrapT = THREE.RepeatWrapping;
+                            tex.flipY = false;
+                            __uploadedTexThreeByBasename.set(b, tex);
+                            console.log('[MTL] resolved', b, 'via uploaded file map (IMG)');
+                            return tex;
+                        }
+                    }
+
+                    // No local file available: prevent file:// fetch (CORS) by returning placeholder.
+                    console.warn('[MTL] missing texture (preventing file:// CORS):', url);
+                    return __make1x1Texture();
+                } catch (e) {
+                    console.warn('[MTL] loadTexture intercept failed:', e);
+                    return __make1x1Texture();
+                }
+            };
+
+materialsCreator.preload();
+
+            for (const matName of Object.keys(materialsCreator.materials || {})) {
+                const maps = mtlMaps.get(matName) || {};
+                const mat = materialsCreator.materials[matName];
+                if (!mat) continue;
+
+                const texLoader = new THREE.TextureLoader();
+                function applyMap(prop, fileField) {
+                    if (!fileField) return;
+                    const b = basename(fileField).toLowerCase();
+                    const dataUrl = urlByName.get(b);
+                    if (!dataUrl) return;
+                    try {
+                        const tex = texLoader.load(dataUrl);
+                        tex.flipY = false;
+                        mat[prop] = tex;
+                        mat.needsUpdate = true;
+                    } catch(e) {}
+                }
+                applyMap('map', maps.map_Kd);
+                applyMap('specularMap', maps.map_Ks);
+                applyMap('alphaMap', maps.map_d);
+                applyMap('bumpMap', maps.map_Bump);
+            }
+
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materialsCreator);
+            const objRoot = objLoader.parse(objText);
+
+            objRoot.traverse((n) => {
+                if (n && n.isMesh && n.geometry) {
+                    try {
+                        const g = n.geometry;
+                        if (!g.attributes || !g.attributes.normal) g.computeVertexNormals();
+                    } catch(e) {}
+                    try {
+                        if (n.material) {
+                            if (Array.isArray(n.material)) n.material.forEach(m => { if(m){ m.side = THREE.DoubleSide; m.transparent=false; m.depthWrite=true; m.needsUpdate=true; }});
+                            else { n.material.side = THREE.DoubleSide; n.material.transparent=false; n.material.depthWrite=true; n.material.needsUpdate=true; }
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            if (!objRoot.name) objRoot.name = objFile.name.replace(/\.[^/.]+$/, '');
+            return objRoot;
+        }
+
+        async function loadOBJWithMTLAndTexturesFromText(objName, objText, mtlText, textureFiles) {
+            const texByName = new Map();
+            const __texByBasename = new Map(); // basename -> THREE.Texture
+            (textureFiles || []).forEach(f => {
+                const key = (f.name || '').toLowerCase();
+                if (key) texByName.set(key, f);
+            });
+
+            function fileToObjectURL(file) {
+                return Promise.resolve(URL.createObjectURL(file));
+            }
+
+
+
+            function basename(p) { return (p || '').split(/[\\/]/).pop(); }
+
+            function parseMtlMaps(mtlTextLocal) {
+                const lines = (mtlTextLocal || '').split(/\r?\n/);
+                const mats = new Map();
+                let cur = null;
+                for (const raw of lines) {
+                    const line = raw.trim();
+                    if (!line || line.startsWith('#')) continue;
+                    const parts = line.split(/\s+/);
+                    const key = parts[0];
+                    const rest = line.slice(key.length).trim();
+                    if (key === 'newmtl') {
+                        cur = rest.trim();
+                        if (cur) mats.set(cur, {});
+                    } else if (cur && (key === 'map_Kd' || key === 'map_Ks' || key === 'map_Bump' || key === 'bump' || key === 'map_d' || key === 'map_Ns')) {
+                        const entry = mats.get(cur) || {};
+                        const tokens = rest.split(/\s+/);
+                        const fileTok = tokens[tokens.length - 1];
+                        if (key === 'bump') entry.map_Bump = fileTok;
+                        else entry[key] = fileTok;
+                        mats.set(cur, entry);
+                    }
+                }
+                return mats;
+            }
+
+            async function makeTextureMap(mtlMaps) {
+                const urlByBasename = new Map();
+                const needed = new Set();
+                for (const [,v] of mtlMaps.entries()) {
+                    for (const k of ['map_Kd','map_Ks','map_Bump','map_d','map_Ns']) {
+                        if (v && v[k]) needed.add(basename(v[k]).toLowerCase());
+                    }
+                }
+                for (const name of needed) {
+                    const f = texByName.get(name);
+                    if (f && (f.name||'').toLowerCase().endsWith('.dds')) {
+                        const tex = await parseDDSFileToThreeTexture(f);
+                        __texByBasename.set(name, tex);
+                        continue;
+                    }
+                    if (f) {
+                        const dataUrl = await fileToObjectURL(f);
+                        urlByBasename.set(name, dataUrl);
+                    }
+                }
+                return urlByBasename;
+            }
+
+            const mtlMaps = parseMtlMaps(mtlText);
+            const urlByName = await makeTextureMap(mtlMaps);
+
+            const mtlLoader = new THREE.MTLLoader();
+            const materialsCreator = mtlLoader.parse(mtlText, '');
+            
+            // Intercept MTLLoader texture requests so opening this HTML via file:// works (no CORS).
+            // We map MTL map_* filenames to uploaded File blobs (blob: URLs) from urlByName.
+            const __origLoadTexture = materialsCreator.loadTexture ? materialsCreator.loadTexture.bind(materialsCreator) : null;
+            materialsCreator.loadTexture = function(url, mapping, onLoad, onProgress, onError) {
+                try {
+                    const b = __basenameLower(url);
+                    // Prefer already-decoded / already-loaded textures (DDS or images)
+                    const directTex = __texByBasename.get(b) || __uploadedTexThreeByBasename.get(b) || null;
+                    if (directTex) return directTex;
+
+                    // If we have an uploaded file, load via blob URL to avoid file:// CORS.
+                    const f = texByName.get(b) || __uploadedTexFilesByBasename.get(b) || null;
+                    if (f) {
+                        // DDS textures should have been pre-decoded in makeTextureMap; if not, return placeholder.
+                        if (b.endsWith('.dds')) {
+                            console.warn('[MTL] DDS referenced but not pre-decoded:', b);
+                            return __make1x1Texture();
+                        }
+
+                        __registerUploadedTextureFile(f);
+                        const blobUrl = __uploadedTexBlobUrlByBasename.get(b);
+                        if (blobUrl) {
+                            const tl = new THREE.TextureLoader();
+                            const tex = tl.load(blobUrl, onLoad, onProgress, onError);
+                            tex.wrapS = THREE.RepeatWrapping;
+                            tex.wrapT = THREE.RepeatWrapping;
+                            tex.flipY = false;
+                            __uploadedTexThreeByBasename.set(b, tex);
+                            console.log('[MTL] resolved', b, 'via uploaded file map (IMG)');
+                            return tex;
+                        }
+                    }
+
+                    // No local file available: prevent file:// fetch (CORS) by returning placeholder.
+                    console.warn('[MTL] missing texture (preventing file:// CORS):', url);
+                    return __make1x1Texture();
+                } catch (e) {
+                    console.warn('[MTL] loadTexture intercept failed:', e);
+                    return __make1x1Texture();
+                }
+            };
+
+materialsCreator.preload();
+
+            for (const matName of Object.keys(materialsCreator.materials || {})) {
+                const maps = mtlMaps.get(matName) || {};
+                const mat = materialsCreator.materials[matName];
+                if (!mat) continue;
+
+                const texLoader = new THREE.TextureLoader();
+                function applyMap(prop, fileField) {
+                    if (!fileField) return;
+                    const b = basename(fileField).toLowerCase();
+                    const dataUrl = urlByName.get(b);
+                    if (!dataUrl) return;
+                    try {
+                        const tex = texLoader.load(dataUrl);
+                        tex.flipY = false;
+                        mat[prop] = tex;
+                        mat.needsUpdate = true;
+                    } catch(e) {}
+                }
+                applyMap('map', maps.map_Kd);
+                applyMap('specularMap', maps.map_Ks);
+                applyMap('alphaMap', maps.map_d);
+                applyMap('bumpMap', maps.map_Bump);
+            }
+
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materialsCreator);
+            const objRoot = objLoader.parse(objText);
+
+            objRoot.traverse((n) => {
+                if (n && n.isMesh && n.geometry) {
+                    try {
+                        const g = n.geometry;
+                        if (!g.attributes || !g.attributes.normal) g.computeVertexNormals();
+                    } catch(e) {}
+                    try {
+                        if (n.material) {
+                            if (Array.isArray(n.material)) n.material.forEach(m => { if(m){ m.side = THREE.DoubleSide; m.transparent=false; m.depthWrite=true; m.needsUpdate=true; }});
+                            else { n.material.side = THREE.DoubleSide; n.material.transparent=false; n.material.depthWrite=true; n.material.needsUpdate=true; }
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            if (!objRoot.name) objRoot.name = objName || "obj_object";
+            return objRoot;
+        }
+
+
+
+        async function loadSTLModel(file) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const loader = new THREE.STLLoader();
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const buf = reader.result;
+                            const geom = loader.parse(buf);
+
+                            // STL has no materials; assign a default PBR-ish material.
+                            const mat = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.8, metalness: 0.1 });
+                            mat.side = THREE.DoubleSide;
+
+                            const mesh = new THREE.Mesh(geom, mat);
+                            const baseName = file.name.replace(/\.[^/.]+$/, '');
+                            mesh.name = (baseName || "stl") + "_mesh";
+
+                            // Wrap mesh in a semantic object group so deltas can target the object, not raw geometry.
+                            const group = new THREE.Group();
+                            group.name = baseName || "stl_object";
+                            group.add(mesh);
+
+                            resolve(group);
+                        } catch (e) { reject(e); }
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+                    reader.readAsArrayBuffer(file);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        async function loadPLYModel(file) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const loader = new THREE.PLYLoader();
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const buf = reader.result;
+                            const geom = loader.parse(buf);
+
+                            // Ensure normals exist for lighting
+                            try {
+                                if (!geom.attributes || !geom.attributes.normal) {
+                                    geom.computeVertexNormals();
+                                }
+                            } catch(e) {}
+
+                            // If PLY has vertex colors, enable vertexColors
+                            const hasColors = !!(geom.attributes && geom.attributes.color);
+
+                            const mat = new THREE.MeshStandardMaterial({
+                                color: 0x9aa0a6,
+                                roughness: 0.8,
+                                metalness: 0.1,
+                                vertexColors: hasColors
+                            });
+                            mat.side = THREE.DoubleSide;
+
+                            const mesh = new THREE.Mesh(geom, mat);
+                            const baseName = file.name.replace(/\.[^/.]+$/, '');
+                            mesh.name = baseName + "_mesh";
+
+                            const group = new THREE.Group();
+                            group.name = baseName || "ply_object";
+                            group.add(mesh);
+
+                            resolve(group);
+                        } catch (e) { reject(e); }
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+                    reader.readAsArrayBuffer(file);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+function handleDAESelect(event) {
+            const btn = document.getElementById('continueFromLoadingBtn');
+            if (btn) btn.style.display = 'none';
+
             const file = event.target.files[0];
             if (!file) return;
-            
+
             currentFileName = file.name;
+            showLoading();
             updateLoadingProgress(`Loading ${file.name}...`, 10);
-            
-            if (!file.name.toLowerCase().endsWith('.dae') && !file.name.toLowerCase().endsWith('.xml')) {
-                updateLoadingProgress('Error: Please select a DAE or XML file', 0, true);
+
+            const ext = (file.name.split('.').pop() || '').toLowerCase();
+            const isDAE = (ext === 'dae' || ext === 'xml');
+            const isGLTF = (ext === 'glb' || ext === 'gltf');
+
+            const isOBJ  = (ext === 'obj');
+
+            const isSTL  = (ext === 'stl');
+
+            const isPLY  = (ext === 'ply');
+
+            if (!isDAE && !isGLTF && !isOBJ && !isSTL && !isPLY) {
+                updateLoadingProgress('Error: Please select a DAE/XML, GLB/GLTF, OBJ, STL, or PLY file', 0, true);
                 return;
             }
+
+            // -----------------------------
+            // GLB / GLTF path (multi-format)
+            // -----------------------------
+            if (isGLTF) {
+                updateLoadingProgress('Loading GLTF/GLB model...', 20);
+
+                // Clear previous model
+                try {
+                    if (brainModel) {
+                        scene.remove(brainModel);
+                        brainModel.traverse((child) => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
+                                else child.material.dispose && child.material.dispose();
+                            }
+                        });
+                    }
+                } catch (e) {}
+
+                brainModel = null;
+
+                loadGLTFModel(file).then((gltf) => {
+                    brainModel = gltf.scene || (gltf.scenes ? gltf.scenes[0] : null);
+                    if (!brainModel) throw new Error('GLTF loaded but no scene found');
+
+                    // Normalize transform
+                    brainModel.position.set(0, 0, 0);
+                    brainModel.rotation.set(0, 0, 0);
+                    brainModel.scale.set(1, 1, 1);
+
+                    scene.add(brainModel);
+
+                    // Build canonical state + delta registry
+                    buildDeltaRegistryFromBrainModel();
+                    buildCanonicalSceneStateFromThree();
+                    syncTexturesToSceneState();
+
+                    updateLoadingProgress('GLTF/GLB loaded. Waiting for textures...', 95);
+
+                    // Keep the upload overlay until textures are loaded or user continues
+                    showAwaitTextures();
+                    updateModelInfo();
+                }).catch((err) => {
+                    console.error('GLTF load error', err);
+                    updateLoadingProgress('GLTF/GLB load error: ' + (err?.message || err), 0, true);
+                });
+
+                return;
+            }
+
+            // -----------------------------
+            // DAE / XML path (original UV pipeline)
+            // -----------------------------
             
+            // -----------------------------
+            // OBJ path (new)
+            // -----------------------------
+            if (isOBJ) {
+                updateLoadingProgress('Loading OBJ model...', 20);
+
+                // Reset previous model
+                try {
+                    if (brainModel) {
+                        scene.remove(brainModel);
+                        brainModel.traverse((child) => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
+                                else child.material.dispose && child.material.dispose();
+                            }
+                        });
+                    }
+                } catch(e) {}
+
+                brainModel = null;
+
+                loadOBJModel(file).then((objRoot) => {
+                    brainModel = objRoot;
+                    if (!brainModel) throw new Error('OBJ loaded but no root found');
+
+
+                    // OBJ import fixes:
+                    // - Ensure consistent lighting by generating normals if missing
+                    // - Avoid "see-through" faces caused by inconsistent winding by using DoubleSide
+                    brainModel.traverse((n) => {
+                        if (n && n.isMesh && n.geometry) {
+                            try {
+                                const g = n.geometry;
+                                if (!g.attributes || !g.attributes.normal) {
+                                    g.computeVertexNormals();
+                                }
+                            } catch(e) {}
+                            try {
+                                if (n.material) {
+                                    if (Array.isArray(n.material)) {
+                                        n.material.forEach(mat => {
+                                            if (mat) {
+                                                mat.side = THREE.DoubleSide;
+                                                mat.transparent = false;
+                                                mat.depthWrite = true;
+                                                mat.needsUpdate = true;
+                                            }
+                                        });
+                                    } else {
+                                        n.material.side = THREE.DoubleSide;
+                                        n.material.transparent = false;
+                                        n.material.depthWrite = true;
+                                        n.material.needsUpdate = true;
+                                    }
+                                }
+                            } catch(e) {}
+                        }
+                    });
+
+                    // Normalize transform
+                    brainModel.position.set(0, 0, 0);
+                    brainModel.rotation.set(0, 0, 0);
+                    brainModel.scale.set(1, 1, 1);
+
+                    if (!brainModel.name) brainModel.name = file.name.replace(/\.[^/.]+$/, '');
+
+                    scene.add(brainModel);
+
+                    // Canonical + delta registry
+                    buildDeltaRegistryFromBrainModel();
+                    buildCanonicalSceneStateFromThree();
+                    syncTexturesToSceneState();
+
+                    updateLoadingProgress('OBJ loaded. Waiting for textures...', 95);
+
+                    showAwaitTextures();
+                    updateModelInfo();
+                }).catch((err) => {
+                    console.error('OBJ load error', err);
+                    updateLoadingProgress('OBJ load error: ' + (err?.message || err), 0, true);
+                });
+
+                return;
+            }
+
+            
+            // -----------------------------
+            // STL path (new)
+            // -----------------------------
+            if (isSTL) {
+                updateLoadingProgress('Loading STL model...', 20);
+
+                // Reset previous model
+                try {
+                    if (brainModel) {
+                        scene.remove(brainModel);
+                        brainModel.traverse((child) => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
+                                else child.material.dispose && child.material.dispose();
+                            }
+                        });
+                    }
+                } catch(e) {}
+
+                brainModel = null;
+
+                loadSTLModel(file).then((stlObj) => {
+                    // stlObj is a semantic Group (e.g., "cube") containing the mesh (e.g., "cube_mesh")
+                    if (!stlObj) throw new Error('STL loaded but no object found');
+
+                    // Create a neutral container root so the semantic object is addressable under __root/<name>
+                    const containerRoot = new THREE.Group();
+                    containerRoot.name = ''; // keep root segment clean
+                    containerRoot.add(stlObj);
+
+                    brainModel = containerRoot;
+
+                    // Normalize transform
+                    brainModel.position.set(0, 0, 0);
+                    brainModel.rotation.set(0, 0, 0);
+                    brainModel.scale.set(1, 1, 1);
+
+                    scene.add(brainModel);
+
+                    // Canonical + delta registry
+                    buildDeltaRegistryFromBrainModel();
+                    buildCanonicalSceneStateFromThree();
+                    syncTexturesToSceneState();
+
+                    updateLoadingProgress('STL loaded. Waiting for textures...', 95);
+
+                    showAwaitTextures();
+                    updateModelInfo();
+                }).catch((err) => {
+                    console.error('STL load error', err);
+                    updateLoadingProgress('STL load error: ' + (err?.message || err), 0, true);
+                });
+
+                return;
+            }
+
+            
+            // -----------------------------
+            // PLY path (new)
+            // -----------------------------
+            if (isPLY) {
+                updateLoadingProgress('Loading PLY model...', 20);
+
+                // Reset previous model
+                try {
+                    if (brainModel) {
+                        scene.remove(brainModel);
+                        brainModel.traverse((child) => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
+                                else child.material.dispose && child.material.dispose();
+                            }
+                        });
+                    }
+                } catch(e) {}
+
+                brainModel = null;
+
+                loadPLYModel(file).then((plyObj) => {
+                    if (!plyObj) throw new Error('PLY loaded but no object found');
+
+                    // Create a neutral container root so the semantic object is addressable under __root/<name>
+                    const containerRoot = new THREE.Group();
+                    containerRoot.name = '';
+                    containerRoot.add(plyObj);
+
+                    brainModel = containerRoot;
+
+                    // Normalize transform
+                    brainModel.position.set(0, 0, 0);
+                    brainModel.rotation.set(0, 0, 0);
+                    brainModel.scale.set(1, 1, 1);
+
+                    scene.add(brainModel);
+
+                    // Canonical + delta registry
+                    buildDeltaRegistryFromBrainModel();
+                    buildCanonicalSceneStateFromThree();
+                    syncTexturesToSceneState();
+
+                    updateLoadingProgress('PLY loaded. Waiting for textures...', 95);
+
+                    showAwaitTextures();
+                    updateModelInfo();
+                }).catch((err) => {
+                    console.error('PLY load error', err);
+                    updateLoadingProgress('PLY load error: ' + (err?.message || err), 0, true);
+                });
+
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     updateLoadingProgress('Processing COLLADA with UV mapping...', 30);
                     processDAEContentWithUV(e.target.result);
                 } catch (error) {
-                    updateLoadingProgress('DAE processing error: ' + error.message, 0, true);
+                    updateLoadingProgress('DAE processing error: ' + (error && error.message ? error.message : error), 0, true);
                 }
             };
-            
+
             reader.onerror = function() {
-                updateLoadingProgress('Failed to read DAE file', 0, true);
+                updateLoadingProgress('Failed to read model file', 0, true);
             };
-            
+
             reader.readAsText(file);
         }
         
         function handleTextureSelect(event) {
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-            
-            updateLoadingProgress(`Loading ${files.length} texture files...`, 50);
-            loadTextures(files);
+            const files = Array.from(event.target.files || []);
+            const mtlFile = files.find(f => (f.name || '').toLowerCase().endsWith('.mtl')) || null;
+            const imageFiles = files.filter(f => !((f.name || '').toLowerCase().endsWith('.mtl')));
+
+            // Register any uploaded texture files globally (supports MTL resolution without file:// CORS)
+            imageFiles.forEach(f => {
+                try { __registerUploadedTextureFile(f); } catch (e) {}
+            });
+            // Attempt to resolve any pending MTL texture refs now that we have new files
+            __tryResolvePendingMtlTextures();
+
+            // If user includes an .mtl alongside textures, and the last loaded model was OBJ,
+            // rebuild the OBJ with proper materials using the Textures button.
+            if (mtlFile && window.__lastObjSource && window.__lastObjSource.text) {
+                (async () => {
+                    try {
+                        showLoading();
+                        updateLoadingProgress('Applying MTL + textures to OBJ...', 20);
+
+                        const mtlText = await new Promise((resolve, reject) => {
+                            const r = new FileReader();
+                            r.onload = () => resolve(r.result);
+                            r.onerror = () => reject(r.error || new Error('FileReader error'));
+                            r.readAsText(mtlFile);
+                        });
+
+                        // Reset previous model
+                        try {
+                            if (brainModel) {
+                                scene.remove(brainModel);
+                                brainModel.traverse((child) => {
+                                    if (child.geometry) child.geometry.dispose();
+                                    if (child.material) {
+                                        if (Array.isArray(child.material)) child.material.forEach(m => m && m.dispose && m.dispose());
+                                        else child.material.dispose && child.material.dispose();
+                                    }
+                                });
+                            }
+                        } catch(e) {}
+
+                        const objRoot = await loadOBJWithMTLAndTexturesFromText(
+                            window.__lastObjSource.name,
+                            window.__lastObjSource.text,
+                            mtlText,
+                            imageFiles
+                        );
+
+                        const containerRoot = new THREE.Group();
+                        containerRoot.name = '';
+                        containerRoot.add(objRoot);
+                        brainModel = containerRoot;
+
+                        brainModel.position.set(0,0,0);
+                        brainModel.rotation.set(0,0,0);
+                        brainModel.scale.set(1,1,1);
+
+                        scene.add(brainModel);
+
+                        buildDeltaRegistryFromBrainModel();
+                        buildCanonicalSceneStateFromThree();
+                        syncTexturesToSceneState();
+
+                        updateLoadingProgress('MTL applied.', 95);
+                        updateModelInfo();
+                        // If textures were provided with the MTL upload, proceed immediately.
+                        if (imageFiles && imageFiles.length > 0) {
+                            const btn = document.getElementById('continueFromLoadingBtn');
+                            if (btn) btn.style.display = 'none';
+                            hideLoading();
+                        } else {
+                            showAwaitTextures();
+                        }
+} catch (err) {
+                        console.error('Apply MTL error', err);
+                        updateLoadingProgress('Apply MTL error: ' + (err?.message || err), 0, true);
+                    }
+                })();
+                return;
+            }
+
+            if (imageFiles.length === 0) return;
+
+            updateLoadingProgress(`Loading ${imageFiles.length} texture files...`, 50);
+            loadTextures(imageFiles);
         }
         
-        function loadTextures(files) {
-            const textureLoader = new THREE.TextureLoader();
-            let loadedCount = 0;
-            const totalFiles = files.length;
-            
-            loadedTextures = {};
-            
-            files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const fileName = file.name.toLowerCase();
-                    const imageUrl = e.target.result;
-                    
-                    let textureType = 'unknown';
-                    if (fileName.includes('albedo') || fileName.includes('diffuse') || fileName.includes('color')) {
-                        textureType = 'albedo';
-                    } else if (fileName.includes('normal')) {
-                        textureType = 'normal';
-                    } else if (fileName.includes('roughness')) {
-                        textureType = 'roughness';
-                    } else if (fileName.includes('metallic') || fileName.includes('metalness')) {
-                        textureType = 'metallic';
-                    } else if (fileName.includes('ao') || fileName.includes('ambient')) {
-                        textureType = 'ao';
-                    } else if (fileName.includes('scatter')) {
-                        textureType = 'scatter';
-                    }
-                    
-                    textureLoader.load(imageUrl, function(texture) {
-                        // Proper UV texture settings
-                        texture.wrapS = THREE.RepeatWrapping;
-                        texture.wrapT = THREE.RepeatWrapping;
-                        texture.flipY = false;
-                        texture.generateMipmaps = true;
-                        texture.minFilter = THREE.LinearMipmapLinearFilter;
-                        texture.magFilter = THREE.LinearFilter;
-                        
-                        loadedTextures[textureType] = texture;
-                        loadedCount++;
-                        
-                        updateLoadingProgress(`Loaded texture ${loadedCount}/${totalFiles}: ${textureType}`, 50 + (loadedCount / totalFiles * 30));
-                        
-                        createTexturePreview(textureType, imageUrl);
-                        
-                        if (loadedCount === totalFiles) {
-                            updateLoadingProgress('All textures loaded! Applying with UV mapping...', 85);
-                            applyTexturesToModelWithUV();
-                        }
-                    }, undefined, function(error) {
-                        console.error('Error loading texture:', file.name, error);
-                        loadedCount++;
-                        if (loadedCount === totalFiles) {
-                            applyTexturesToModelWithUV();
+        
+        async function loadTextures(files) {
+            try {
+                const fileArr = Array.from(files || []);
+                if (!fileArr.length) return;
+
+                function guessTextureSlot(filename) {
+                    const n = (filename || '').toLowerCase();
+                    if (n.includes('albedo') || n.includes('diffuse') || n.includes('basecolor') || n.includes('base_color') || n.includes('col') || n.includes('color')) return 'albedo';
+                    if (n.includes('normal') || n.includes('nrm') || n.includes('nor')) return 'normal';
+                    if (n.includes('rough') || n.includes('rgh')) return 'roughness';
+                    if (n.includes('ao') || n.includes('ambientocclusion') || n.includes('occlusion')) return 'ao';
+                    if (n.includes('metal') || n.includes('metallic')) return 'metallic';
+                    if (n.includes('emiss') || n.includes('emit')) return 'emissive';
+                    return null;
+                }
+
+                // Reset any previously loaded slot textures
+                loadedTextures = {};
+
+                const textureLoader = new THREE.TextureLoader();
+
+                // Helper: load image file as blob URL (file:// safe)
+                function loadImageFileAsTexture(file) {
+                    return new Promise((resolve, reject) => {
+                        try {
+                            const url = URL.createObjectURL(file);
+                            textureLoader.load(url, (tex) => {
+                                try { URL.revokeObjectURL(url); } catch(e) {}
+                                resolve(tex);
+                            }, undefined, (err) => {
+                                try { URL.revokeObjectURL(url); } catch(e) {}
+                                reject(err);
+                            });
+                        } catch (e) {
+                            reject(e);
                         }
                     });
-                };
-                reader.readAsDataURL(file);
-            });
+                }
+
+                await Promise.all(fileArr.map(async (file) => {
+                    const lower = (file.name || '').toLowerCase();
+                    let tex = null;
+
+                    if (lower.endsWith('.dds')) {
+                        tex = await parseDDSFileToThreeTexture(file);
+                    } else if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp')) {
+                        tex = await loadImageFileAsTexture(file);
+                    } else {
+                        // Ignore non-texture here (MTL handled elsewhere)
+                        return;
+                    }
+
+                    const slot = guessTextureSlot(file.name);
+                    if (slot) {
+                        loadedTextures[slot] = tex;
+                    } else {
+                        loadedTextures[file.name] = tex;
+                    }
+                }));
+
+                // Fallback: if only one texture provided and no slot was guessed, treat as albedo
+                if (!loadedTextures.albedo) {
+                    const keys = Object.keys(loadedTextures);
+                    if (keys.length === 1) {
+                        const only = loadedTextures[keys[0]];
+                        if (only instanceof THREE.Texture) {
+                            loadedTextures.albedo = only;
+                        }
+                    }
+                }
+
+                applyTexturesToModelWithUV();
+                syncTexturesToSceneState();
+                buildCanonicalSceneStateFromThree();
+            } catch (err) {
+                console.error("loadTextures error", err);
+            }
         }
+
         
         function createTexturePreview(type, imageUrl) {
             const previews = document.getElementById('texturePreviews');
@@ -687,6 +3355,10 @@
                     side: THREE.DoubleSide,
                     transparent: false
                 });
+
+                // Ensure canvas compositing behavior matches the X-Ray Canvas setting
+                applyXRayCanvasToMaterial(material, viewerSettings.xrayCanvas);
+
                 
                 brainModel = new THREE.Mesh(brainGeometry, material);
                 brainModel.castShadow = true;
@@ -709,15 +3381,23 @@
                 brainModel.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
                 
                 scene.add(brainModel);
+                // Build canonical state + delta registry for pipeline integration
+                buildDeltaRegistryFromBrainModel();
+                buildCanonicalSceneStateFromThree();
+                syncTexturesToSceneState();
+
                 
                 updateLoadingProgress('UV-mapped DAE model loaded!', 95);
                 
                 setTimeout(() => {
                     if (Object.keys(loadedTextures).length === 0) {
-                        hideLoading();
+                        // Do NOT auto-advance; stay on the loading screen so the user can load textures.
+                        showAwaitTextures();
                         updateModelInfo();
                     } else {
                         applyTexturesToModelWithUV();
+                        syncTexturesToSceneState();
+                        buildCanonicalSceneStateFromThree();
                     }
                 }, 1000);
                 
@@ -935,6 +3615,9 @@
                     side: THREE.DoubleSide,
                     transparent: false
                 });
+
+                // Ensure canvas compositing behavior matches the X-Ray Canvas setting
+                applyXRayCanvasToMaterial(material, viewerSettings.xrayCanvas);
                 
                 // Apply textures with proper UV mapping
                 if (loadedTextures.albedo) {
@@ -971,13 +3654,31 @@
                     material.opacity = 0.95;
                     material.transmission = 0.05;
                     console.log('Applied subsurface scattering effect');
+                    // Re-apply patch decision after changing transparency
+                    applyXRayCanvasToMaterial(material, viewerSettings.xrayCanvas);
                 }
                 
-                // Replace material
-                brainModel.material.dispose();
-                brainModel.material = material;
-                
-                updateLoadingProgress('UV-mapped textures applied successfully!', 100);
+                // Replace material on all meshes (brainModel is usually a Group)
+                let appliedCount = 0;
+                brainModel.traverse((node) => {
+                    if (node && node.isMesh) {
+                        try {
+                            if (node.material && typeof node.material.dispose === 'function') node.material.dispose();
+                        } catch(e) {}
+                        node.material = material;
+                        appliedCount++;
+                    }
+                });
+                if (appliedCount === 0 && brainModel && brainModel.isMesh) {
+                    try {
+                        if (brainModel.material && typeof brainModel.material.dispose === 'function') brainModel.material.dispose();
+                    } catch(e) {}
+                    brainModel.material = material;
+                    appliedCount = 1;
+                }
+                // Phase C: ensure canonical texture registry is up to date
+                syncTexturesToSceneState();
+updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                 
                 setTimeout(() => {
                     hideLoading();
@@ -991,14 +3692,43 @@
         }
         
         function updateModelInfo() {
-            const vertexCount = brainModel.geometry.attributes.position.count;
-            const faceCount = brainModel.geometry.index ? brainModel.geometry.index.count / 3 : vertexCount / 3;
-            const textureCount = Object.keys(loadedTextures).length;
-            const hasUV = brainModel.geometry.attributes.uv ? 'Yes' : 'No';
-            
-            document.getElementById('status').textContent = `${currentFileName} loaded with proper UV mapping!`;
-            document.getElementById('modelStats').textContent = `Vertices: ${vertexCount.toLocaleString()} | Faces: ${Math.floor(faceCount).toLocaleString()}`;
-            document.getElementById('textureStats').textContent = `Textures: ${textureCount} | UV Mapping: ${hasUV} | Quality: ${hasUV === 'Yes' ? 'Photorealistic' : 'Basic'}`;
+            try {
+                if (!brainModel) return;
+
+                // Gather mesh stats (DAE may be a single Mesh; GLB/GLTF is usually a Group)
+                const meshes = [];
+                brainModel.traverse((n) => {
+                    if (n && n.isMesh && n.geometry) meshes.push(n);
+                });
+
+                // Fallback: brainModel itself might be a Mesh
+                if (meshes.length === 0 && brainModel.isMesh && brainModel.geometry) meshes.push(brainModel);
+
+                let vertexCount = 0;
+                let faceCount = 0;
+                let hasUV = false;
+
+                for (const m of meshes) {
+                    const g = m.geometry;
+                    const pos = g.attributes && g.attributes.position;
+                    if (pos) vertexCount += pos.count;
+                    if (g.attributes && g.attributes.uv) hasUV = true;
+                    if (g.index && g.index.count) faceCount += (g.index.count / 3);
+                    else if (pos) faceCount += (pos.count / 3);
+                }
+
+                const textureCount = Object.keys(loadedTextures).length;
+
+                const statusEl = document.getElementById('status');
+                const modelStatsEl = document.getElementById('modelStats');
+                const textureStatsEl = document.getElementById('textureStats');
+
+                if (statusEl) statusEl.textContent = `${currentFileName} loaded!`;
+                if (modelStatsEl) modelStatsEl.textContent = `Vertices: ${Math.floor(vertexCount).toLocaleString()} | Faces: ${Math.floor(faceCount).toLocaleString()}`;
+                if (textureStatsEl) textureStatsEl.textContent = `Textures: ${textureCount} loaded | UV Mapping: ${hasUV ? 'Yes' : 'No'} | Quality: ${hasUV ? 'Photorealistic' : 'Basic'}`;
+            } catch (e) {
+                console.warn('updateModelInfo failed', e);
+            }
         }
         
         function animate() {
@@ -1791,7 +4521,7 @@
         
         // Initialize everything
         window.addEventListener('load', () => {
-            console.log('🧠 UV Mapped Brain Model Viewer v4.0');
+            console.log('🧠 3D Model Viewer v4.0');
             console.log('🎨 Advanced UV Mapping & PBR Textures');
             console.log('📁 Proper COLLADA UV coordinate processing');
             console.log('⚡ Photorealistic brain rendering');
@@ -1823,6 +4553,340 @@
                 renderer.dispose();
             }
         });
-    </script>
+    
+
+// =============================
+// [BUILD v3_47] Teacher additions (Phase G/H)
+// =============================
+// Phase G: Entities (Teacher thin client)
+// =============================
+(function initTeacherEntitiesPhaseG(){
+  window.__teacher = window.__teacher || {};
+  window.__teacher.entitiesRoot = window.__teacher.entitiesRoot || null;
+
+  // Ensure sceneState exists
+  if (typeof window.sceneState !== "object" || !window.sceneState) {
+    window.sceneState = window.sceneState || {};
+  }
+  sceneState.entities = sceneState.entities || new Map(); // entityId -> {id, rootName, createdAt, objectPathRoot}
+  sceneState.entityOrder = sceneState.entityOrder || [];  // stable ordering
+
+  function ensureEntitiesRoot() {
+    if (window.__teacher.entitiesRoot && window.__teacher.entitiesRoot.parent) return window.__teacher.entitiesRoot;
+    const root = new THREE.Group();
+    root.name = "__entities";
+    if (typeof scene !== "undefined" && scene) scene.add(root);
+    window.__teacher.entitiesRoot = root;
+    return root;
+  }
+
+  function sanitizeId(id) {
+    return String(id || "").trim().replace(/[^\w\-]/g, "_").replace(/^_+/, "") || ("entity_" + Math.random().toString(16).slice(2));
+  }
+
+  function updateEntityStatsUI() {
+    const el = document.getElementById("entityStats");
+    if (!el) return;
+    el.textContent = `Entities: ${sceneState.entities.size}`;
+  }
+
+  function computeObjectPath(node) {
+    // reuse existing stable path builder if present
+    if (typeof window._computeStablePathId === "function") return window._computeStablePathId(node);
+    // fallback: build name chain
+    const parts = [];
+    let cur = node;
+    while (cur && cur.parent) {
+      parts.push(cur.name || cur.type || "Node");
+      cur = cur.parent;
+      if (parts.length > 32) break;
+    }
+    return "__root/" + parts.reverse().join("/");
+  }
+
+  window.__registerEntityFromObject3D = function(entityId, obj3d) {
+    ensureEntitiesRoot();
+    const id = sanitizeId(entityId);
+    const rootName = `entity_${id}`;
+    obj3d.name = obj3d.name || rootName;
+
+    // Wrap into an entity group (so objectPath includes entityId)
+    const wrapper = new THREE.Group();
+    wrapper.name = rootName;
+    wrapper.userData.__entityId = id;
+    wrapper.userData.__teacherEntity = true;
+    wrapper.add(obj3d);
+
+    // Add to entities root
+    window.__teacher.entitiesRoot.add(wrapper);
+
+    const record = {
+      id,
+      rootName,
+      createdAt: Date.now(),
+      objectPathRoot: computeObjectPath(wrapper),
+    };
+    sceneState.entities.set(id, record);
+    if (!sceneState.entityOrder.includes(id)) sceneState.entityOrder.push(id);
+
+    updateEntityStatsUI();
+    console.log("[ENT] Registered entity", record);
+    return record;
+  };
+
+  window.registerCurrentModelAsEntity = function(entityId){
+    if (typeof brainModel === "undefined" || !brainModel) {
+      console.warn("[ENT] No brainModel to register yet.");
+      return null;
+    }
+    // Avoid double-registering the same model wrapper
+    const already = (brainModel.parent && brainModel.parent.userData && brainModel.parent.userData.__teacherEntity);
+    if (already) {
+      console.warn("[ENT] brainModel already inside an entity wrapper:", brainModel.parent.name);
+      return sceneState.entities.get(brainModel.parent.userData.__entityId) || null;
+    }
+
+    // Detach current model from scene and register
+    try {
+      if (brainModel.parent) brainModel.parent.remove(brainModel);
+    } catch(e) {}
+
+    const rec = window.__registerEntityFromObject3D(entityId || "main", brainModel);
+
+    // Keep brainModel reference pointing at the model (not wrapper) for existing code paths
+    // but ensure traversal for binding capture uses entitiesRoot when present.
+    updateEntityStatsUI();
+    return rec;
+  };
+
+  window.duplicateEntity = function(sourceEntityId, newEntityId){
+    ensureEntitiesRoot();
+    const srcId = sourceEntityId || sceneState.entityOrder[0];
+    if (!srcId) { console.warn("[ENT] No source entity to duplicate."); return null; }
+    const srcRec = sceneState.entities.get(srcId);
+    if (!srcRec) { console.warn("[ENT] Unknown entity:", srcId); return null; }
+
+    // Find wrapper by name
+    const wrapper = window.__teacher.entitiesRoot.getObjectByName(srcRec.rootName);
+    if (!wrapper) { console.warn("[ENT] Could not find wrapper:", srcRec.rootName); return null; }
+
+    // Clone wrapper children (model)
+    const model = wrapper.children && wrapper.children[0];
+    if (!model) { console.warn("[ENT] No model under wrapper."); return null; }
+
+    const clone = model.clone(true);
+    // Clone materials so edits don't bleed between entities
+    clone.traverse(o=>{
+      if (o.isMesh && o.material) {
+        if (Array.isArray(o.material)) o.material = o.material.map(m=>m.clone());
+        else o.material = o.material.clone();
+      }
+    });
+
+    const nid = sanitizeId(newEntityId || (srcId + "_copy"));
+    return window.__registerEntityFromObject3D(nid, clone);
+  };
+
+  // UI wrappers
+  window.registerCurrentModelAsEntityUI = function(){
+    const id = prompt("Entity ID?", "player_001") || "player_001";
+    return window.registerCurrentModelAsEntity(id);
+  };
+  window.duplicateEntityUI = function(){
+    const src = prompt("Source entity ID? (blank = first)", "") || "";
+    const dst = prompt("New entity ID?", (src ? (src+"_copy") : "player_002")) || "player_002";
+    return window.duplicateEntity(src || undefined, dst);
+  };
+  window.dumpEntitiesUI = function(){
+    const rows = Array.from(sceneState.entities.values());
+    console.table(rows);
+    return rows;
+  };
+  window.__verifyEntities = function(){
+    return {
+      count: sceneState.entities.size,
+      ids: Array.from(sceneState.entities.keys()),
+      order: sceneState.entityOrder.slice()
+    };
+  };
+  window.verifyEntitiesUI = function(){
+    const v = window.__verifyEntities();
+    console.log("[VERIFY] Entities", v);
+    updateEntityStatsUI();
+    return v;
+  };
+
+  // Auto-register the first loaded model after a short delay (keeps current single-model UX)
+  setTimeout(()=>{
+    try {
+      if (sceneState.entities.size === 0 && typeof brainModel !== "undefined" && brainModel) {
+        window.registerCurrentModelAsEntity("main");
+      }
+    } catch(e) {}
+  }, 800);
+
+  updateEntityStatsUI();
+})();
+
+// =============================
+// Phase H: Dataset capture (Teacher export)
+// =============================
+(function initTeacherCapturePhaseH(){
+  window.__teacher = window.__teacher || {};
+  window.__teacher.captureSeq = window.__teacher.captureSeq || 0;
+
+  function downloadBlob(blob, filename) {
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }
+
+  function getCameraState(){
+    if (typeof camera === "undefined" || !camera) return null;
+    return {
+      position: [camera.position.x, camera.position.y, camera.position.z],
+      quaternion: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w],
+      fov: camera.fov,
+      near: camera.near,
+      far: camera.far,
+      aspect: camera.aspect
+    };
+  }
+
+  function projectBoxToScreen(box, cam, domEl){
+    const pts = [
+      new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+      new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+      new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+      new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+      new THREE.Vector3(box.max.x, box.max.y, box.max.z),
+    ];
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    const w = domEl.width || domEl.clientWidth;
+    const h = domEl.height || domEl.clientHeight;
+    for (const p of pts){
+      const q = p.clone().project(cam);
+      const sx = (q.x * 0.5 + 0.5) * w;
+      const sy = (-q.y * 0.5 + 0.5) * h;
+      if (!Number.isFinite(sx) || !Number.isFinite(sy)) continue;
+      minX = Math.min(minX, sx); minY = Math.min(minY, sy);
+      maxX = Math.max(maxX, sx); maxY = Math.max(maxY, sy);
+    }
+    if (!Number.isFinite(minX)) return null;
+    return {x:minX, y:minY, w:(maxX-minX), h:(maxY-minY)};
+  }
+
+  function gatherEntitiesSnapshot(includeBboxes){
+    const snapshot = [];
+    const domEl = (typeof renderer !== "undefined" && renderer) ? renderer.domElement : null;
+    const cam = (typeof camera !== "undefined") ? camera : null;
+
+    // Find entities root
+    const entitiesRoot = (window.__teacher && window.__teacher.entitiesRoot) ? window.__teacher.entitiesRoot : null;
+
+    const ids = (sceneState && sceneState.entityOrder) ? sceneState.entityOrder.slice() : [];
+    for (const id of ids){
+      const rec = sceneState.entities.get(id);
+      if (!rec) continue;
+      let wrapper = null;
+      if (entitiesRoot) wrapper = entitiesRoot.getObjectByName(rec.rootName);
+      const model = wrapper && wrapper.children && wrapper.children[0];
+      const out = {
+        entityId: id,
+        rootName: rec.rootName,
+        objectPathRoot: rec.objectPathRoot,
+        world: null,
+        bbox2d: null,
+      };
+      if (wrapper){
+        out.world = {
+          position: [wrapper.position.x, wrapper.position.y, wrapper.position.z],
+          quaternion: [wrapper.quaternion.x, wrapper.quaternion.y, wrapper.quaternion.z, wrapper.quaternion.w],
+          scale: [wrapper.scale.x, wrapper.scale.y, wrapper.scale.z],
+        };
+      }
+      if (includeBboxes && model && cam && domEl){
+        const box = new THREE.Box3().setFromObject(model);
+        out.bbox2d = projectBoxToScreen(box, cam, domEl);
+      }
+      snapshot.push(out);
+    }
+    return snapshot;
+  }
+
+  function gatherBindingsSnapshot(){
+    try {
+      if (typeof __verifyBindings === "function") {
+        const v = __verifyBindings();
+        return v.bindings || [];
+      }
+    } catch(e) {}
+    return [];
+  }
+
+  window.captureTeacherFrame = async function(opts){
+    opts = opts || {};
+    const includeBboxes = !!opts.includeBboxes;
+    const includeBindings = !!opts.includeBindings;
+
+    if (typeof renderer === "undefined" || !renderer) {
+      console.warn("[CAPTURE] No renderer available.");
+      return null;
+    }
+
+    // Ensure a render has happened recently
+    try { renderer.render(scene, camera); } catch(e) {}
+
+    const seq = (++window.__teacher.captureSeq);
+    const ts = Date.now();
+    const tick = (typeof window.__teacherTick === "number") ? window.__teacherTick : null;
+
+    // PNG
+    const dataUrl = renderer.domElement.toDataURL("image/png");
+    const pngBlob = await (await fetch(dataUrl)).blob();
+
+    // JSON metadata
+    const meta = {
+      schema_version: "teacher_v1",
+      capturedAt: new Date(ts).toISOString(),
+      unixMs: ts,
+      tick,
+      camera: getCameraState(),
+      textures: (typeof __verifyTextureState === "function") ? __verifyTextureState() : null,
+      entities: gatherEntitiesSnapshot(includeBboxes),
+      bindings: includeBindings ? gatherBindingsSnapshot() : undefined
+    };
+
+    const jsonBlob = new Blob([JSON.stringify(meta, null, 2)], {type:"application/json"});
+
+    // Filenames
+    const base = `teacher_${ts}_${seq}`;
+    downloadBlob(pngBlob, `${base}.png`);
+    downloadBlob(jsonBlob, `${base}.json`);
+
+    const statsEl = document.getElementById("teacherCaptureStats");
+    if (statsEl) statsEl.textContent = `Last capture: ${base} (PNG + JSON)`;
+    console.log("[CAPTURE] Saved", base, meta);
+
+    return {base, meta};
+  };
+
+  window.captureTeacherFrameUI = function(){
+    const includeBboxes = !!document.getElementById("teacherIncludeBboxes")?.checked;
+    const includeBindings = !!document.getElementById("teacherIncludeBindings")?.checked;
+    return window.captureTeacherFrame({includeBboxes, includeBindings});
+  };
+})();
+
+
+</script>
 </body>
 </html>

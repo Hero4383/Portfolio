@@ -291,6 +291,13 @@
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(52, 73, 94, 0.2);
         }
+
+        .project-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
         
         .project-link:hover {
             transform: translateY(-2px);
@@ -564,7 +571,10 @@
                             </div>
                         </div>
                         
-                        <a href="3d-model-viewer/" class="project-link">Launch 3D Viewer</a>
+                        <div class="project-links">
+                            <a href="3d-model-viewer/index.html" class="project-link">Launch 3D Viewer</a>
+                            <a href="3d-model-viewer/extra-resources.zip" class="project-link">Download Resources</a>
+                        </div>
                     </div>
                 </div>
                
