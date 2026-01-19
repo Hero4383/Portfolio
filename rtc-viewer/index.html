@@ -68,6 +68,13 @@
             color: rgba(0, 255, 65, 0.8);
         }
 
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
         .status {
             padding: 10px;
             border-radius: 8px;
@@ -212,6 +219,16 @@
             outline-offset: 6px;
         }
 
+        #streamOverlay.outline-hidden,
+        #streamOverlay.outline-hidden.resize-active {
+            outline: none;
+        }
+
+        .stream-outline-visible {
+            outline: 1px dashed rgba(180, 0, 255, 0.75);
+            outline-offset: 2px;
+        }
+
         .stage.full #streamOverlay {
             inset: 0;
             width: 100%;
@@ -267,9 +284,15 @@
                 <button id="requestBtn">Request Stream</button>
                 <button id="disconnectBtn" disabled>Disconnect</button>
 
-                <div class="toggle">
-                    <input type="checkbox" id="watermarkToggle" checked>
-                    <label for="watermarkToggle">Watermark mode (overlay)</label>
+                <div class="control-group">
+                    <div class="toggle">
+                        <input type="checkbox" id="watermarkToggle" checked>
+                        <label for="watermarkToggle">Watermark mode (overlay)</label>
+                    </div>
+                    <div class="toggle">
+                        <input type="checkbox" id="outlineToggle" checked>
+                        <label for="outlineToggle">Show overlay outline</label>
+                    </div>
                 </div>
 
                 <div class="file-input">Optional background video:</div>
@@ -306,6 +329,7 @@
         const requestBtn = document.getElementById('requestBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
         const watermarkToggle = document.getElementById('watermarkToggle');
+        const outlineToggle = document.getElementById('outlineToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
         const streamOverlay = document.getElementById('streamOverlay');
         const resizeHandle = document.getElementById('resizeHandle');
@@ -372,6 +396,11 @@
 
         function showStream(active) {
             noStream.style.display = active ? 'none' : 'grid';
+        }
+
+        function setOutlineVisible(visible) {
+            streamOverlay.classList.toggle('outline-hidden', !visible);
+            streamOverlay.classList.toggle('stream-outline-visible', visible);
         }
 
         function getContentBoundsInOverlay() {
@@ -695,6 +724,12 @@
                 stageEl.classList.add('full');
             }
         });
+
+        outlineToggle.addEventListener('change', () => {
+            setOutlineVisible(outlineToggle.checked);
+        });
+
+        setOutlineVisible(outlineToggle.checked);
 
         streamOverlay.addEventListener('pointerdown', (event) => {
             if (event.target === resizeHandle) return;
