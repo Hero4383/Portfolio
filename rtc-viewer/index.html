@@ -1268,44 +1268,37 @@
                 }
             }
 
-            const sharedMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                roughness: 0.8,
-                metalness: 0.1,
-                side: THREE.DoubleSide,
-                transparent: false
-            });
-
-            if (slotTextures.albedo) sharedMaterial.map = slotTextures.albedo;
-            if (slotTextures.normal) {
-                sharedMaterial.normalMap = slotTextures.normal;
-                sharedMaterial.normalScale = new THREE.Vector2(1, 1);
-            }
-            if (slotTextures.roughness) sharedMaterial.roughnessMap = slotTextures.roughness;
-            if (slotTextures.metallic) sharedMaterial.metalnessMap = slotTextures.metallic;
-            if (slotTextures.ao) {
-                sharedMaterial.aoMap = slotTextures.ao;
-                sharedMaterial.aoMapIntensity = 1.0;
-            }
-            if (slotTextures.emissive) sharedMaterial.emissiveMap = slotTextures.emissive;
-            if (slotTextures.scatter) {
-                sharedMaterial.transparent = true;
-                sharedMaterial.opacity = 0.95;
-                sharedMaterial.transmission = 0.05;
-            }
-            sharedMaterial.depthWrite = true;
-            sharedMaterial.needsUpdate = true;
-
             forEachDeltaMesh((node) => {
                 if (slotTextures.ao && node.geometry && node.geometry.attributes && node.geometry.attributes.uv && !node.geometry.attributes.uv2) {
                     node.geometry.setAttribute('uv2', node.geometry.attributes.uv);
                 }
-                if (Array.isArray(node.material)) {
-                    node.material.forEach((mat) => mat && mat.dispose && mat.dispose());
-                } else if (node.material && node.material.dispose) {
-                    node.material.dispose();
-                }
-                node.material = sharedMaterial;
+                const mats = Array.isArray(node.material) ? node.material : [node.material];
+                mats.forEach((mat) => {
+                    if (!mat) return;
+                    if (slotTextures.albedo) {
+                        mat.map = slotTextures.albedo;
+                        if (mat.color) mat.color.set(1, 1, 1);
+                    }
+                    if (slotTextures.normal) {
+                        mat.normalMap = slotTextures.normal;
+                        mat.normalScale = new THREE.Vector2(1, 1);
+                    }
+                    if (slotTextures.roughness) mat.roughnessMap = slotTextures.roughness;
+                    if (slotTextures.metallic) mat.metalnessMap = slotTextures.metallic;
+                    if (slotTextures.ao) {
+                        mat.aoMap = slotTextures.ao;
+                        mat.aoMapIntensity = 1.0;
+                    }
+                    if (slotTextures.emissive) mat.emissiveMap = slotTextures.emissive;
+                    if (slotTextures.scatter) {
+                        mat.transparent = true;
+                        mat.opacity = 0.95;
+                        mat.transmission = 0.05;
+                    }
+                    mat.side = THREE.DoubleSide;
+                    mat.depthWrite = true;
+                    mat.needsUpdate = true;
+                });
             });
         }
 
@@ -1530,6 +1523,7 @@
         }
 
         function getContentBoundsInOverlay() {
+            if (renderMode === 'delta') return null;
             if (!contentBounds || !streamCanvas.width || !streamCanvas.height) return null;
             const scaleX = streamOverlay.clientWidth / streamCanvas.width;
             const scaleY = streamOverlay.clientHeight / streamCanvas.height;
