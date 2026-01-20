@@ -297,6 +297,9 @@
   <button onclick="dumpEntitiesUI()" style="flex:1; margin: 5px 0;">Dump Entities</button>
   <button onclick="verifyEntitiesUI()" style="flex:1; margin: 5px 0;">Verify Entities</button>
 </div>
+<div style="display:flex; gap:6px; margin: 6px 0;">
+  <button onclick="spawnCubeEntityUI()" style="flex:1; margin: 5px 0;">Spawn Cube Entity</button>
+</div>
 
 <hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
 <div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">📸 Dataset Export (Phase H)</div>
@@ -345,6 +348,7 @@
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         // Matrix background effect
@@ -468,11 +472,19 @@
         let streamLocalStream = null;
         let streamCanvas = null;
         let streamCtx = null;
+        let streamRenderer = null;
+        let streamLightingSnapshot = null;
+        const streamSize = new THREE.Vector2();
         let streamSessionId = null;
         let streamOfferSdp = null;
         let streamOfferTimer = null;
         let streamOfferAttempts = 0;
-        const streamKeyColor = { r: 255, g: 0, b: 255 };
+        const streamKeyColor = { r: 0, g: 255, b: 255 };
+        let deltaSessionId = null;
+        let deltaClientConnected = false;
+        let deltaLastSent = 0;
+        const deltaSendIntervalMs = 1000 / 90;
+        let deltaTick = 0;
         // ===== Uploaded Texture Registry (global) =====
         // Keyed by lowercase basename (e.g. "checker_albedo.png", "foo.dds")
         const __uploadedTexFilesByBasename = new Map();     // basename -> File
@@ -573,6 +585,7 @@
         let colorIndex = 0;
         let currentFileName = '';
         let loadedTextures = {};
+        const loadedTextureFilesBySlot = new Map();
         let lastRenderTime = null;
         const rotationSpeed = 0.6; // radians per second (matches ~0.01/frame at 60fps)
 
@@ -1695,11 +1708,34 @@ function ingestDeltaPacket(packet) {
       } else if (t === 'setTransform') {
         // target by objectPath (preferred) or entityId (maps to main model root)
         const targetPath = op.objectPath || null;
-        const obj = targetPath ? findObjectByPath(targetPath) : (window.brainModel || brainModel);
+        let obj = null;
+        if (op.entityId && sceneState && sceneState.entities) {
+          const rec = sceneState.entities.get(op.entityId);
+          if (rec && window.__teacher && window.__teacher.entitiesRoot) {
+            obj = window.__teacher.entitiesRoot.getObjectByName(rec.rootName);
+          }
+        }
+        if (!obj && targetPath) obj = findObjectByPath(targetPath);
+        if (!obj) obj = (window.brainModel || brainModel);
         if (obj) {
           if (op.position && Array.isArray(op.position) && op.position.length === 3) obj.position.set(op.position[0], op.position[1], op.position[2]);
           if (op.rotation_quat && Array.isArray(op.rotation_quat) && op.rotation_quat.length === 4) obj.quaternion.set(op.rotation_quat[0], op.rotation_quat[1], op.rotation_quat[2], op.rotation_quat[3]);
           if (op.scale && Array.isArray(op.scale) && op.scale.length === 3) obj.scale.set(op.scale[0], op.scale[1], op.scale[2]);
+        }
+      } else if (t === 'setVisibility') {
+        let obj = null;
+        if (op.entityId && sceneState && sceneState.entities) {
+          const rec = sceneState.entities.get(op.entityId);
+          if (rec && window.__teacher && window.__teacher.entitiesRoot) {
+            obj = window.__teacher.entitiesRoot.getObjectByName(rec.rootName);
+          }
+        }
+        if (!obj && op.objectPath) obj = findObjectByPath(op.objectPath);
+        if (!obj) obj = (window.brainModel || brainModel);
+        if (obj) obj.visible = !!op.visible;
+      } else if (t === 'spawnEntity') {
+        if (op.primitive === 'cube' && typeof window.spawnCubeEntity === 'function') {
+          window.spawnCubeEntity(op.entityId || undefined, { size: op.size || 0.2 });
         }
       } else if (t === 'setXRayCanvas') {
         const enabled = !!op.enabled;
@@ -1962,6 +1998,15 @@ window.applyTextureBinding = applyTextureBinding;
             }
         }
 
+        function sendStreamMessageRaw(payload) {
+            if (!streamChannel) return;
+            try {
+                streamChannel.postMessage(payload);
+            } catch (error) {
+                console.warn('Stream channel send failed', error);
+            }
+        }
+
         function readStreamMessage(event) {
             const data = event.data;
             if (typeof data === 'string') {
@@ -1979,6 +2024,256 @@ window.applyTextureBinding = applyTextureBinding;
             const stopBtn = document.getElementById('stopStreamBtn');
             if (startBtn) startBtn.disabled = isStreaming;
             if (stopBtn) stopBtn.disabled = !isStreaming;
+        }
+
+        function captureLightingSnapshot() {
+            if (!scene) return [];
+            return scene.children
+                .filter((child) => child && child.isLight)
+                .map((light) => ({
+                    light,
+                    intensity: light.intensity,
+                    color: light.color ? light.color.clone() : null,
+                    visible: light.visible
+                }));
+        }
+
+        function applyLightingSnapshot(snapshot) {
+            if (!snapshot) return;
+            snapshot.forEach((entry) => {
+                if (!entry || !entry.light) return;
+                entry.light.intensity = entry.intensity;
+                if (entry.color && entry.light.color) {
+                    entry.light.color.copy(entry.color);
+                }
+                entry.light.visible = entry.visible;
+            });
+        }
+
+        function getModelSize(model) {
+            if (!model || typeof THREE === 'undefined') return null;
+            try {
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const maxSize = Math.max(size.x, size.y, size.z);
+                return Number.isFinite(maxSize) ? maxSize : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getPrimaryMaterialSettings() {
+            if (!brainModel || typeof THREE === 'undefined') return null;
+            let material = null;
+            brainModel.traverse((node) => {
+                if (material || !node || !node.isMesh || !node.material) return;
+                material = Array.isArray(node.material) ? node.material[0] : node.material;
+            });
+            if (!material) return null;
+            return {
+                color: material.color ? [material.color.r, material.color.g, material.color.b] : null,
+                roughness: typeof material.roughness === 'number' ? material.roughness : null,
+                metalness: typeof material.metalness === 'number' ? material.metalness : null,
+                aoIntensity: typeof material.aoMapIntensity === 'number' ? material.aoMapIntensity : null,
+                opacity: typeof material.opacity === 'number' ? material.opacity : null,
+                transmission: typeof material.transmission === 'number' ? material.transmission : null,
+                transparent: !!material.transparent,
+                wireframe: !!material.wireframe,
+                side: material.side
+            };
+        }
+
+        function exportModelForDelta() {
+            return new Promise((resolve, reject) => {
+                if (!brainModel || typeof THREE === 'undefined' || !THREE.GLTFExporter) {
+                    reject(new Error('GLTFExporter unavailable or model missing'));
+                    return;
+                }
+                try {
+                    const exporter = new THREE.GLTFExporter();
+                    exporter.parse(
+                        brainModel,
+                        (jsonResult) => {
+                            if (jsonResult && typeof jsonResult === 'object') {
+                                resolve({ format: 'gltf', data: jsonResult });
+                                return;
+                            }
+                            reject(new Error('Unexpected GLTF export result'));
+                        },
+                        (error) => {
+                            if (error) {
+                                console.warn('GLTF export failed, trying binary', error);
+                            }
+                            try {
+                                exporter.parse(
+                                    brainModel,
+                                    (result) => {
+                                        if (result instanceof ArrayBuffer) {
+                                            resolve({ format: 'glb', data: result });
+                                        } else if (ArrayBuffer.isView(result)) {
+                                            const buffer = result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength);
+                                            resolve({ format: 'glb', data: buffer });
+                                        } else if (result && result instanceof Blob) {
+                                            result.arrayBuffer().then((buf) => resolve({ format: 'glb', data: buf })).catch(reject);
+                                        } else {
+                                            reject(new Error('Unexpected GLB export result'));
+                                        }
+                                    },
+                                    (binaryError) => reject(binaryError || new Error('GLB export failed')),
+                                    { binary: true, embedImages: true }
+                                );
+                            } catch (binaryCatch) {
+                                reject(binaryCatch);
+                            }
+                        },
+                        { binary: false, embedImages: true }
+                    );
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        function guessMimeFromName(name) {
+            const lower = (name || '').toLowerCase();
+            if (lower.endsWith('.png')) return 'image/png';
+            if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+            if (lower.endsWith('.webp')) return 'image/webp';
+            if (lower.endsWith('.bmp')) return 'image/bmp';
+            if (lower.endsWith('.tga')) return 'image/x-tga';
+            return 'application/octet-stream';
+        }
+
+        async function textureToPngBuffer(texture) {
+            if (!texture || !texture.image) return null;
+            try {
+                const image = texture.image;
+                const width = image.naturalWidth || image.videoWidth || image.width;
+                const height = image.naturalHeight || image.videoHeight || image.height;
+                if (!width || !height) return null;
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return null;
+                if (image.data && image.width && image.height) {
+                    const data = new Uint8ClampedArray(image.data);
+                    const imageData = new ImageData(data, image.width, image.height);
+                    ctx.putImageData(imageData, 0, 0);
+                } else {
+                    ctx.drawImage(image, 0, 0, width, height);
+                }
+                const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) return null;
+                return await blob.arrayBuffer();
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function buildDeltaTexturePayloads() {
+            const textures = [];
+            const usedSlots = new Set();
+            const orderedSlots = ['albedo', 'normal', 'roughness', 'ao', 'metallic', 'emissive', 'scatter'];
+
+            const addPayload = async (slot, file, texMeta) => {
+                if (!slot || !file || usedSlots.has(slot)) return;
+                const buffer = await file.arrayBuffer();
+                const payload = {
+                    slot,
+                    name: file.name || slot,
+                    type: file.type || guessMimeFromName(file.name),
+                    buffer
+                };
+                if (texMeta && typeof texMeta.flipY === 'boolean') payload.flipY = texMeta.flipY;
+                if (texMeta && typeof texMeta.encoding === 'number') payload.encoding = texMeta.encoding;
+                textures.push(payload);
+                usedSlots.add(slot);
+            };
+
+            for (const [slot, file] of loadedTextureFilesBySlot.entries()) {
+                const texMeta = loadedTextures && loadedTextures[slot] ? loadedTextures[slot] : null;
+                await addPayload(slot, file, texMeta);
+            }
+
+            for (const file of __uploadedTexFilesByBasename.values()) {
+                const slot = guessTextureSlotFromName(file.name);
+                if (!slot || usedSlots.has(slot)) continue;
+                const texMeta = loadedTextures && loadedTextures[slot] ? loadedTextures[slot] : null;
+                await addPayload(slot, file, texMeta);
+            }
+
+            for (const slot of orderedSlots) {
+                if (usedSlots.has(slot)) continue;
+                const texMeta = loadedTextures && loadedTextures[slot] ? loadedTextures[slot] : null;
+                if (!texMeta) continue;
+                const buffer = await textureToPngBuffer(texMeta);
+                if (!buffer) continue;
+                textures.push({
+                    slot,
+                    name: `${slot}.png`,
+                    type: 'image/png',
+                    buffer,
+                    flipY: !!texMeta.flipY,
+                    encoding: typeof texMeta.encoding === 'number' ? texMeta.encoding : undefined
+                });
+                usedSlots.add(slot);
+            }
+
+            return textures;
+        }
+
+        function buildDeltaRegistrySnapshot() {
+            try {
+                if (window.sceneState && sceneState.entities && sceneState.entities.size === 0 && typeof registerCurrentModelAsEntity === 'function' && brainModel) {
+                    registerCurrentModelAsEntity('main');
+                }
+                const entities = [];
+                if (window.sceneState && sceneState.entityOrder && sceneState.entities) {
+                    for (const id of sceneState.entityOrder) {
+                        const rec = sceneState.entities.get(id);
+                        if (!rec) continue;
+                        entities.push({
+                            entityId: rec.id || id,
+                            rootName: rec.rootName || null,
+                            objectPathRoot: rec.objectPathRoot || null,
+                            primitive: rec.primitive || null,
+                            size: rec.size || null
+                        });
+                    }
+                }
+                let bindings = [];
+                if (typeof __verifyBindings === 'function') {
+                    const v = __verifyBindings();
+                    if (v && Array.isArray(v.bindings)) bindings = v.bindings;
+                }
+                return { entities, bindings };
+            } catch (error) {
+                return { entities: [], bindings: [] };
+            }
+        }
+
+        function collectEntityTransforms() {
+            const out = [];
+            if (!window.sceneState || !sceneState.entityOrder || !sceneState.entities) return out;
+            const entitiesRoot = (window.__teacher && window.__teacher.entitiesRoot) ? window.__teacher.entitiesRoot : null;
+            for (const id of sceneState.entityOrder) {
+                const rec = sceneState.entities.get(id);
+                if (!rec) continue;
+                let wrapper = null;
+                if (entitiesRoot && rec.rootName) {
+                    wrapper = entitiesRoot.getObjectByName(rec.rootName);
+                }
+                if (!wrapper) continue;
+                out.push({
+                    entityId: rec.id || id,
+                    position: [wrapper.position.x, wrapper.position.y, wrapper.position.z],
+                    quaternion: [wrapper.quaternion.x, wrapper.quaternion.y, wrapper.quaternion.z, wrapper.quaternion.w],
+                    scale: [wrapper.scale.x, wrapper.scale.y, wrapper.scale.z]
+                });
+            }
+            return out;
         }
 
         function sendStreamOffer() {
@@ -2005,13 +2300,41 @@ window.applyTextureBinding = applyTextureBinding;
 
             streamSessionId = Math.random().toString(36).slice(2);
             streamOfferAttempts = 0;
+            deltaSessionId = streamSessionId;
+            deltaClientConnected = false;
+
+            if (brainModel) {
+                sendStreamMessage({
+                    type: 'delta-ready',
+                    role: 'viewer',
+                    sessionId: deltaSessionId,
+                    modelName: currentFileName || 'model'
+                });
+            }
 
             try {
-                streamCanvas = document.createElement('canvas');
-                streamCtx = streamCanvas.getContext('2d');
-                streamCanvas.width = renderer.domElement.width;
-                streamCanvas.height = renderer.domElement.height;
-                streamLocalStream = streamCanvas.captureStream(30);
+                if (!streamRenderer) {
+                    streamRenderer = new THREE.WebGLRenderer({
+                        antialias: true,
+                        alpha: true,
+                        preserveDrawingBuffer: true,
+                        powerPreference: 'high-performance'
+                    });
+                    streamRenderer.setPixelRatio(renderer.getPixelRatio());
+                    streamRenderer.physicallyCorrectLights = renderer.physicallyCorrectLights;
+                    streamRenderer.toneMapping = renderer.toneMapping;
+                    streamRenderer.toneMappingExposure = renderer.toneMappingExposure;
+                    streamRenderer.outputEncoding = renderer.outputEncoding;
+                    streamRenderer.shadowMap.enabled = renderer.shadowMap.enabled;
+                    streamRenderer.shadowMap.type = renderer.shadowMap.type;
+                }
+                renderer.getSize(streamSize);
+                streamRenderer.setSize(streamSize.x, streamSize.y, false);
+                streamRenderer.setClearColor(0x00ffff, 1);
+                streamCanvas = streamRenderer.domElement;
+                streamCtx = null;
+                streamLocalStream = streamCanvas.captureStream(90);
+                streamLightingSnapshot = captureLightingSnapshot();
             } catch (error) {
                 updateStreamStatus('Stream: captureStream failed');
                 return;
@@ -2022,7 +2345,15 @@ window.applyTextureBinding = applyTextureBinding;
             });
 
             streamLocalStream.getTracks().forEach((track) => {
-                streamPc.addTrack(track, streamLocalStream);
+                const sender = streamPc.addTrack(track, streamLocalStream);
+                if (sender && sender.getParameters) {
+                    const params = sender.getParameters();
+                    params.degradationPreference = 'maintain-resolution';
+                    params.encodings = params.encodings || [{}];
+                    params.encodings[0].maxBitrate = 8000000;
+                    params.encodings[0].maxFramerate = 90;
+                    sender.setParameters(params).catch(() => {});
+                }
             });
 
             streamPc.onicecandidate = (event) => {
@@ -2096,6 +2427,14 @@ window.applyTextureBinding = applyTextureBinding;
                 });
             }
 
+            if (streamChannel && deltaSessionId) {
+                sendStreamMessage({
+                    type: 'delta-stop',
+                    role: 'viewer',
+                    sessionId: deltaSessionId
+                });
+            }
+
             if (streamPc) {
                 streamPc.onicecandidate = null;
                 streamPc.oniceconnectionstatechange = null;
@@ -2109,9 +2448,12 @@ window.applyTextureBinding = applyTextureBinding;
             }
             streamCanvas = null;
             streamCtx = null;
+            streamLightingSnapshot = null;
 
             streamSessionId = null;
             streamOfferSdp = null;
+            deltaSessionId = null;
+            deltaClientConnected = false;
             setStreamButtons(false);
             updateStreamStatus(message || 'Stream: idle');
         }
@@ -2121,10 +2463,78 @@ window.applyTextureBinding = applyTextureBinding;
                 const msg = readStreamMessage(event) || {};
                 if (msg.role === 'viewer') return;
 
+                if (msg.type === 'delta-ping' && deltaSessionId) {
+                    sendStreamMessage({
+                        type: 'delta-ready',
+                        role: 'viewer',
+                        sessionId: deltaSessionId,
+                        modelName: currentFileName || 'model'
+                    });
+                    return;
+                }
+
+                if (msg.type === 'delta-request-assets' && msg.sessionId === deltaSessionId) {
+                    try {
+                        const asset = await exportModelForDelta();
+                        deltaClientConnected = true;
+                        const snapshot = {
+                            model: {
+                                position: [brainModel.position.x, brainModel.position.y, brainModel.position.z],
+                                quaternion: [brainModel.quaternion.x, brainModel.quaternion.y, brainModel.quaternion.z, brainModel.quaternion.w],
+                                scale: [brainModel.scale.x, brainModel.scale.y, brainModel.scale.z]
+                            },
+                            camera: {
+                                position: [camera.position.x, camera.position.y, camera.position.z],
+                                quaternion: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w]
+                            },
+                            modelSize: getModelSize(brainModel),
+                            material: getPrimaryMaterialSettings()
+                        };
+                        const textures = await buildDeltaTexturePayloads();
+                        const registry = buildDeltaRegistrySnapshot();
+                        sendStreamMessageRaw({
+                            type: 'delta-assets',
+                            role: 'viewer',
+                            sessionId: deltaSessionId,
+                            modelName: currentFileName || 'model',
+                            format: asset.format,
+                            data: asset.data,
+                            snapshot,
+                            textures,
+                            registry
+                        });
+                    } catch (error) {
+                        console.warn('Delta asset export failed', error);
+                        sendStreamMessage({
+                            type: 'delta-error',
+                            role: 'viewer',
+                            sessionId: deltaSessionId,
+                            message: error?.message || 'Delta asset export failed'
+                        });
+                    }
+                    return;
+                }
+
+                if (msg.type === 'delta-op') {
+                    if (msg.sessionId && deltaSessionId && msg.sessionId !== deltaSessionId) return;
+                    try {
+                        const payload = msg.payload || msg;
+                        ingestDeltaPacket(payload);
+                    } catch (error) {
+                        console.warn('Delta op ingest failed', error);
+                    }
+                    return;
+                }
+
                 if (msg.type === 'request-offer') {
                     if (streamPc && streamOfferSdp && streamSessionId) {
                         sendStreamOffer();
                     }
+                    return;
+                }
+
+                if (msg.type === 'delta-stop' && msg.sessionId === deltaSessionId) {
+                    deltaClientConnected = false;
                     return;
                 }
 
@@ -3432,24 +3842,26 @@ function handleDAESelect(event) {
         }
         
         
+        function guessTextureSlotFromName(filename) {
+            const n = (filename || '').toLowerCase();
+            if (n.includes('albedo') || n.includes('diffuse') || n.includes('basecolor') || n.includes('base_color') || n.includes('col') || n.includes('color')) return 'albedo';
+            if (n.includes('normal') || n.includes('nrm') || n.includes('nor')) return 'normal';
+            if (n.includes('rough') || n.includes('rgh')) return 'roughness';
+            if (n.includes('ao') || n.includes('ambientocclusion') || n.includes('occlusion')) return 'ao';
+            if (n.includes('metal') || n.includes('metallic')) return 'metallic';
+            if (n.includes('emiss') || n.includes('emit')) return 'emissive';
+            if (n.includes('scatter') || n.includes('sss') || n.includes('subsurface') || n.includes('transmission')) return 'scatter';
+            return null;
+        }
+
         async function loadTextures(files) {
             try {
                 const fileArr = Array.from(files || []);
                 if (!fileArr.length) return;
 
-                function guessTextureSlot(filename) {
-                    const n = (filename || '').toLowerCase();
-                    if (n.includes('albedo') || n.includes('diffuse') || n.includes('basecolor') || n.includes('base_color') || n.includes('col') || n.includes('color')) return 'albedo';
-                    if (n.includes('normal') || n.includes('nrm') || n.includes('nor')) return 'normal';
-                    if (n.includes('rough') || n.includes('rgh')) return 'roughness';
-                    if (n.includes('ao') || n.includes('ambientocclusion') || n.includes('occlusion')) return 'ao';
-                    if (n.includes('metal') || n.includes('metallic')) return 'metallic';
-                    if (n.includes('emiss') || n.includes('emit')) return 'emissive';
-                    return null;
-                }
-
                 // Reset any previously loaded slot textures
                 loadedTextures = {};
+                loadedTextureFilesBySlot.clear();
 
                 const textureLoader = new THREE.TextureLoader();
 
@@ -3484,9 +3896,10 @@ function handleDAESelect(event) {
                         return;
                     }
 
-                    const slot = guessTextureSlot(file.name);
+                    const slot = guessTextureSlotFromName(file.name);
                     if (slot) {
                         loadedTextures[slot] = tex;
+                        loadedTextureFilesBySlot.set(slot, file);
                     } else {
                         loadedTextures[file.name] = tex;
                     }
@@ -3499,6 +3912,9 @@ function handleDAESelect(event) {
                         const only = loadedTextures[keys[0]];
                         if (only instanceof THREE.Texture) {
                             loadedTextures.albedo = only;
+                            if (fileArr.length === 1) {
+                                loadedTextureFilesBySlot.set('albedo', fileArr[0]);
+                            }
                         }
                     }
                 }
@@ -3988,19 +4404,54 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
 
             renderer.render(scene, camera);
 
-            if (streamLocalStream && streamCanvas && streamCtx) {
-                const targetWidth = renderer.domElement.width;
-                const targetHeight = renderer.domElement.height;
-                if (streamCanvas.width !== targetWidth || streamCanvas.height !== targetHeight) {
-                    streamCanvas.width = targetWidth;
-                    streamCanvas.height = targetHeight;
+            if (streamLocalStream && streamRenderer && streamCanvas) {
+                renderer.getSize(streamSize);
+                if (streamCanvas.width !== streamSize.x || streamCanvas.height !== streamSize.y) {
+                    streamRenderer.setSize(streamSize.x, streamSize.y, false);
                 }
-                streamCtx.fillStyle = `rgb(${streamKeyColor.r}, ${streamKeyColor.g}, ${streamKeyColor.b})`;
-                streamCtx.fillRect(0, 0, streamCanvas.width, streamCanvas.height);
-                streamCtx.drawImage(renderer.domElement, 0, 0, streamCanvas.width, streamCanvas.height);
+                const previousBackground = scene.background;
+                const currentLighting = captureLightingSnapshot();
+                if (streamLightingSnapshot) {
+                    applyLightingSnapshot(streamLightingSnapshot);
+                }
+                scene.background = null;
+                streamRenderer.setClearColor(0x00ffff, 1);
+                streamRenderer.render(scene, camera);
+                scene.background = previousBackground;
+                if (currentLighting && currentLighting.length) {
+                    applyLightingSnapshot(currentLighting);
+                }
                 const track = streamLocalStream.getVideoTracks()[0];
                 if (track && typeof track.requestFrame === 'function') {
                     track.requestFrame();
+                }
+            }
+
+            if (deltaClientConnected && deltaSessionId && brainModel) {
+                if (now - deltaLastSent >= deltaSendIntervalMs) {
+                    deltaLastSent = now;
+                    deltaTick += 1;
+                    const entities = collectEntityTransforms();
+                    const payload = {
+                        type: 'delta-transform',
+                        role: 'viewer',
+                        sessionId: deltaSessionId,
+                        tick: deltaTick
+                    };
+                    if (entities && entities.length) {
+                        payload.entities = entities;
+                    } else {
+                        payload.model = {
+                            position: [brainModel.position.x, brainModel.position.y, brainModel.position.z],
+                            quaternion: [brainModel.quaternion.x, brainModel.quaternion.y, brainModel.quaternion.z, brainModel.quaternion.w],
+                            scale: [brainModel.scale.x, brainModel.scale.y, brainModel.scale.z]
+                        };
+                    }
+                    payload.camera = {
+                        position: [camera.position.x, camera.position.y, camera.position.z],
+                        quaternion: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w]
+                    };
+                    sendStreamMessage(payload);
                 }
             }
         }
@@ -4954,6 +5405,33 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
     return window.__registerEntityFromObject3D(nid, clone);
   };
 
+  window.spawnCubeEntity = function(entityId, options){
+    ensureEntitiesRoot();
+    const id = sanitizeId(entityId || ("cube_" + (sceneState.entities.size + 1)));
+    const size = (options && options.size) ? Number(options.size) : 0.2;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x2dff7c,
+      roughness: 0.5,
+      metalness: 0.1
+    });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.castShadow = true;
+    cube.receiveShadow = true;
+    const rec = window.__registerEntityFromObject3D(id, cube);
+    if (rec) {
+      rec.primitive = "cube";
+      rec.size = size;
+      sceneState.entities.set(rec.id, rec);
+      const wrapper = window.__teacher && window.__teacher.entitiesRoot ? window.__teacher.entitiesRoot.getObjectByName(rec.rootName) : null;
+      if (wrapper) {
+        wrapper.position.set(0.2 + (sceneState.entities.size * 0.05), 0, 0);
+      }
+    }
+    updateEntityStatsUI();
+    return rec;
+  };
+
   // UI wrappers
   window.registerCurrentModelAsEntityUI = function(){
     const id = prompt("Entity ID?", "player_001") || "player_001";
@@ -4968,6 +5446,10 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
     const rows = Array.from(sceneState.entities.values());
     console.table(rows);
     return rows;
+  };
+  window.spawnCubeEntityUI = function(){
+    const id = prompt("Cube entity ID?", "cube_001") || "cube_001";
+    return window.spawnCubeEntity(id);
   };
   window.__verifyEntities = function(){
     return {

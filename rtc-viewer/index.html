@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thin Render RTC Viewer</title>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
         :root {
             --green: #00ff41;
@@ -28,6 +30,10 @@
             border-bottom: 1px solid var(--panel-border);
             background: rgba(0, 10, 0, 0.85);
             padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
         }
 
         header h1 {
@@ -40,6 +46,14 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 24px;
+        }
+
+        .panel-toggle {
+            width: auto;
+            margin: 0;
+            padding: 8px 12px;
+            font-size: 12px;
+            white-space: nowrap;
         }
 
         .layout {
@@ -95,6 +109,71 @@
             margin-bottom: 12px;
         }
 
+        .status.small {
+            padding: 8px;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        .panel-section {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .panel h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 0 0 6px 0;
+            color: var(--green);
+        }
+
+        .data-list {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 6px;
+            max-height: 180px;
+            overflow: auto;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .data-item {
+            padding: 6px;
+            border-bottom: 1px dashed rgba(0, 255, 65, 0.18);
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .mono {
+            font-family: 'Courier New', monospace;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .action-grid button {
+            width: 100%;
+            margin-bottom: 0;
+            padding: 8px 10px;
+            font-size: 11px;
+        }
+
+        .inline-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 6px;
+        }
+
         button {
             width: 100%;
             background: rgba(0, 255, 65, 0.15);
@@ -134,6 +213,18 @@
         .file-input {
             font-size: 12px;
             margin-bottom: 8px;
+        }
+
+        .range-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--green);
         }
 
         .stage {
@@ -191,10 +282,22 @@
         }
 
         #streamCanvas {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             border-radius: 8px;
             display: block;
+            pointer-events: none;
+        }
+
+        #deltaCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: none;
             pointer-events: none;
         }
 
@@ -275,6 +378,24 @@
             100% { background-position: 0% 50%; }
         }
 
+        .fullscreen-mode .container {
+            max-width: none;
+            padding: 16px 24px 24px;
+        }
+
+        .fullscreen-mode .layout {
+            grid-template-columns: 1fr;
+        }
+
+        .fullscreen-mode .panel {
+            display: none;
+        }
+
+        .fullscreen-mode .stage {
+            height: calc(100vh - 150px);
+            min-height: 520px;
+        }
+
         @media (max-width: 900px) {
             .layout {
                 grid-template-columns: 1fr;
@@ -285,6 +406,7 @@
 <body>
     <header>
         <h1>Thin Render RTC Viewer</h1>
+        <button id="panelToggle" class="panel-toggle">Show Controls</button>
     </header>
 
     <div class="container">
@@ -295,6 +417,12 @@
                 <div id="status" class="status">Status: waiting for offer</div>
                 <button id="requestBtn">Request Stream</button>
                 <button id="disconnectBtn" disabled>Disconnect</button>
+
+                <div class="file-input" style="margin-top:12px;">Render mode:</div>
+                <select id="renderMode" class="control-select">
+                    <option value="delta" selected>Delta (model sync)</option>
+                    <option value="video">Video (keyed stream)</option>
+                </select>
 
                 <div class="control-group">
                     <div class="toggle">
@@ -312,6 +440,59 @@
                     <option value="1920x1080">1920 x 1080</option>
                     <option value="2560x1440">2560 x 1440</option>
                 </select>
+                <div class="range-wrap">
+                    <label for="keyStrength">Key strength: <span id="keyStrengthValue">55</span>%</label>
+                    <input type="range" id="keyStrength" min="0" max="100" value="55">
+                </div>
+
+                <div class="panel-section">
+                    <h3>Modules</h3>
+                    <div id="moduleList" class="data-list">Loading modules...</div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Delta Inspector</h3>
+                    <div id="deltaStats" class="status small">Delta: waiting for stream</div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Entity Registry</h3>
+                    <div id="entityList" class="data-list">No entities yet.</div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Entity Actions</h3>
+                    <select id="entitySelect" class="control-select"></select>
+                    <div class="inline-control">
+                        <span style="font-size:11px; opacity:0.8;">Target</span>
+                        <select id="actionTarget" class="control-select" style="flex:1;">
+                            <option value="source" selected>Send to source</option>
+                            <option value="local">Local overlay only</option>
+                        </select>
+                    </div>
+                    <div id="actionStatus" class="status small">Actions: idle</div>
+                    <div class="action-grid">
+                        <button id="actionUp">Nudge Up</button>
+                        <button id="actionForward">Forward</button>
+                        <button id="actionRotateLeft">Rotate L</button>
+                        <button id="actionLeft">Left</button>
+                        <button id="actionDown">Nudge Down</button>
+                        <button id="actionRotateRight">Rotate R</button>
+                        <button id="actionRight">Right</button>
+                        <button id="actionBack">Back</button>
+                        <button id="actionReset">Reset</button>
+                        <button id="actionToggleVis">Toggle Vis</button>
+                        <button id="actionRandom">Randomize</button>
+                        <button id="actionSpawnCube">Spawn Cube</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Bindings</h3>
+                    <input id="bindingFilter" class="control-select mono" placeholder="Filter bindings..." style="margin-bottom:6px;">
+                    <div id="bindingList" class="data-list">No bindings yet.</div>
+                </div>
+
                 <p>Tip: leave the 3D viewer open while exploring this view to simulate a remote thin-client stream.</p>
             </div>
 
@@ -320,6 +501,7 @@
                 <video id="backgroundVideo" autoplay muted loop playsinline></video>
                 <div id="streamOverlay">
                     <video id="remoteVideo" autoplay muted playsinline></video>
+                    <canvas id="deltaCanvas"></canvas>
                     <canvas id="streamCanvas"></canvas>
                     <div class="stream-label">3D Model Stream</div>
                     <div id="resizeHandle" class="resize-handle" title="Toggle resize mode"></div>
@@ -337,22 +519,51 @@
         const stageEl = document.getElementById('stage');
         const remoteVideo = document.getElementById('remoteVideo');
         const streamCanvas = document.getElementById('streamCanvas');
-        const streamCtx = streamCanvas.getContext('2d', { willReadFrequently: true });
+        const deltaCanvas = document.getElementById('deltaCanvas');
+        let gl = null;
+        let glProgram = null;
+        let glTexture = null;
+        let glBuffers = null;
+        let glUniforms = null;
         const backgroundVideo = document.getElementById('backgroundVideo');
         const bgPlaceholder = document.getElementById('bgPlaceholder');
         const noStream = document.getElementById('noStream');
         const requestBtn = document.getElementById('requestBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
+        const renderModeSelect = document.getElementById('renderMode');
         const watermarkToggle = document.getElementById('watermarkToggle');
         const bgVideoInput = document.getElementById('bgVideoInput');
         const resolutionSelect = document.getElementById('resolutionSelect');
+        const keyStrengthInput = document.getElementById('keyStrength');
+        const keyStrengthValue = document.getElementById('keyStrengthValue');
         const streamOverlay = document.getElementById('streamOverlay');
         const resizeHandle = document.getElementById('resizeHandle');
+        const panelToggle = document.getElementById('panelToggle');
+        const deltaStatsEl = document.getElementById('deltaStats');
+        const entityListEl = document.getElementById('entityList');
+        const bindingListEl = document.getElementById('bindingList');
+        const bindingFilterEl = document.getElementById('bindingFilter');
+        const moduleListEl = document.getElementById('moduleList');
+        const entitySelectEl = document.getElementById('entitySelect');
+        const actionTargetEl = document.getElementById('actionTarget');
+        const actionStatusEl = document.getElementById('actionStatus');
+        const actionUpBtn = document.getElementById('actionUp');
+        const actionDownBtn = document.getElementById('actionDown');
+        const actionLeftBtn = document.getElementById('actionLeft');
+        const actionRightBtn = document.getElementById('actionRight');
+        const actionForwardBtn = document.getElementById('actionForward');
+        const actionBackBtn = document.getElementById('actionBack');
+        const actionRotateLeftBtn = document.getElementById('actionRotateLeft');
+        const actionRotateRightBtn = document.getElementById('actionRotateRight');
+        const actionResetBtn = document.getElementById('actionReset');
+        const actionToggleVisBtn = document.getElementById('actionToggleVis');
+        const actionRandomBtn = document.getElementById('actionRandom');
+        const actionSpawnCubeBtn = document.getElementById('actionSpawnCube');
 
         let pc = null;
         let currentSessionId = null;
         let tickTimer = null;
-        const tickIntervalMs = 1000 / 30;
+        const tickIntervalMs = 1000 / 90;
         let dragState = null;
         let resizeState = null;
         const minOverlaySize = { width: 160, height: 120 };
@@ -360,17 +571,879 @@
         let resizeEnabled = false;
         let frameLoopActive = false;
         let contentBounds = null;
-        const keyColor = { r: 255, g: 0, b: 255 };
-        const keyThreshold = 28;
-        const keySoftness = 30;
-        const despillStrength = 0.8;
-        const workCanvas = document.createElement('canvas');
-        const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+        const keyColor = { r: 0, g: 255, b: 255 };
+        const keySettingsBase = {
+            threshold: 22,
+            softness: 14,
+            matteChoke: 8,
+            alphaLow: 70,
+            alphaHigh: 230,
+            edgeGamma: 1.15,
+            despill: 0.6
+        };
+        let keyThreshold = keySettingsBase.threshold;
+        let keySoftness = keySettingsBase.softness;
+        let despillStrength = keySettingsBase.despill;
+        let edgeGamma = keySettingsBase.edgeGamma;
+        let matteChoke = keySettingsBase.matteChoke;
+        let alphaCutoffLow = keySettingsBase.alphaLow;
+        let alphaCutoffHigh = keySettingsBase.alphaHigh;
+        const keyYCbCr = { cb: 0, cr: 0 };
+        const keyYCbCr255 = { cb: 0, cr: 0 };
+        const boundsCanvas = document.createElement('canvas');
+        const boundsCtx = boundsCanvas.getContext('2d', { willReadFrequently: true });
         let outlineHideTimer = null;
         const outlineDelayMs = 1800;
+        let renderMode = 'delta';
+        let deltaSessionId = null;
+        let deltaRenderer = null;
+        let deltaScene = null;
+        let deltaCamera = null;
+        let deltaModel = null;
+        let deltaAnimating = false;
+        let pendingDeltaSnapshot = null;
+        let deltaScaleLocked = false;
+        let deltaRegistry = { entities: [], bindings: [] };
+        const deltaEntityMap = new Map();
+        let deltaRxCount = 0;
+        let deltaLastTick = null;
+        let deltaLastAt = null;
+        const actionStep = 0.08;
+        const actionRotateDeg = 15;
+
+        const moduleState = {
+            transport: { label: 'Transport', enabled: true, locked: true, detail: '' },
+            physics: { label: 'Physics', enabled: false, detail: 'External plugin' },
+            lighting: { label: 'Lighting', enabled: true, detail: 'Material sync + lights' },
+            rules: { label: 'Rules', enabled: false, detail: 'External plugin' },
+            assets: { label: 'Asset Resolver', enabled: true, detail: 'Local cache + bindings' },
+            input: { label: 'Input', enabled: false, detail: 'Optional (viewer)' }
+        };
+
+        function rgbToCbCr01(r, g, b) {
+            const rn = r / 255;
+            const gn = g / 255;
+            const bn = b / 255;
+            const cb = 0.5 - 0.168736 * rn - 0.331264 * gn + 0.5 * bn;
+            const cr = 0.5 + 0.5 * rn - 0.418688 * gn - 0.081312 * bn;
+            return { cb, cr };
+        }
+
+        const keyChroma = rgbToCbCr01(keyColor.r, keyColor.g, keyColor.b);
+        keyYCbCr.cb = keyChroma.cb;
+        keyYCbCr.cr = keyChroma.cr;
+        keyYCbCr255.cb = keyChroma.cb * 255;
+        keyYCbCr255.cr = keyChroma.cr * 255;
 
         function setStatus(message) {
             statusEl.textContent = `Status: ${message}`;
+        }
+
+        function applyKeyStrength(value) {
+            const strength = Math.min(Math.max(Number(value) || 0, 0), 100) / 100;
+            keyThreshold = Math.round(keySettingsBase.threshold + strength * 20);
+            keySoftness = Math.round(keySettingsBase.softness + strength * 10);
+            matteChoke = Math.round(keySettingsBase.matteChoke + strength * 10);
+            alphaCutoffLow = Math.round(keySettingsBase.alphaLow + strength * 50);
+            alphaCutoffHigh = Math.round(keySettingsBase.alphaHigh + strength * 10);
+            edgeGamma = keySettingsBase.edgeGamma + strength * 0.25;
+            despillStrength = keySettingsBase.despill + strength * 0.2;
+            if (keyStrengthValue) {
+                keyStrengthValue.textContent = Math.round(strength * 100);
+            }
+        }
+
+        function setRenderMode(mode) {
+            renderMode = mode === 'video' ? 'video' : 'delta';
+            if (renderMode === 'delta') {
+                stopFrameLoop();
+                remoteVideo.style.display = 'none';
+                streamCanvas.style.display = 'none';
+                deltaCanvas.style.display = 'block';
+                noStream.textContent = 'Waiting for delta model...';
+            } else {
+                deltaCanvas.style.display = 'none';
+                streamCanvas.style.display = 'block';
+                remoteVideo.style.display = 'none';
+                noStream.textContent = 'Waiting for stream...';
+            }
+            renderModules();
+        }
+
+        function updateDeltaStats() {
+            if (!deltaStatsEl) return;
+            if (!deltaLastAt) {
+                deltaStatsEl.textContent = 'Delta: waiting for stream';
+                return;
+            }
+            const ageSeconds = Math.max(0, (Date.now() - deltaLastAt) / 1000);
+            const tickText = deltaLastTick != null ? ` | tick ${deltaLastTick}` : '';
+            deltaStatsEl.textContent = `Delta: ${deltaRxCount} updates | last ${ageSeconds.toFixed(1)}s${tickText}`;
+        }
+
+        function renderModules() {
+            if (!moduleListEl) return;
+            moduleState.transport.detail = renderMode === 'delta' ? 'BroadcastChannel (delta)' : 'WebRTC video';
+            const rows = Object.entries(moduleState).map(([id, mod]) => {
+                const disabled = mod.locked ? 'disabled' : '';
+                const checked = mod.enabled ? 'checked' : '';
+                const detail = mod.detail ? `<div style="opacity:0.7;">${mod.detail}</div>` : '';
+                return `
+                    <div class="data-item">
+                        <label style="display:flex; gap:8px; align-items:center;">
+                            <input type="checkbox" data-module="${id}" ${checked} ${disabled}>
+                            <div>
+                                <strong>${mod.label}</strong>
+                                ${detail}
+                            </div>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            moduleListEl.innerHTML = rows;
+            moduleListEl.querySelectorAll('input[data-module]').forEach((input) => {
+                input.addEventListener('change', () => {
+                    const key = input.getAttribute('data-module');
+                    if (!key || !moduleState[key] || moduleState[key].locked) return;
+                    moduleState[key].enabled = input.checked;
+                });
+            });
+        }
+
+        function setDeltaRegistry(registry) {
+            deltaRegistry = {
+                entities: Array.isArray(registry?.entities) ? registry.entities : [],
+                bindings: Array.isArray(registry?.bindings) ? registry.bindings : []
+            };
+            renderEntityRegistry();
+            renderBindings();
+            renderEntitySelect();
+        }
+
+        function renderEntityRegistry() {
+            if (!entityListEl) return;
+            const entities = deltaRegistry.entities || [];
+            if (!entities.length) {
+                entityListEl.textContent = 'No entities yet.';
+                return;
+            }
+            entityListEl.innerHTML = entities.map((entity) => {
+                const tag = entity.primitive ? ` (${entity.primitive})` : '';
+                const path = entity.objectPathRoot || '';
+                return `
+                    <div class="data-item">
+                        <div><strong>${entity.entityId || 'unknown'}</strong>${tag}</div>
+                        <div class="mono" style="opacity:0.8;">${path}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEntitySelect() {
+            if (!entitySelectEl) return;
+            const entities = deltaRegistry.entities || [];
+            const options = entities.length ? entities : [{ entityId: 'main' }];
+            entitySelectEl.innerHTML = options.map((entity) => {
+                const id = entity.entityId || 'main';
+                const label = entity.primitive ? `${id} (${entity.primitive})` : id;
+                return `<option value="${id}">${label}</option>`;
+            }).join('');
+        }
+
+        function renderBindings() {
+            if (!bindingListEl) return;
+            const filter = (bindingFilterEl && bindingFilterEl.value || '').toLowerCase().trim();
+            const bindings = deltaRegistry.bindings || [];
+            const filtered = !filter ? bindings : bindings.filter((binding) => {
+                return [
+                    binding.bindingId,
+                    binding.objectPath,
+                    binding.slot,
+                    binding.textureId,
+                    binding.sourceName,
+                    binding.textureKey
+                ].some((value) => (value || '').toLowerCase().includes(filter));
+            });
+            if (!filtered.length) {
+                bindingListEl.textContent = 'No bindings yet.';
+                return;
+            }
+            bindingListEl.innerHTML = filtered.map((binding) => {
+                const slot = binding.slot || 'slot';
+                const tex = binding.textureId || binding.sourceName || 'unbound';
+                const path = binding.objectPath || '';
+                return `
+                    <div class="data-item">
+                        <div><strong>${slot}</strong> → <span class="mono">${tex}</span></div>
+                        <div class="mono" style="opacity:0.7;">${path}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setActionStatus(message) {
+            if (!actionStatusEl) return;
+            actionStatusEl.textContent = `Actions: ${message}`;
+        }
+
+        function getSelectedEntityId() {
+            if (!entitySelectEl) return 'main';
+            return entitySelectEl.value || 'main';
+        }
+
+        function getEntityObject(entityId) {
+            return deltaEntityMap.get(entityId) || deltaModel;
+        }
+
+        function applyLocalAction(entityId, transform) {
+            const obj = getEntityObject(entityId);
+            if (!obj) return false;
+            applyTransformToObject(obj, transform);
+            return true;
+        }
+
+        function sendDeltaOpsToSource(ops) {
+            if (!channel || !deltaSessionId) return false;
+            const payload = {
+                type: 'delta-op',
+                role: 'rtc',
+                sessionId: deltaSessionId,
+                payload: {
+                    tick: Date.now(),
+                    ops
+                }
+            };
+            try {
+                channel.postMessage(JSON.stringify(payload));
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function applyEntityAction(transform, visibility) {
+            const entityId = getSelectedEntityId();
+            const targetMode = actionTargetEl ? actionTargetEl.value : 'source';
+            if (visibility != null) {
+                const op = { type: 'setVisibility', entityId, visible: visibility };
+                if (targetMode === 'source') {
+                    const ok = sendDeltaOpsToSource([op]);
+                    setActionStatus(ok ? 'sent visibility' : 'source not ready');
+                } else {
+                    const obj = getEntityObject(entityId);
+                    if (obj) obj.visible = visibility;
+                    setActionStatus('applied locally');
+                }
+                return;
+            }
+            if (!transform) return;
+            if (targetMode === 'source') {
+                const op = Object.assign({ type: 'setTransform', entityId }, transform);
+                const ok = sendDeltaOpsToSource([op]);
+                setActionStatus(ok ? 'sent transform' : 'source not ready');
+                return;
+            }
+            const ok = applyLocalAction(entityId, transform);
+            setActionStatus(ok ? 'applied locally' : 'no entity');
+        }
+
+        function buildTransformFromObject(obj) {
+            if (!obj) return null;
+            return {
+                position: [obj.position.x, obj.position.y, obj.position.z],
+                quaternion: [obj.quaternion.x, obj.quaternion.y, obj.quaternion.z, obj.quaternion.w],
+                scale: [obj.scale.x, obj.scale.y, obj.scale.z]
+            };
+        }
+
+        function applyOffsetToEntity(offset, rotationDelta) {
+            const entityId = getSelectedEntityId();
+            const obj = getEntityObject(entityId);
+            if (!obj) {
+                setActionStatus('no entity');
+                return;
+            }
+            const nextPosition = obj.position.clone().add(offset || new THREE.Vector3());
+            const nextQuaternion = obj.quaternion.clone();
+            if (rotationDelta) {
+                nextQuaternion.multiply(rotationDelta);
+            }
+            applyEntityAction({
+                position: [nextPosition.x, nextPosition.y, nextPosition.z],
+                quaternion: [nextQuaternion.x, nextQuaternion.y, nextQuaternion.z, nextQuaternion.w],
+                scale: [obj.scale.x, obj.scale.y, obj.scale.z]
+            });
+        }
+
+        function createPrimitiveMesh(entity) {
+            if (!entity || entity.primitive !== 'cube' || typeof THREE === 'undefined') return null;
+            const size = Number(entity.size) || 1;
+            const geometry = new THREE.BoxGeometry(size, size, size);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x2dff7c,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        function buildDeltaEntities(registry) {
+            if (!deltaScene || !deltaModel) return;
+            const entities = Array.isArray(registry?.entities) ? registry.entities : [];
+            for (const [id, obj] of deltaEntityMap.entries()) {
+                if (obj !== deltaModel && obj && obj.parent) {
+                    obj.parent.remove(obj);
+                }
+            }
+            deltaEntityMap.clear();
+            if (!entities.length) {
+                deltaEntityMap.set('main', deltaModel);
+                return;
+            }
+            let mainAssigned = false;
+            entities.forEach((entity) => {
+                let obj = null;
+                if (!mainAssigned && !entity.primitive) {
+                    obj = deltaModel;
+                    mainAssigned = true;
+                } else {
+                    obj = createPrimitiveMesh(entity) || deltaModel.clone(true);
+                    deltaScene.add(obj);
+                }
+                if (obj) {
+                    obj.userData.__entityId = entity.entityId;
+                    deltaEntityMap.set(entity.entityId, obj);
+                }
+            });
+        }
+
+        function createShader(glContext, type, source) {
+            const shader = glContext.createShader(type);
+            glContext.shaderSource(shader, source);
+            glContext.compileShader(shader);
+            if (!glContext.getShaderParameter(shader, glContext.COMPILE_STATUS)) {
+                console.warn('Shader compile failed', glContext.getShaderInfoLog(shader));
+                glContext.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        function createProgram(glContext, vertexSource, fragmentSource) {
+            const vertexShader = createShader(glContext, glContext.VERTEX_SHADER, vertexSource);
+            const fragmentShader = createShader(glContext, glContext.FRAGMENT_SHADER, fragmentSource);
+            if (!vertexShader || !fragmentShader) return null;
+            const program = glContext.createProgram();
+            glContext.attachShader(program, vertexShader);
+            glContext.attachShader(program, fragmentShader);
+            glContext.linkProgram(program);
+            if (!glContext.getProgramParameter(program, glContext.LINK_STATUS)) {
+                console.warn('Program link failed', glContext.getProgramInfoLog(program));
+                glContext.deleteProgram(program);
+                return null;
+            }
+            return program;
+        }
+
+        function initKeyingGL() {
+            if (gl) return;
+            gl = streamCanvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+            if (!gl) {
+                console.warn('WebGL unavailable for keying');
+                return;
+            }
+
+            const vertexSource = `
+                attribute vec2 a_position;
+                attribute vec2 a_texCoord;
+                varying vec2 v_texCoord;
+                void main() {
+                    v_texCoord = a_texCoord;
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+            `;
+
+            const fragmentSource = `
+                precision mediump float;
+                uniform sampler2D u_video;
+                uniform vec2 u_keyCbCr;
+                uniform float u_thresh;
+                uniform float u_softness;
+                uniform float u_edgeGamma;
+                uniform float u_matteChoke;
+                uniform float u_alphaLow;
+                uniform float u_alphaHigh;
+                uniform float u_despill;
+                varying vec2 v_texCoord;
+
+                vec2 rgbToCbCr(vec3 rgb) {
+                    float cb = 0.5 - 0.168736 * rgb.r - 0.331264 * rgb.g + 0.5 * rgb.b;
+                    float cr = 0.5 + 0.5 * rgb.r - 0.418688 * rgb.g - 0.081312 * rgb.b;
+                    return vec2(cb, cr);
+                }
+
+                void main() {
+                    vec4 color = texture2D(u_video, v_texCoord);
+                    vec2 cbcr = rgbToCbCr(color.rgb);
+                    float dist = distance(cbcr, u_keyCbCr);
+                    float alpha = 1.0;
+                    float edgeLimit = u_thresh + u_softness;
+
+                    if (dist <= u_thresh) {
+                        alpha = 0.0;
+                    } else if (dist <= edgeLimit) {
+                        float t = (dist - u_thresh) / u_softness;
+                        alpha = pow(t, u_edgeGamma);
+                        float choke = u_matteChoke * (1.0 - clamp(t, 0.0, 1.0));
+                        alpha = max(0.0, alpha - choke);
+                    }
+
+                    if (alpha < u_alphaLow) {
+                        alpha = 0.0;
+                    } else if (alpha > u_alphaHigh) {
+                        alpha = 1.0;
+                    }
+
+                    if (alpha > 0.0 && dist <= edgeLimit) {
+                        float cyan = min(color.g, color.b) - color.r;
+                        if (cyan > 0.0) {
+                            float reduce = cyan * u_despill;
+                            color.g = max(0.0, color.g - reduce);
+                            color.b = max(0.0, color.b - reduce);
+                            color.r = min(1.0, color.r + reduce * 0.35);
+                        }
+                    }
+
+                    gl_FragColor = vec4(color.rgb, alpha);
+                }
+            `;
+
+            glProgram = createProgram(gl, vertexSource, fragmentSource);
+            if (!glProgram) {
+                gl = null;
+                return;
+            }
+
+            gl.useProgram(glProgram);
+            const posBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                -1, -1,
+                 1, -1,
+                -1,  1,
+                 1,  1
+            ]), gl.STATIC_DRAW);
+
+            const texBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                0, 1,
+                1, 1,
+                0, 0,
+                1, 0
+            ]), gl.STATIC_DRAW);
+
+            glTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, glTexture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+            glUniforms = {
+                position: gl.getAttribLocation(glProgram, 'a_position'),
+                texCoord: gl.getAttribLocation(glProgram, 'a_texCoord'),
+                video: gl.getUniformLocation(glProgram, 'u_video'),
+                keyCbCr: gl.getUniformLocation(glProgram, 'u_keyCbCr'),
+                thresh: gl.getUniformLocation(glProgram, 'u_thresh'),
+                softness: gl.getUniformLocation(glProgram, 'u_softness'),
+                edgeGamma: gl.getUniformLocation(glProgram, 'u_edgeGamma'),
+                matteChoke: gl.getUniformLocation(glProgram, 'u_matteChoke'),
+                alphaLow: gl.getUniformLocation(glProgram, 'u_alphaLow'),
+                alphaHigh: gl.getUniformLocation(glProgram, 'u_alphaHigh'),
+                despill: gl.getUniformLocation(glProgram, 'u_despill')
+            };
+
+            glBuffers = { posBuffer, texBuffer };
+            gl.uniform1i(glUniforms.video, 0);
+        }
+
+        function renderKeyedFrame(video, width, height) {
+            if (!gl) {
+                initKeyingGL();
+            }
+            if (!gl || !glProgram) return false;
+
+            gl.viewport(0, 0, width, height);
+            gl.useProgram(glProgram);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, glTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers.posBuffer);
+            gl.enableVertexAttribArray(glUniforms.position);
+            gl.vertexAttribPointer(glUniforms.position, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, glBuffers.texBuffer);
+            gl.enableVertexAttribArray(glUniforms.texCoord);
+            gl.vertexAttribPointer(glUniforms.texCoord, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform2f(glUniforms.keyCbCr, keyYCbCr.cb, keyYCbCr.cr);
+            gl.uniform1f(glUniforms.thresh, keyThreshold / 255);
+            gl.uniform1f(glUniforms.softness, keySoftness / 255);
+            gl.uniform1f(glUniforms.edgeGamma, edgeGamma);
+            gl.uniform1f(glUniforms.matteChoke, matteChoke / 255);
+            gl.uniform1f(glUniforms.alphaLow, alphaCutoffLow / 255);
+            gl.uniform1f(glUniforms.alphaHigh, alphaCutoffHigh / 255);
+            gl.uniform1f(glUniforms.despill, despillStrength);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            return true;
+        }
+
+        function initDeltaRenderer() {
+            if (deltaRenderer || typeof THREE === 'undefined') return;
+            deltaRenderer = new THREE.WebGLRenderer({
+                canvas: deltaCanvas,
+                alpha: true,
+                antialias: true,
+                preserveDrawingBuffer: false
+            });
+            deltaRenderer.setPixelRatio(window.devicePixelRatio || 1);
+            deltaRenderer.setClearColor(0x000000, 0);
+            deltaRenderer.physicallyCorrectLights = true;
+            deltaRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+            deltaRenderer.toneMappingExposure = 1.0;
+            deltaRenderer.outputEncoding = THREE.sRGBEncoding;
+
+            deltaScene = new THREE.Scene();
+            deltaCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            deltaScene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            keyLight.position.set(5, 5, 5);
+            deltaScene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+            fillLight.position.set(-3, 2, -2);
+            deltaScene.add(fillLight);
+
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
+            rimLight.position.set(0, 0, -5);
+            deltaScene.add(rimLight);
+
+            const envLight = new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.4);
+            deltaScene.add(envLight);
+
+            const pointLight1 = new THREE.PointLight(0xffffff, 0.3, 10);
+            pointLight1.position.set(2, 3, 2);
+            deltaScene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xffffff, 0.2, 10);
+            pointLight2.position.set(-2, 1, -2);
+            deltaScene.add(pointLight2);
+
+            deltaCamera.position.set(0.1, 0.05, 0.3);
+            deltaCamera.lookAt(0, 0, 0);
+
+            const resizeObserver = new ResizeObserver(() => {
+                if (!deltaRenderer) return;
+                const rect = streamOverlay.getBoundingClientRect();
+                const width = Math.max(1, Math.floor(rect.width));
+                const height = Math.max(1, Math.floor(rect.height));
+                deltaRenderer.setSize(width, height, false);
+                deltaCamera.aspect = width / height;
+                deltaCamera.updateProjectionMatrix();
+            });
+            resizeObserver.observe(streamOverlay);
+            const initialRect = streamOverlay.getBoundingClientRect();
+            const initialWidth = Math.max(1, Math.floor(initialRect.width));
+            const initialHeight = Math.max(1, Math.floor(initialRect.height));
+            deltaRenderer.setSize(initialWidth, initialHeight, false);
+            deltaCamera.aspect = initialWidth / initialHeight;
+            deltaCamera.updateProjectionMatrix();
+
+            if (!deltaAnimating) {
+                deltaAnimating = true;
+                const animateDelta = () => {
+                    if (!deltaRenderer || !deltaScene || !deltaCamera) return;
+                    deltaRenderer.render(deltaScene, deltaCamera);
+                    requestAnimationFrame(animateDelta);
+                };
+                requestAnimationFrame(animateDelta);
+            }
+        }
+
+        function fitDeltaCameraToModel() {
+            if (!deltaModel || !deltaCamera) return;
+            const box = new THREE.Box3().setFromObject(deltaModel);
+            const size = new THREE.Vector3();
+            const center = new THREE.Vector3();
+            box.getSize(size);
+            box.getCenter(center);
+            const maxSize = Math.max(size.x, size.y, size.z);
+            if (!(maxSize > 0)) return;
+            const fitDistance = maxSize / (2 * Math.tan(THREE.MathUtils.degToRad(deltaCamera.fov * 0.5)));
+            const distance = fitDistance * 1.8;
+            deltaCamera.position.set(center.x, center.y, center.z + distance);
+            deltaCamera.near = Math.max(0.01, distance / 100);
+            deltaCamera.far = Math.max(1000, distance * 20);
+            deltaCamera.updateProjectionMatrix();
+            deltaCamera.lookAt(center);
+        }
+
+        async function loadTextureFromPayload(payload) {
+            if (!payload || !payload.buffer) return null;
+            const type = payload.type || 'image/jpeg';
+            const blob = new Blob([payload.buffer], { type });
+            const url = URL.createObjectURL(blob);
+            const loader = new THREE.TextureLoader();
+            return new Promise((resolve, reject) => {
+                loader.load(url, (tex) => {
+                    try { URL.revokeObjectURL(url); } catch (e) {}
+                    resolve(tex);
+                }, undefined, (err) => {
+                    try { URL.revokeObjectURL(url); } catch (e) {}
+                    reject(err);
+                });
+            });
+        }
+
+        function forEachDeltaMesh(callback) {
+            if (!callback) return;
+            if (deltaEntityMap.size) {
+                deltaEntityMap.forEach((obj) => {
+                    if (!obj) return;
+                    obj.traverse((node) => {
+                        if (node.isMesh) callback(node);
+                    });
+                });
+                return;
+            }
+            if (!deltaModel) return;
+            deltaModel.traverse((node) => {
+                if (node.isMesh) callback(node);
+            });
+        }
+
+        async function applyDeltaTextures(textures) {
+            if (!deltaModel || !textures || !textures.length) return;
+            const slotTextures = {};
+            for (const texPayload of textures) {
+                try {
+                    const tex = await loadTextureFromPayload(texPayload);
+                    if (!tex) continue;
+                    if (typeof texPayload.flipY === 'boolean') {
+                        tex.flipY = texPayload.flipY;
+                    }
+                    if (typeof texPayload.encoding === 'number') {
+                        tex.encoding = texPayload.encoding;
+                    } else if (texPayload.slot === 'albedo' || texPayload.slot === 'emissive') {
+                        tex.encoding = THREE.sRGBEncoding;
+                    }
+                    tex.needsUpdate = true;
+                    slotTextures[texPayload.slot] = tex;
+                } catch (error) {
+                    console.warn('Delta texture load failed', texPayload?.name || texPayload?.slot, error);
+                }
+            }
+
+            const sharedMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.8,
+                metalness: 0.1,
+                side: THREE.FrontSide,
+                transparent: false
+            });
+
+            if (slotTextures.albedo) sharedMaterial.map = slotTextures.albedo;
+            if (slotTextures.normal) {
+                sharedMaterial.normalMap = slotTextures.normal;
+                sharedMaterial.normalScale = new THREE.Vector2(1, 1);
+            }
+            if (slotTextures.roughness) sharedMaterial.roughnessMap = slotTextures.roughness;
+            if (slotTextures.metallic) sharedMaterial.metalnessMap = slotTextures.metallic;
+            if (slotTextures.ao) {
+                sharedMaterial.aoMap = slotTextures.ao;
+                sharedMaterial.aoMapIntensity = 1.0;
+            }
+            if (slotTextures.emissive) sharedMaterial.emissiveMap = slotTextures.emissive;
+            if (slotTextures.scatter) {
+                sharedMaterial.transparent = true;
+                sharedMaterial.opacity = 0.95;
+                sharedMaterial.transmission = 0.05;
+            }
+            sharedMaterial.depthWrite = true;
+            sharedMaterial.needsUpdate = true;
+
+            forEachDeltaMesh((node) => {
+                if (slotTextures.ao && node.geometry && node.geometry.attributes && node.geometry.attributes.uv && !node.geometry.attributes.uv2) {
+                    node.geometry.setAttribute('uv2', node.geometry.attributes.uv);
+                }
+                if (Array.isArray(node.material)) {
+                    node.material.forEach((mat) => mat && mat.dispose && mat.dispose());
+                } else if (node.material && node.material.dispose) {
+                    node.material.dispose();
+                }
+                node.material = sharedMaterial;
+            });
+        }
+
+        function applyDeltaMaterialSettings(settings) {
+            if (!deltaModel || !settings) return;
+            forEachDeltaMesh((node) => {
+                if (!node.material) return;
+                const mats = Array.isArray(node.material) ? node.material : [node.material];
+                mats.forEach((mat) => {
+                    if (!mat) return;
+                    if (Array.isArray(settings.color) && mat.color) {
+                        mat.color.setRGB(settings.color[0], settings.color[1], settings.color[2]);
+                    }
+                    if (typeof settings.roughness === 'number') mat.roughness = settings.roughness;
+                    if (typeof settings.metalness === 'number') mat.metalness = settings.metalness;
+                    if (typeof settings.aoIntensity === 'number') mat.aoMapIntensity = settings.aoIntensity;
+                    if (typeof settings.opacity === 'number') mat.opacity = settings.opacity;
+                    if (typeof settings.transmission === 'number') mat.transmission = settings.transmission;
+                    if (typeof settings.transparent === 'boolean') mat.transparent = settings.transparent;
+                    if (typeof settings.wireframe === 'boolean') mat.wireframe = settings.wireframe;
+                    if (typeof settings.side === 'number') mat.side = settings.side;
+                    if (mat.transparent) {
+                        mat.side = THREE.FrontSide;
+                        mat.depthWrite = true;
+                    }
+                    mat.depthWrite = true;
+                    mat.needsUpdate = true;
+                });
+            });
+        }
+
+        function clearDeltaModel() {
+            if (!deltaScene || !deltaModel) return;
+            deltaScene.remove(deltaModel);
+            deltaEntityMap.forEach((obj) => {
+                if (obj && obj.parent) obj.parent.remove(obj);
+            });
+            deltaEntityMap.clear();
+            deltaModel.traverse((child) => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat) => mat.dispose && mat.dispose());
+                    } else if (child.material.dispose) {
+                        child.material.dispose();
+                    }
+                }
+            });
+            deltaModel = null;
+            deltaScaleLocked = false;
+            setDeltaRegistry({ entities: [], bindings: [] });
+            deltaRxCount = 0;
+            deltaLastTick = null;
+            deltaLastAt = null;
+            updateDeltaStats();
+        }
+
+        function loadDeltaModelFromBuffer(buffer) {
+            return new Promise((resolve, reject) => {
+                if (!buffer || typeof THREE === 'undefined' || !THREE.GLTFLoader) {
+                    reject(new Error('GLTFLoader unavailable'));
+                    return;
+                }
+                let source = buffer;
+                if (source instanceof Blob) {
+                    source = source.arrayBuffer();
+                }
+                if (source && typeof source.then === 'function') {
+                    source.then((arrayBuffer) => loadDeltaModelFromBuffer(arrayBuffer).then(resolve).catch(reject)).catch(reject);
+                    return;
+                }
+                if (typeof source === 'string') {
+                    try {
+                        const json = JSON.parse(source);
+                        source = json;
+                    } catch (error) {
+                        // If the string isn't valid JSON, treat it as invalid delta payload.
+                        reject(new Error('Delta asset string is not valid JSON'));
+                        return;
+                    }
+                }
+                if (ArrayBuffer.isView(source)) {
+                    source = source.buffer;
+                }
+                if (!(source instanceof ArrayBuffer) && typeof source !== 'string' && typeof source !== 'object') {
+                    reject(new Error('Unsupported delta asset format'));
+                    return;
+                }
+                initDeltaRenderer();
+                clearDeltaModel();
+                const loader = new THREE.GLTFLoader();
+                const parseInput = (source instanceof ArrayBuffer) ? source : JSON.stringify(source);
+                loader.parse(parseInput, '', (gltf) => {
+                    deltaModel = gltf.scene || (gltf.scenes ? gltf.scenes[0] : null);
+                    if (!deltaModel) {
+                        reject(new Error('GLB contains no scene'));
+                        return;
+                    }
+                    deltaScene.add(deltaModel);
+                    deltaEntityMap.clear();
+                    deltaEntityMap.set('main', deltaModel);
+                    resolve();
+                }, (error) => reject(error || new Error('GLB parse failed')));
+            });
+        }
+
+        function applyTransformToObject(obj, payload) {
+            if (!obj || !payload) return;
+            if (Array.isArray(payload.position)) {
+                obj.position.set(payload.position[0], payload.position[1], payload.position[2]);
+            }
+            if (Array.isArray(payload.quaternion)) {
+                obj.quaternion.set(payload.quaternion[0], payload.quaternion[1], payload.quaternion[2], payload.quaternion[3]);
+            }
+            if (Array.isArray(payload.scale)) {
+                obj.scale.set(payload.scale[0], payload.scale[1], payload.scale[2]);
+            }
+        }
+
+        function applyDeltaTransform(payload) {
+            if (!payload) return;
+            if (Array.isArray(payload.entities) && payload.entities.length) {
+                payload.entities.forEach((entity) => {
+                    const obj = deltaEntityMap.get(entity.entityId);
+                    if (!obj) return;
+                    applyTransformToObject(obj, entity);
+                });
+                return;
+            }
+            if (!deltaModel) {
+                pendingDeltaSnapshot = payload;
+                return;
+            }
+            const model = payload.model || {};
+            const hasScale = Array.isArray(model.scale);
+            if (payload.modelSize && !hasScale) {
+                try {
+                    const box = new THREE.Box3().setFromObject(deltaModel);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    const maxSize = Math.max(size.x, size.y, size.z);
+                    if (maxSize > 0) {
+                        const scaleFactor = payload.modelSize / maxSize;
+                        deltaModel.scale.setScalar(scaleFactor);
+                        deltaScaleLocked = true;
+                    }
+                } catch (error) {}
+            }
+            applyTransformToObject(deltaModel, model);
+            if (Array.isArray(model.scale)) {
+                deltaScaleLocked = false;
+            }
+            // Keep local camera to maintain overlay framing.
         }
 
         function sendChannelMessage(payload) {
@@ -415,6 +1488,18 @@
 
         function showStream(active) {
             noStream.style.display = active ? 'none' : 'grid';
+        }
+
+        function setFullscreenMode(enabled) {
+            document.body.classList.toggle('fullscreen-mode', enabled);
+            panelToggle.textContent = enabled ? 'Show Controls' : 'Hide Controls';
+            applyStageResolution();
+            requestAnimationFrame(() => {
+                const { stageRect, overlayRect } = getOverlayBounds();
+                const left = overlayRect.left - stageRect.left;
+                const top = overlayRect.top - stageRect.top;
+                setOverlayPosition(left, top);
+            });
         }
 
         function setOutlineVisible(visible) {
@@ -640,6 +1725,60 @@
             }
         }
 
+        function updateContentBounds(video, width, height) {
+            const maxSample = 220;
+            const scale = Math.min(maxSample / width, maxSample / height, 1);
+            const bw = Math.max(1, Math.floor(width * scale));
+            const bh = Math.max(1, Math.floor(height * scale));
+
+            if (boundsCanvas.width !== bw || boundsCanvas.height !== bh) {
+                boundsCanvas.width = bw;
+                boundsCanvas.height = bh;
+            }
+
+            boundsCtx.drawImage(video, 0, 0, bw, bh);
+            const frame = boundsCtx.getImageData(0, 0, bw, bh);
+            const data = frame.data;
+            let minX = bw;
+            let minY = bh;
+            let maxX = 0;
+            let maxY = 0;
+            let hasContent = false;
+            const edgeLimit = keyThreshold + keySoftness;
+            const step = 2;
+
+            for (let y = 0; y < bh; y += step) {
+                for (let x = 0; x < bw; x += step) {
+                    const idx = (y * bw + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+                    const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+                    const dist = Math.hypot(cb - keyYCbCr255.cb, cr - keyYCbCr255.cr);
+                    if (dist <= edgeLimit) continue;
+                    hasContent = true;
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
+                }
+            }
+
+            if (hasContent) {
+                const scaleX = width / bw;
+                const scaleY = height / bh;
+                contentBounds = {
+                    left: minX * scaleX,
+                    top: minY * scaleY,
+                    right: maxX * scaleX,
+                    bottom: maxY * scaleY
+                };
+            } else {
+                contentBounds = null;
+            }
+        }
+
         function processFrame() {
             if (!frameLoopActive) return;
             if (!remoteVideo.videoWidth || !remoteVideo.videoHeight) {
@@ -649,69 +1788,13 @@
 
             const w = remoteVideo.videoWidth;
             const h = remoteVideo.videoHeight;
-            if (workCanvas.width != w || workCanvas.height != h) {
-                workCanvas.width = w;
-                workCanvas.height = h;
-            }
-            if (streamCanvas.width != w || streamCanvas.height != h) {
+            if (streamCanvas.width !== w || streamCanvas.height !== h) {
                 streamCanvas.width = w;
                 streamCanvas.height = h;
             }
 
-            workCtx.drawImage(remoteVideo, 0, 0, w, h);
-            const frame = workCtx.getImageData(0, 0, w, h);
-            const data = frame.data;
-            let minX = w;
-            let minY = h;
-            let maxX = 0;
-            let maxY = 0;
-            let hasContent = false;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const dr = r - keyColor.r;
-                const dg = g - keyColor.g;
-                const db = b - keyColor.b;
-                const dist = Math.max(Math.abs(dr), Math.abs(dg), Math.abs(db));
-
-                let alpha = 255;
-                if (dist <= keyThreshold) {
-                    alpha = 0;
-                } else if (dist <= keyThreshold + keySoftness) {
-                    alpha = Math.round(255 * (dist - keyThreshold) / keySoftness);
-                }
-
-                if (alpha > 0) {
-                    if (dist <= keyThreshold + keySoftness) {
-                        const spill = Math.min(r, b) - g;
-                        if (spill > 0) {
-                            const reduce = spill * despillStrength;
-                            data[i] = Math.max(0, r - reduce);
-                            data[i + 2] = Math.max(0, b - reduce);
-                        }
-                    }
-                    data[i + 3] = alpha;
-                    hasContent = true;
-                    const px = (i / 4) % w;
-                    const py = Math.floor((i / 4) / w);
-                    if (px < minX) minX = px;
-                    if (py < minY) minY = py;
-                    if (px > maxX) maxX = px;
-                    if (py > maxY) maxY = py;
-                } else {
-                    data[i + 3] = 0;
-                }
-            }
-
-            if (hasContent) {
-                contentBounds = { left: minX, top: minY, right: maxX, bottom: maxY };
-            } else {
-                contentBounds = null;
-            }
-
-            streamCtx.putImageData(frame, 0, 0);
+            renderKeyedFrame(remoteVideo, w, h);
+            updateContentBounds(remoteVideo, w, h);
             scheduleFrame();
         }
 
@@ -739,6 +1822,65 @@
             channel.onmessage = (event) => {
                 const msg = readChannelMessage(event) || {};
                 if (msg.role === 'rtc') return;
+                if (msg.type === 'delta-ready') {
+                    deltaSessionId = msg.sessionId;
+                    if (renderMode === 'delta') {
+                        setStatus('delta ready, requesting assets');
+                        sendChannelMessage({ type: 'delta-request-assets', role: 'rtc', sessionId: deltaSessionId });
+                    }
+                    return;
+                }
+                if (msg.type === 'delta-assets') {
+                    if (!msg.sessionId || msg.sessionId !== deltaSessionId) return;
+                    const payload = msg.data || msg.buffer;
+                    const snapshot = msg.snapshot || null;
+                    const textures = msg.textures || [];
+                    const registry = msg.registry || { entities: msg.entities || [], bindings: msg.bindings || [] };
+                    setDeltaRegistry(registry);
+                    loadDeltaModelFromBuffer(payload).then(() => {
+                        showStream(true);
+                        setStatus('delta model loaded');
+                        if (snapshot) {
+                            applyDeltaTransform(snapshot);
+                        } else if (pendingDeltaSnapshot) {
+                            applyDeltaTransform(pendingDeltaSnapshot);
+                            pendingDeltaSnapshot = null;
+                        }
+                        applyDeltaTextures(textures).then(() => {
+                            buildDeltaEntities(registry);
+                            if (snapshot && snapshot.material) applyDeltaMaterialSettings(snapshot.material);
+                            fitDeltaCameraToModel();
+                        }).catch(() => {
+                            buildDeltaEntities(registry);
+                            if (snapshot && snapshot.material) applyDeltaMaterialSettings(snapshot.material);
+                            fitDeltaCameraToModel();
+                        });
+                    }).catch((error) => {
+                        setStatus('delta load failed');
+                        console.warn('Delta load failed', error);
+                    });
+                    return;
+                }
+                if (msg.type === 'delta-transform') {
+                    if (!msg.sessionId || msg.sessionId !== deltaSessionId) return;
+                    deltaRxCount += 1;
+                    deltaLastAt = Date.now();
+                    if (msg.tick != null) deltaLastTick = msg.tick;
+                    updateDeltaStats();
+                    applyDeltaTransform(msg);
+                    return;
+                }
+                if (msg.type === 'delta-stop' && msg.sessionId === deltaSessionId) {
+                    deltaSessionId = null;
+                    clearDeltaModel();
+                    showStream(false);
+                    setStatus('delta stopped');
+                    return;
+                }
+                if (msg.type === 'delta-error' && msg.sessionId === deltaSessionId) {
+                    setStatus(msg.message || 'delta error');
+                    return;
+                }
                 if (msg.type === 'offer') {
                     handleOffer(msg);
                 } else if (msg.type === 'ice' && msg.sessionId === currentSessionId && msg.candidate) {
@@ -756,8 +1898,18 @@
 
         requestBtn.addEventListener('click', () => {
             if (!channel) return;
-            setStatus('requesting stream');
-            sendChannelMessage({ type: 'request-offer', role: 'rtc' });
+            if (renderMode === 'delta') {
+                if (!deltaSessionId) {
+                    setStatus('waiting for 3D viewer');
+                    sendChannelMessage({ type: 'delta-ping', role: 'rtc' });
+                    return;
+                }
+                setStatus('requesting delta assets');
+                sendChannelMessage({ type: 'delta-request-assets', role: 'rtc', sessionId: deltaSessionId });
+            } else {
+                setStatus('requesting stream');
+                sendChannelMessage({ type: 'request-offer', role: 'rtc' });
+            }
         });
 
         disconnectBtn.addEventListener('click', () => {
@@ -771,7 +1923,130 @@
                 stageEl.classList.add('full');
             }
         });
+
+        panelToggle.addEventListener('click', () => {
+            const nextState = !document.body.classList.contains('fullscreen-mode');
+            setFullscreenMode(nextState);
+        });
         setOutlineVisible(false);
+
+        if (keyStrengthInput) {
+            applyKeyStrength(keyStrengthInput.value);
+            keyStrengthInput.addEventListener('input', (event) => {
+                applyKeyStrength(event.target.value);
+            });
+        }
+
+        if (renderModeSelect) {
+            setRenderMode(renderModeSelect.value);
+            renderModeSelect.addEventListener('change', (event) => {
+                setRenderMode(event.target.value);
+            });
+        } else {
+            setRenderMode('delta');
+        }
+
+        if (bindingFilterEl) {
+            bindingFilterEl.addEventListener('input', () => {
+                renderBindings();
+            });
+        }
+
+        if (actionUpBtn) {
+            actionUpBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(0, actionStep, 0));
+            });
+        }
+        if (actionDownBtn) {
+            actionDownBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(0, -actionStep, 0));
+            });
+        }
+        if (actionLeftBtn) {
+            actionLeftBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(-actionStep, 0, 0));
+            });
+        }
+        if (actionRightBtn) {
+            actionRightBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(actionStep, 0, 0));
+            });
+        }
+        if (actionForwardBtn) {
+            actionForwardBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(0, 0, -actionStep));
+            });
+        }
+        if (actionBackBtn) {
+            actionBackBtn.addEventListener('click', () => {
+                applyOffsetToEntity(new THREE.Vector3(0, 0, actionStep));
+            });
+        }
+        if (actionRotateLeftBtn) {
+            actionRotateLeftBtn.addEventListener('click', () => {
+                const rot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, THREE.MathUtils.degToRad(actionRotateDeg), 0));
+                applyOffsetToEntity(new THREE.Vector3(0, 0, 0), rot);
+            });
+        }
+        if (actionRotateRightBtn) {
+            actionRotateRightBtn.addEventListener('click', () => {
+                const rot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, THREE.MathUtils.degToRad(-actionRotateDeg), 0));
+                applyOffsetToEntity(new THREE.Vector3(0, 0, 0), rot);
+            });
+        }
+        if (actionResetBtn) {
+            actionResetBtn.addEventListener('click', () => {
+                applyEntityAction({
+                    position: [0, 0, 0],
+                    quaternion: [0, 0, 0, 1],
+                    scale: [1, 1, 1]
+                });
+            });
+        }
+        if (actionToggleVisBtn) {
+            actionToggleVisBtn.addEventListener('click', () => {
+                const entityId = getSelectedEntityId();
+                const obj = getEntityObject(entityId);
+                const nextVisible = obj ? !obj.visible : true;
+                applyEntityAction(null, nextVisible);
+            });
+        }
+        if (actionRandomBtn) {
+            actionRandomBtn.addEventListener('click', () => {
+                const entityId = getSelectedEntityId();
+                const obj = getEntityObject(entityId);
+                if (!obj) {
+                    setActionStatus('no entity');
+                    return;
+                }
+                const pos = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.6,
+                    (Math.random() - 0.5) * 0.4,
+                    (Math.random() - 0.5) * 0.6
+                );
+                applyEntityAction({
+                    position: [pos.x, pos.y, pos.z],
+                    quaternion: [obj.quaternion.x, obj.quaternion.y, obj.quaternion.z, obj.quaternion.w],
+                    scale: [obj.scale.x, obj.scale.y, obj.scale.z]
+                });
+            });
+        }
+        if (actionSpawnCubeBtn) {
+            actionSpawnCubeBtn.addEventListener('click', () => {
+                const targetMode = actionTargetEl ? actionTargetEl.value : 'source';
+                if (targetMode !== 'source') {
+                    setActionStatus('spawn requires source');
+                    return;
+                }
+                const id = `cube_${Date.now().toString(36).slice(-4)}`;
+                const op = { type: 'spawnEntity', primitive: 'cube', entityId: id, size: 0.2 };
+                const ok = sendDeltaOpsToSource([op]);
+                setActionStatus(ok ? `spawned ${id}` : 'source not ready');
+            });
+        }
+
+        renderModules();
+        renderEntitySelect();
 
         streamOverlay.addEventListener('pointerdown', (event) => {
             if (event.target === resizeHandle) return;
@@ -807,9 +2082,16 @@
 
         function applyStageResolution() {
             const value = resolutionSelect.value;
+            const isFullscreen = document.body.classList.contains('fullscreen-mode');
             if (value === 'auto') {
                 stageEl.style.width = '100%';
-                stageEl.style.height = 'min(78vh, 900px)';
+                if (isFullscreen) {
+                    const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+                    const available = Math.max(420, window.innerHeight - headerHeight - 110);
+                    stageEl.style.height = `${available}px`;
+                } else {
+                    stageEl.style.height = 'min(78vh, 900px)';
+                }
                 return;
             }
 
@@ -819,7 +2101,8 @@
             const layoutRect = stageEl.parentElement.getBoundingClientRect();
             const headerHeight = document.querySelector('header')?.offsetHeight || 0;
             const maxWidth = layoutRect.width;
-            const maxHeight = Math.max(320, window.innerHeight - headerHeight - 140);
+            const chromeOffset = isFullscreen ? 110 : 140;
+            const maxHeight = Math.max(320, window.innerHeight - headerHeight - chromeOffset);
             const scale = Math.min(maxWidth / target.width, maxHeight / target.height, 1);
             stageEl.style.width = `${Math.floor(target.width * scale)}px`;
             stageEl.style.height = `${Math.floor(target.height * scale)}px`;
@@ -827,7 +2110,7 @@
 
         resolutionSelect.addEventListener('change', applyStageResolution);
         window.addEventListener('resize', applyStageResolution);
-        applyStageResolution();
+        setFullscreenMode(true);
 
         bgVideoInput.addEventListener('change', (event) => {
             const file = event.target.files && event.target.files[0];
