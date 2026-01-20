@@ -1836,9 +1836,10 @@
                     const snapshot = msg.snapshot || null;
                     const textures = msg.textures || [];
                     const registry = msg.registry || { entities: msg.entities || [], bindings: msg.bindings || [] };
-                    setDeltaRegistry(registry);
                     loadDeltaModelFromBuffer(payload).then(() => {
                         showStream(true);
+                        setDeltaRegistry(registry);
+                        buildDeltaEntities(registry);
                         setStatus('delta model loaded');
                         if (snapshot) {
                             applyDeltaTransform(snapshot);
@@ -1847,11 +1848,9 @@
                             pendingDeltaSnapshot = null;
                         }
                         applyDeltaTextures(textures).then(() => {
-                            buildDeltaEntities(registry);
                             if (snapshot && snapshot.material) applyDeltaMaterialSettings(snapshot.material);
                             fitDeltaCameraToModel();
                         }).catch(() => {
-                            buildDeltaEntities(registry);
                             if (snapshot && snapshot.material) applyDeltaMaterialSettings(snapshot.material);
                             fitDeltaCameraToModel();
                         });
