@@ -2039,6 +2039,52 @@ window.applyTextureBinding = applyTextureBinding;
                 }));
         }
 
+        function buildLightingPayload() {
+            if (!scene) return null;
+            const lights = scene.children
+                .filter((child) => child && child.isLight)
+                .map((light) => {
+                    const payload = {
+                        type: light.type,
+                        color: light.color ? light.color.getHex() : null,
+                        intensity: light.intensity,
+                        visible: light.visible,
+                        castShadow: !!light.castShadow
+                    };
+                    if (light.position) {
+                        payload.position = [light.position.x, light.position.y, light.position.z];
+                    }
+                    if (light.isDirectionalLight || light.isSpotLight) {
+                        const target = light.target;
+                        if (target && target.position) {
+                            payload.target = [target.position.x, target.position.y, target.position.z];
+                        }
+                    }
+                    if (light.isHemisphereLight && light.groundColor) {
+                        payload.groundColor = light.groundColor.getHex();
+                    }
+                    if (light.isPointLight || light.isSpotLight) {
+                        payload.distance = light.distance;
+                        payload.decay = light.decay;
+                    }
+                    if (light.isSpotLight) {
+                        payload.angle = light.angle;
+                        payload.penumbra = light.penumbra;
+                    }
+                    return payload;
+                });
+
+            return {
+                renderer: {
+                    physicallyCorrectLights: !!renderer?.physicallyCorrectLights,
+                    toneMapping: renderer?.toneMapping,
+                    toneMappingExposure: renderer?.toneMappingExposure,
+                    outputEncoding: renderer?.outputEncoding
+                },
+                lights
+            };
+        }
+
         function applyLightingSnapshot(snapshot) {
             if (!snapshot) return;
             snapshot.forEach((entry) => {
@@ -2306,6 +2352,18 @@ window.applyTextureBinding = applyTextureBinding;
             });
         }
 
+        function sendDeltaLightingUpdate() {
+            if (!deltaClientConnected || !deltaSessionId) return;
+            const lighting = buildLightingPayload();
+            if (!lighting) return;
+            sendStreamMessage({
+                type: 'delta-lighting',
+                role: 'viewer',
+                sessionId: deltaSessionId,
+                lighting
+            });
+        }
+
         function getMatchingRtcViewerUrl() {
             const href = window.location.href;
             if (href.includes('/3d-model-viewer/')) {
@@ -2525,7 +2583,8 @@ window.applyTextureBinding = applyTextureBinding;
                                 quaternion: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w]
                             },
                             modelSize: getModelSize(brainModel),
-                            material: getPrimaryMaterialSettings()
+                            material: getPrimaryMaterialSettings(),
+                            lighting: buildLightingPayload()
                         };
                         const textures = await buildDeltaTexturePayloads();
                         const registry = buildDeltaRegistrySnapshot();
@@ -4591,6 +4650,7 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                     document.getElementById('status').textContent = 'Lighting: Dramatic';
                     break;
             }
+            sendDeltaLightingUpdate();
         }
         
         function cycleBackground() {
@@ -4665,6 +4725,7 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                     document.getElementById('status').textContent = 'Background: Solid Black';
                     break;
             }
+            sendDeltaLightingUpdate();
         }
         
         function toggleWireframe() {

@@ -605,6 +605,7 @@
         let deltaAnimating = false;
         let pendingDeltaSnapshot = null;
         let deltaScaleLocked = false;
+        let deltaLightGroup = null;
         let deltaRegistry = { entities: [], bindings: [] };
         const deltaEntityMap = new Map();
         let deltaRxCount = 0;
@@ -1119,6 +1120,121 @@
             return true;
         }
 
+        function clearDeltaLights() {
+            if (!deltaLightGroup) return;
+            while (deltaLightGroup.children.length) {
+                const child = deltaLightGroup.children.pop();
+                if (child && child.parent) child.parent.remove(child);
+            }
+        }
+
+        function buildDefaultDeltaLights() {
+            if (!deltaLightGroup || typeof THREE === 'undefined') return;
+            clearDeltaLights();
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            deltaLightGroup.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            keyLight.position.set(5, 5, 5);
+            deltaLightGroup.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+            fillLight.position.set(-3, 2, -2);
+            deltaLightGroup.add(fillLight);
+
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
+            rimLight.position.set(0, 0, -5);
+            deltaLightGroup.add(rimLight);
+
+            const envLight = new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.4);
+            deltaLightGroup.add(envLight);
+
+            const pointLight1 = new THREE.PointLight(0xffffff, 0.3, 10);
+            pointLight1.position.set(2, 3, 2);
+            deltaLightGroup.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xffffff, 0.2, 10);
+            pointLight2.position.set(-2, 1, -2);
+            deltaLightGroup.add(pointLight2);
+        }
+
+        function applyDeltaLighting(lighting) {
+            if (!lighting) return;
+            initDeltaRenderer();
+
+            const rendererSettings = lighting.renderer || {};
+            if (deltaRenderer) {
+                if (typeof rendererSettings.physicallyCorrectLights === 'boolean') {
+                    deltaRenderer.physicallyCorrectLights = rendererSettings.physicallyCorrectLights;
+                }
+                if (typeof rendererSettings.toneMapping === 'number') {
+                    deltaRenderer.toneMapping = rendererSettings.toneMapping;
+                }
+                if (typeof rendererSettings.toneMappingExposure === 'number') {
+                    deltaRenderer.toneMappingExposure = rendererSettings.toneMappingExposure;
+                }
+                if (typeof rendererSettings.outputEncoding === 'number') {
+                    deltaRenderer.outputEncoding = rendererSettings.outputEncoding;
+                }
+            }
+
+            if (!Array.isArray(lighting.lights) || !lighting.lights.length) {
+                buildDefaultDeltaLights();
+                return;
+            }
+
+            clearDeltaLights();
+            lighting.lights.forEach((entry) => {
+                if (!entry || !entry.type) return;
+                const color = (typeof entry.color === 'number') ? entry.color : 0xffffff;
+                const intensity = (typeof entry.intensity === 'number') ? entry.intensity : 1;
+                let light = null;
+
+                switch (entry.type) {
+                    case 'AmbientLight':
+                        light = new THREE.AmbientLight(color, intensity);
+                        break;
+                    case 'DirectionalLight':
+                        light = new THREE.DirectionalLight(color, intensity);
+                        break;
+                    case 'PointLight':
+                        light = new THREE.PointLight(color, intensity, entry.distance || 0, entry.decay ?? 2);
+                        break;
+                    case 'SpotLight':
+                        light = new THREE.SpotLight(
+                            color,
+                            intensity,
+                            entry.distance || 0,
+                            entry.angle || Math.PI / 6,
+                            entry.penumbra || 0,
+                            entry.decay ?? 1
+                        );
+                        break;
+                    case 'HemisphereLight': {
+                        const ground = (typeof entry.groundColor === 'number') ? entry.groundColor : 0x444444;
+                        light = new THREE.HemisphereLight(color, ground, intensity);
+                        break;
+                    }
+                    default:
+                        return;
+                }
+
+                if (entry.position && light.position) {
+                    light.position.set(entry.position[0], entry.position[1], entry.position[2]);
+                }
+                if ((light.isDirectionalLight || light.isSpotLight) && entry.target) {
+                    const target = new THREE.Object3D();
+                    target.position.set(entry.target[0], entry.target[1], entry.target[2]);
+                    deltaLightGroup.add(target);
+                    light.target = target;
+                }
+                if (typeof entry.visible === 'boolean') light.visible = entry.visible;
+                if (typeof entry.castShadow === 'boolean') light.castShadow = entry.castShadow;
+
+                deltaLightGroup.add(light);
+            });
+        }
+
         function initDeltaRenderer() {
             if (deltaRenderer || typeof THREE === 'undefined') return;
             deltaRenderer = new THREE.WebGLRenderer({
@@ -1137,31 +1253,10 @@
             deltaScene = new THREE.Scene();
             deltaCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-            deltaScene.add(ambientLight);
-
-            const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            keyLight.position.set(5, 5, 5);
-            deltaScene.add(keyLight);
-
-            const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
-            fillLight.position.set(-3, 2, -2);
-            deltaScene.add(fillLight);
-
-            const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
-            rimLight.position.set(0, 0, -5);
-            deltaScene.add(rimLight);
-
-            const envLight = new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.4);
-            deltaScene.add(envLight);
-
-            const pointLight1 = new THREE.PointLight(0xffffff, 0.3, 10);
-            pointLight1.position.set(2, 3, 2);
-            deltaScene.add(pointLight1);
-
-            const pointLight2 = new THREE.PointLight(0xffffff, 0.2, 10);
-            pointLight2.position.set(-2, 1, -2);
-            deltaScene.add(pointLight2);
+            deltaLightGroup = new THREE.Group();
+            deltaLightGroup.name = 'deltaLights';
+            deltaScene.add(deltaLightGroup);
+            buildDefaultDeltaLights();
 
             deltaCamera.position.set(0.1, 0.05, 0.3);
             deltaCamera.lookAt(0, 0, 0);
@@ -1853,6 +1948,9 @@
                         showStream(true);
                         setDeltaRegistry(registry);
                         buildDeltaEntities(registry);
+                        if (snapshot && snapshot.lighting) {
+                            applyDeltaLighting(snapshot.lighting);
+                        }
                         setStatus('delta model loaded');
                         if (snapshot) {
                             applyDeltaTransform(snapshot);
@@ -1871,6 +1969,11 @@
                         setStatus('delta load failed');
                         console.warn('Delta load failed', error);
                     });
+                    return;
+                }
+                if (msg.type === 'delta-lighting') {
+                    if (msg.sessionId && msg.sessionId !== deltaSessionId) return;
+                    applyDeltaLighting(msg.lighting || msg.snapshot || msg);
                     return;
                 }
                 if (msg.type === 'delta-transform') {
