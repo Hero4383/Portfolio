@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transfer | Nathan Storms</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 35%, #4a6741 70%, #2980b9 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+            letter-spacing: -0.4px;
+        }
+
+        .nav-link {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+
+        .hero {
+            padding: 4.5rem 0 2.5rem;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: #ecf0f1;
+            max-width: 720px;
+            margin: 0 auto 1.5rem;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(52, 73, 94, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .card p {
+            color: #5a6c7d;
+            font-size: 1.05rem;
+        }
+
+        .card ul {
+            margin-top: 1rem;
+            padding-left: 1.2rem;
+            color: #5a6c7d;
+        }
+
+        .card li {
+            margin-bottom: 0.6rem;
+        }
+
+        .note {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+
+        .form-row label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 73, 94, 0.2);
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .address-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1.2rem;
+        }
+
+        .address-card {
+            border: 1px solid rgba(52, 73, 94, 0.16);
+            border-radius: 14px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .address-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .address-title {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .address-text {
+            font-family: "Courier New", monospace;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            word-break: break-all;
+            margin-bottom: 0.75rem;
+        }
+
+        .qr {
+            width: 160px;
+            height: 160px;
+            border-radius: 10px;
+            border: 1px solid rgba(52, 73, 94, 0.15);
+            display: block;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 0.8rem 1.6rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.25);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .btn.tiny {
+            padding: 0.45rem 0.9rem;
+            font-size: 0.85rem;
+            box-shadow: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .cta {
+            text-align: center;
+            padding: 1rem 0 4rem;
+        }
+
+        .cta a {
+            display: inline-block;
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 0.9rem 2.2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(52, 73, 94, 0.25);
+        }
+
+        .cta a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(52, 73, 94, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.1rem;
+            }
+
+            .card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a class="logo" href="../index.html">Nathan Storms</a>
+            <a class="nav-link" href="../index.html#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Bank Transfer (Contracted Work Only)</h1>
+                <p>This site does not collect bank or card details. Bank transfer details are shared after contract verification.</p>
+            </div>
+        </section>
+
+        <section class="container">
+            <div class="card">
+                <h2>How it works</h2>
+                <p>Bank transfers are available only for contracted work. Please use the contract ID so payments can be matched to the correct agreement.</p>
+                <ul>
+                    <li>Confirm you have an active contract and a contract ID.</li>
+                    <li>Send a request for transfer details using the template below.</li>
+                    <li>Receive ACH or wire instructions after verification.</li>
+                    <li>Send payment from your bank and include the contract ID in the memo.</li>
+                </ul>
+                <p class="note">Fees depend on your bank and transfer type. ACH is often low-fee within the USA.</p>
+            </div>
+
+            <div class="card">
+                <h2>Low-fee options (USA)</h2>
+                <p>Choose the method that fits your payment size and timeline. Details are shared after contract verification.</p>
+                <ul>
+                    <li>ACH bank transfer (recommended): low fees, typically 1-3 business days.</li>
+                    <li>Zelle (ready): send to <strong>nathanstorms@ymail.com</strong> and include the contract ID in the memo.</li>
+                    <li>Crypto: send only the specified asset on the exact network below.</li>
+                </ul>
+                <p class="note">Crypto transfers must use the correct currency and network address or funds can be lost.</p>
+            </div>
+
+            <div class="card">
+                <h2>Crypto receive addresses (contracted work only)</h2>
+                <p>Send only the listed asset on the specified network. Include the contract ID in your memo if the network supports it.</p>
+                <div class="address-grid">
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">BTC (Bitcoin)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-btc">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-btc">bc1qqsggyy2xx3dcf6l6km9tgr8g4k3gmhp5tafdq6</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=bc1qqsggyy2xx3dcf6l6km9tgr8g4k3gmhp5tafdq6" alt="BTC QR code">
+                    </div>
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">ETH (Ethereum)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-eth">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-eth">0x99AaB49458DE086829950D833B7283751f691DbE</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=0x99AaB49458DE086829950D833B7283751f691DbE" alt="ETH QR code">
+                    </div>
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">USDC (Ethereum)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-usdc-eth">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-usdc-eth">0x99AaB49458DE086829950D833B7283751f691DbE</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=0x99AaB49458DE086829950D833B7283751f691DbE" alt="USDC (Ethereum) QR code">
+                    </div>
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">SOL (Solana)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-sol">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-sol">HTryDmSta7NBGL6QsaVvX9QwY12imrsz79TC4cVRrnPx</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=HTryDmSta7NBGL6QsaVvX9QwY12imrsz79TC4cVRrnPx" alt="SOL QR code">
+                    </div>
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">USDC (Solana)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-usdc-sol">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-usdc-sol">HTryDmSta7NBGL6QsaVvX9QwY12imrsz79TC4cVRrnPx</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=HTryDmSta7NBGL6QsaVvX9QwY12imrsz79TC4cVRrnPx" alt="USDC (Solana) QR code">
+                    </div>
+                    <div class="address-card">
+                        <div class="address-header">
+                            <div class="address-title">XRP (XRP Ledger)</div>
+                            <button class="btn tiny" type="button" data-copy-target="addr-xrp">Copy</button>
+                        </div>
+                        <div class="address-text" id="addr-xrp">rh6foMH69HSQSUuNtmK3xTMvQNy6sKMKPy</div>
+                        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=rh6foMH69HSQSUuNtmK3xTMvQNy6sKMKPy" alt="XRP QR code">
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn secondary" type="button" id="copyCryptoBtn">Copy All Crypto Addresses</button>
+                </div>
+                <p class="note">Double-check the network before sending. For XRP, confirm if a destination tag is required by your wallet.</p>
+            </div>
+
+            <div class="card">
+                <h2>Request template</h2>
+                <p>Fill in your contract ID and copy the request template. Paste it into your email client or contact form.</p>
+                <div class="form-row">
+                    <label for="contractId">Contract ID</label>
+                    <input id="contractId" type="text" placeholder="Example: NS-2026-001">
+                </div>
+                <div class="form-row">
+                    <label for="requestTemplate">Request message</label>
+                    <textarea id="requestTemplate" readonly></textarea>
+                </div>
+                <div class="actions">
+                    <button class="btn secondary" type="button" id="copyEmailBtn">Copy Email Address</button>
+                    <button class="btn" type="button" id="copyTemplateBtn">Copy Request Template</button>
+                </div>
+                <p class="note">Email address: <span id="emailText">ittnathanstorms@gmail.com</span></p>
+            </div>
+        </section>
+
+        <div class="cta">
+            <a href="../index.html#contact">Back to Portfolio</a>
+        </div>
+    </main>
+
+    <script>
+        const emailAddress = 'ittnathanstorms@gmail.com';
+        const contractInput = document.getElementById('contractId');
+        const templateEl = document.getElementById('requestTemplate');
+        const copyEmailBtn = document.getElementById('copyEmailBtn');
+        const copyTemplateBtn = document.getElementById('copyTemplateBtn');
+        const copyCryptoBtn = document.getElementById('copyCryptoBtn');
+        const cryptoAddrs = [
+            { label: 'BTC (Bitcoin)', id: 'addr-btc' },
+            { label: 'ETH (Ethereum)', id: 'addr-eth' },
+            { label: 'USDC (Ethereum)', id: 'addr-usdc-eth' },
+            { label: 'SOL (Solana)', id: 'addr-sol' },
+            { label: 'USDC (Solana)', id: 'addr-usdc-sol' },
+            { label: 'XRP (XRP Ledger)', id: 'addr-xrp' }
+        ];
+
+        function buildTemplate() {
+            const contractId = contractInput.value.trim() || '[CONTRACT_ID]';
+            templateEl.value = `Subject: Bank Transfer Request - ${contractId}\n\n` +
+                `Hello Nathan,\n\n` +
+                `I would like to pay via bank transfer for contracted work.\n\n` +
+                `Contract ID: ${contractId}\n` +
+                `Payer name: \n` +
+                `Company (if applicable): \n` +
+                `Amount (USD): \n` +
+                `Preferred method: ACH / Zelle / USDC\n` +
+                `Zelle sender email/phone (if Zelle): \n` +
+                `Crypto network + sender wallet (if USDC): \n\n` +
+                `Please send the bank transfer details.\n\n` +
+                `Thank you,`;
+        }
+
+        async function copyText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            temp.remove();
+        }
+
+        contractInput.addEventListener('input', buildTemplate);
+
+        copyEmailBtn.addEventListener('click', async () => {
+            await copyText(emailAddress);
+        });
+
+        copyTemplateBtn.addEventListener('click', async () => {
+            await copyText(templateEl.value);
+        });
+
+        if (copyCryptoBtn) {
+            copyCryptoBtn.addEventListener('click', async () => {
+                const lines = cryptoAddrs.map((entry) => {
+                    const el = document.getElementById(entry.id);
+                    const addr = el ? el.textContent.trim() : '';
+                    return `${entry.label}: ${addr}`;
+                });
+                await copyText(lines.join('\n'));
+            });
+        }
+
+        document.querySelectorAll('[data-copy-target]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const targetId = button.getAttribute('data-copy-target');
+                const el = targetId ? document.getElementById(targetId) : null;
+                if (!el) return;
+                await copyText(el.textContent.trim());
+            });
+        });
+
+        buildTemplate();
+    </script>
+</body>
+</html>

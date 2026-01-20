@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Containerized LLM Ops Lab | Nathan Storms</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 35%, #4a6741 70%, #2980b9 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+            letter-spacing: -0.4px;
+        }
+        
+        .nav-link {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+        
+        .hero {
+            padding: 5rem 0 3rem;
+            text-align: center;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+        }
+        
+        .hero p {
+            font-size: 1.15rem;
+            color: #ecf0f1;
+            max-width: 720px;
+            margin: 0 auto 2rem;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+        
+        .tag {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ecf0f1;
+            padding: 0.45rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(52, 73, 94, 0.1);
+        }
+        
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        .card p {
+            color: #5a6c7d;
+            font-size: 1.05rem;
+        }
+        
+        .card ul {
+            margin-top: 1rem;
+            padding-left: 1.2rem;
+            color: #5a6c7d;
+        }
+        
+        .card li {
+            margin-bottom: 0.6rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .pill {
+            background: rgba(52, 73, 94, 0.06);
+            border: 1px solid rgba(52, 73, 94, 0.12);
+            border-radius: 14px;
+            padding: 1.3rem;
+        }
+        
+        .pill h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .diagram {
+            background: rgba(44, 62, 80, 0.06);
+            border: 1px dashed rgba(52, 73, 94, 0.3);
+            border-radius: 12px;
+            padding: 1.2rem;
+            font-family: "Courier New", monospace;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        
+        .cta {
+            text-align: center;
+            padding: 1rem 0 4rem;
+        }
+        
+        .cta a {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+        
+        .cta a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(52, 152, 219, 0.35);
+        }
+
+        .animation-section {
+            padding-bottom: 0;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #5a6c7d;
+            font-size: 0.95rem;
+        }
+
+        .legend-swatch {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid rgba(52, 73, 94, 0.2);
+            background: rgba(52, 73, 94, 0.08);
+        }
+
+        .legend-swatch.pipe {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+        }
+
+        .legend-swatch.agent {
+            background: #f1c40f;
+            border-radius: 50%;
+        }
+
+        .legend-swatch.hat {
+            background: #9b59b6;
+            clip-path: polygon(0 100%, 50% 0, 100% 100%);
+        }
+
+        .canvas-wrap {
+            background: rgba(44, 62, 80, 0.04);
+            border: 1px solid rgba(52, 73, 94, 0.12);
+            border-radius: 16px;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        #containerLabCanvas {
+            width: 100%;
+            height: 520px;
+            display: block;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(52, 73, 94, 0.08), rgba(52, 73, 94, 0.02));
+        }
+
+        .canvas-note {
+            margin-top: 0.75rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .card {
+                padding: 2rem;
+            }
+
+            #containerLabCanvas {
+                height: 380px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a class="logo" href="../index.html">Nathan Storms</a>
+            <a class="nav-link" href="../index.html#projects">Back to Projects</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Containerized LLM Ops Lab</h1>
+                <p>Tree of Life uses a container-first lab to keep LLM experiments portable, reproducible, and production-ready without exposing internal datasets or prompts.</p>
+                <div class="tag-row">
+                    <span class="tag">Docker</span>
+                    <span class="tag">Docker Compose</span>
+                    <span class="tag">LLM Inference</span>
+                    <span class="tag">Vector DB</span>
+                    <span class="tag">API Gateway</span>
+                    <span class="tag">Observability</span>
+                    <span class="tag">GPU/CPU Profiles</span>
+                </div>
+            </div>
+        </section>
+        
+        <section class="container">
+            <div class="card">
+                <h2>Mission for Tree of Life</h2>
+                <p>This lab keeps research-grade LLM workflows repeatable and secure while still feeling fast to iterate on.</p>
+                <ul>
+                    <li>Single-command boot with Compose profiles for CPU or GPU.</li>
+                    <li>Strict service boundaries and network isolation by default.</li>
+                    <li>Config-driven deployments so environments stay consistent.</li>
+                    <li>Observability hooks for latency, throughput, and error tracking.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Capability pillars</h2>
+                <div class="grid">
+                    <div class="pill">
+                        <h3>Reproducible environments</h3>
+                        <p>Environment files and versioned containers keep every run consistent across machines.</p>
+                    </div>
+                    <div class="pill">
+                        <h3>Safe service boundaries</h3>
+                        <p>Clear separation between model runtime, retrieval, and external tools.</p>
+                    </div>
+                    <div class="pill">
+                        <h3>Performance control</h3>
+                        <p>CPU and GPU profiles tuned for predictable latency and cost awareness.</p>
+                    </div>
+                    <div class="pill">
+                        <h3>Operational visibility</h3>
+                        <p>Structured logs and metrics for fast debugging and reporting.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Architecture snapshot</h2>
+                <p>High-level view only. Internal services and data are intentionally abstracted.</p>
+                <div class="diagram">Client UI
+   |
+   v
+Gateway / API
+   |
+   +-- Auth + Rate Limits
+   |
+   v
+LLM Runtime ----> Tooling Layer ----> Vector Store
+   |                    |                  |
+   v                    v                  v
+Observability <----- Metrics + Logs ---- Cache</div>
+            </div>
+
+            <div class="card">
+                <h2>Delivery artifacts</h2>
+                <p>Portfolio-friendly outputs that show real delivery without exposing proprietary internals.</p>
+                <ul>
+                    <li>Compose files with CPU and GPU profiles.</li>
+                    <li>Service health checks and startup orchestration.</li>
+                    <li>Environment templates with redacted secrets.</li>
+                    <li>Metrics dashboards for latency, errors, and throughput.</li>
+                    <li>Runbooks for local and staged deployments.</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2>Operational highlights</h2>
+                <ul>
+                    <li>Health checks and startup sequencing prevent broken demos.</li>
+                    <li>Configurable rate limits protect infrastructure.</li>
+                    <li>GPU-aware scheduling keeps inference stable under load.</li>
+                    <li>Token and latency dashboards support clear reporting.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>What stays private</h2>
+                <ul>
+                    <li>Model weights, prompt strategies, and proprietary datasets.</li>
+                    <li>Internal service topology and provider credentials.</li>
+                    <li>Deployment secrets and contract-specific automation.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Why it matters</h2>
+                <p>Containerizing the workflow keeps experiments consistent, supports secure collaboration, and makes it practical to ship the same stack from local dev to production.</p>
+            </div>
+        </section>
+
+        <section class="container animation-section">
+            <div class="card">
+                <h2>Systems Playground (Interactive)</h2>
+                <p>A visual metaphor for the Tree of Life stack: containers inside containers, protocols as tunnels, and agent tiers that specialize by role and skill. This stays high-level by design while showing the architectural intent.</p>
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="legend-swatch"></span>
+                        Containers and layered boundaries
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch pipe"></span>
+                        Protocol tunnels and data pipes
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch agent"></span>
+                        Agents consuming information
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-swatch hat"></span>
+                        Skill hats and job roles
+                    </div>
+                </div>
+                <div class="canvas-wrap">
+                    <canvas id="containerLabCanvas" role="img" aria-label="Animated diagram of nested containers, protocol tunnels, and AI agent tiers."></canvas>
+                    <div class="canvas-note">Move your cursor to shift the view. Click a slave container to open the full-screen playground, or click elsewhere to pause.</div>
+                </div>
+            </div>
+        </section>
+        
+        <div class="cta">
+            <a href="../index.html#projects">Return to Portfolio</a>
+        </div>
+    </main>
+
+    <script>
+        (() => {
+            const canvas = document.getElementById('containerLabCanvas');
+            if (!canvas || !canvas.getContext) return;
+
+            const ctx = canvas.getContext('2d');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const mouse = { x: 0, y: 0, active: false };
+            let width = 0;
+            let height = 0;
+            let time = 0;
+            let paused = prefersReducedMotion;
+
+            const levels = [
+                { name: 'Master', topRatio: 0.08, heightRatio: 0.18, containers: 2, pattern: 'tile', env: '#e2e7ec' },
+                { name: 'Servant', topRatio: 0.34, heightRatio: 0.22, containers: 3, pattern: 'stone', env: '#e9edf2' },
+                { name: 'Slave', topRatio: 0.62, heightRatio: 0.28, containers: 5, pattern: 'brick', env: '#f2f5f8' }
+            ];
+
+            const masterServantLinks = [
+                [0, 1],
+                [2]
+            ];
+
+            const servantSlaveLinks = [
+                [0, 1],
+                [2, 3],
+                [4]
+            ];
+
+            const agents = [];
+            const slaveStages = [];
+            const hitRects = { slave: [] };
+            const roleStyles = {
+                master: { radius: 14, speed: 0.35, color: '#e67e22' },
+                servant: { radius: 11, speed: 0.55, color: '#f39c12' },
+                slave: { radius: 9, speed: 0.75, color: '#f1c40f' }
+            };
+
+            function resize() {
+                const dpr = window.devicePixelRatio || 1;
+                width = canvas.clientWidth;
+                height = canvas.clientHeight;
+                canvas.width = Math.floor(width * dpr);
+                canvas.height = Math.floor(height * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                layoutLevels();
+                initSlaveStages();
+            }
+
+            function layoutLevels() {
+                levels.forEach((level) => {
+                    const top = height * level.topRatio;
+                    const levelHeight = height * level.heightRatio;
+                    const marginX = width * 0.08;
+                    const gap = width * 0.03;
+                    const totalWidth = width - marginX * 2;
+                    const containerWidth = (totalWidth - gap * (level.containers - 1)) / level.containers;
+                    const containers = [];
+                    for (let i = 0; i < level.containers; i++) {
+                        containers.push({
+                            x: marginX + i * (containerWidth + gap),
+                            y: top,
+                            w: containerWidth,
+                            h: levelHeight
+                        });
+                    }
+                    level.layout = { top, height: levelHeight, containers };
+                });
+            }
+
+            function initAgents() {
+                agents.length = 0;
+                levels.forEach((level, levelIndex) => {
+                    const role = level.name.toLowerCase();
+                    const count = level.containers;
+                    for (let i = 0; i < count; i++) {
+                        agents.push({
+                            role,
+                            levelIndex,
+                            containerIndex: i,
+                            progress: Math.random(),
+                            dir: i % 2 === 0 ? 1 : -1,
+                            hatType: i % 3
+                        });
+                    }
+                });
+            }
+
+            function initSlaveStages() {
+                slaveStages.length = 0;
+                const slaveLevel = levels[2];
+                if (!slaveLevel.layout) return;
+                slaveLevel.layout.containers.forEach((container, index) => {
+                    const columns = Math.max(6, Math.min(10, Math.floor(container.w / 50)));
+                    const rows = container.h > 120 ? 3 : 2;
+                    const stage = {
+                        dots: [],
+                        total: 0,
+                        completeAt: null,
+                        resetAt: null,
+                        path: [],
+                        pathIndex: 0,
+                        pathProgress: 0,
+                        speed: 0.9
+                    };
+                    buildStageDots(stage, columns, rows);
+                    stage.path = stage.dots.map((dot, idx) => ({ x: dot.x, y: dot.y, dotIndex: idx }));
+                    stage.total = stage.dots.length;
+                    resetStage(stage);
+                    slaveStages[index] = stage;
+                });
+            }
+
+            function buildStageDots(stage, columns, rows) {
+                const xStart = 0.12;
+                const xEnd = 0.88;
+                const yStart = rows === 2 ? 0.42 : 0.34;
+                const yGap = rows === 2 ? 0.22 : 0.18;
+                stage.dots = [];
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < columns; c++) {
+                        const t = columns === 1 ? 0.5 : c / (columns - 1);
+                        const flow = r % 2 === 0 ? t : 1 - t;
+                        const x = xStart + flow * (xEnd - xStart);
+                        const y = yStart + r * yGap;
+                        stage.dots.push({ x, y, active: true });
+                    }
+                }
+            }
+
+            function resetStage(stage) {
+                stage.dots.forEach((dot) => {
+                    dot.active = true;
+                });
+                stage.completeAt = null;
+                stage.resetAt = null;
+                stage.pathIndex = 0;
+                stage.pathProgress = 0;
+                if (stage.dots.length > 0) {
+                    stage.dots[0].active = false;
+                }
+            }
+
+            function drawBrickPattern(rect) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.18)';
+                ctx.lineWidth = 1;
+                const rowHeight = 12;
+                const brickWidth = 28;
+                for (let y = rect.y + 6; y < rect.y + rect.h; y += rowHeight) {
+                    const offset = ((y / rowHeight) % 2) * (brickWidth / 2);
+                    for (let x = rect.x + 6 - offset; x < rect.x + rect.w; x += brickWidth) {
+                        ctx.strokeRect(x, y, brickWidth, rowHeight - 4);
+                    }
+                }
+            }
+
+            function drawTilePattern(rect) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.18)';
+                ctx.lineWidth = 1;
+                const size = 18;
+                for (let y = rect.y + 6; y < rect.y + rect.h; y += size) {
+                    for (let x = rect.x + 6; x < rect.x + rect.w; x += size) {
+                        ctx.strokeRect(x, y, size, size);
+                    }
+                }
+            }
+
+            function drawStonePattern(rect) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.2)';
+                ctx.lineWidth = 1;
+                const size = 16;
+                for (let y = rect.y + 6; y < rect.y + rect.h; y += size) {
+                    const offset = ((y / size) % 2) * 6;
+                    for (let x = rect.x + 6 + offset; x < rect.x + rect.w; x += size) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            function drawContainer(rect, patternType, label) {
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.25)';
+                ctx.lineWidth = 2;
+                ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+                ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+                if (patternType === 'brick') drawBrickPattern(rect);
+                if (patternType === 'tile') drawTilePattern(rect);
+                if (patternType === 'stone') drawStonePattern(rect);
+
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.25)';
+                ctx.lineWidth = 1;
+                const maxInset = Math.min(rect.w, rect.h) * 0.35;
+                const step = 10;
+                const nestedCount = Math.max(2, Math.min(4, Math.floor(maxInset / step)));
+                for (let i = 1; i <= nestedCount; i++) {
+                    const inset = i * step;
+                    ctx.strokeRect(rect.x + inset, rect.y + inset, rect.w - inset * 2, rect.h - inset * 2);
+                }
+
+                ctx.fillStyle = 'rgba(52, 73, 94, 0.6)';
+                ctx.font = '12px "Segoe UI", sans-serif';
+                ctx.fillText(label, rect.x + 10, rect.y + 18);
+            }
+
+            function drawDots(rect, count, pulse) {
+                const dotY = rect.y + rect.h * 0.7;
+                ctx.fillStyle = 'rgba(52, 73, 94, 0.25)';
+                for (let i = 0; i < count; i++) {
+                    const x = rect.x + 12 + i * ((rect.w - 24) / (count - 1));
+                    const size = 2 + Math.sin(pulse + i) * 0.6;
+                    ctx.beginPath();
+                    ctx.arc(x, dotY, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawStageDots(rect, stage, pulse) {
+                if (!stage) return;
+                stage.dots.forEach((dot, index) => {
+                    if (!dot.active) return;
+                    const x = rect.x + rect.w * dot.x;
+                    const y = rect.y + rect.h * dot.y;
+                    const base = index % 7 === 0 ? 3.6 : 2.4;
+                    const size = base + Math.sin(pulse + index) * 0.4;
+                    ctx.fillStyle = index % 7 === 0 ? 'rgba(46, 204, 113, 0.75)' : 'rgba(52, 73, 94, 0.35)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function drawStageStatus(rect, stage) {
+                if (!stage) return;
+                const remaining = stage.dots.filter((dot) => dot.active).length;
+                const total = stage.total || 1;
+                ctx.save();
+                if (stage.completeAt) {
+                    ctx.fillStyle = 'rgba(46, 204, 113, 0.2)';
+                    ctx.fillRect(rect.x + 6, rect.y + 6, rect.w - 12, rect.h - 12);
+                    ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(rect.x + 6, rect.y + 6, rect.w - 12, rect.h - 12);
+                    ctx.fillStyle = '#27ae60';
+                    ctx.font = '12px "Segoe UI", sans-serif';
+                    ctx.fillText('Level Complete', rect.x + 12, rect.y + rect.h - 12);
+                } else {
+                    ctx.fillStyle = 'rgba(52, 73, 94, 0.55)';
+                    ctx.font = '11px "Segoe UI", sans-serif';
+                    ctx.fillText(`Progress: ${total - remaining}/${total}`, rect.x + 12, rect.y + rect.h - 12);
+                }
+                ctx.restore();
+            }
+
+            function drawPowerup(x, y, size, color) {
+                ctx.fillStyle = color;
+                ctx.fillRect(x - size / 2, y - size / 2, size, size);
+            }
+
+            function drawHat(x, y, size, type) {
+                ctx.fillStyle = '#8e44ad';
+                if (type === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size);
+                    ctx.lineTo(x - size, y + size);
+                    ctx.lineTo(x + size, y + size);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (type === 1) {
+                    ctx.fillRect(x - size, y - size, size * 2, size);
+                } else {
+                    ctx.fillRect(x - size * 1.2, y - size * 0.6, size * 2.4, size * 0.6);
+                    ctx.fillRect(x - size * 0.6, y - size * 1.4, size * 1.2, size);
+                }
+            }
+
+            function drawAgent(agent, x, y, mouthPhase) {
+                const style = roleStyles[agent.role];
+                const radius = style.radius;
+                const mouth = 0.3 + Math.abs(Math.sin(mouthPhase)) * 0.5;
+                ctx.save();
+                ctx.translate(x, y);
+                const heading = Number.isFinite(agent.heading) ? agent.heading : (agent.dir > 0 ? 0 : Math.PI);
+                ctx.rotate(heading);
+
+                ctx.fillStyle = style.color;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, mouth, Math.PI * 2 - mouth);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.beginPath();
+                ctx.arc(radius * 0.3, -radius * 0.35, radius * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+
+                drawHat(0, -radius * 1.1, radius * 0.5, agent.hatType);
+                drawPowerup(radius * 0.9, radius * 0.1, radius * 0.35, '#2ecc71');
+                ctx.restore();
+            }
+
+            function bezierPoint(t, p0, p1, p2, p3) {
+                const cX = 3 * (p1.x - p0.x);
+                const bX = 3 * (p2.x - p1.x) - cX;
+                const aX = p3.x - p0.x - cX - bX;
+
+                const cY = 3 * (p1.y - p0.y);
+                const bY = 3 * (p2.y - p1.y) - cY;
+                const aY = p3.y - p0.y - cY - bY;
+
+                const x = aX * t * t * t + bX * t * t + cX * t + p0.x;
+                const y = aY * t * t * t + bY * t * t + cY * t + p0.y;
+                return { x, y };
+            }
+
+            function drawPipe(from, to, phase, style) {
+                const controlOffset = (to.y - from.y) * 0.4;
+                const p0 = { x: from.x, y: from.y };
+                const p1 = { x: from.x + 20, y: from.y + controlOffset };
+                const p2 = { x: to.x - 20, y: to.y - controlOffset };
+                const p3 = { x: to.x, y: to.y };
+
+                ctx.strokeStyle = style;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 6]);
+                ctx.beginPath();
+                ctx.moveTo(p0.x, p0.y);
+                ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const t = (phase % 1 + 1) % 1;
+                const point = bezierPoint(t, p0, p1, p2, p3);
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawStrings(masterPoints, servantPoints, phase) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.35)';
+                ctx.lineWidth = 1.5;
+                masterPoints.forEach((master, index) => {
+                    const servant = servantPoints[index % servantPoints.length];
+                    const sway = Math.sin(phase + index) * 6;
+                    ctx.beginPath();
+                    ctx.moveTo(master.x, master.y);
+                    ctx.lineTo((master.x + servant.x) / 2 + sway, (master.y + servant.y) / 2);
+                    ctx.lineTo(servant.x, servant.y);
+                    ctx.stroke();
+                });
+            }
+
+            function getAgentByRole(role, containerIndex) {
+                return agents.find((agent) => agent.role === role && agent.containerIndex === containerIndex);
+            }
+
+            function getContainerRect(levelIndex, containerIndex, offsetX, offsetY, sway) {
+                const level = levels[levelIndex];
+                const container = level.layout.containers[containerIndex];
+                return {
+                    x: container.x + offsetX + sway,
+                    y: container.y + offsetY + sway,
+                    w: container.w,
+                    h: container.h
+                };
+            }
+
+            function updateAgents(delta, now) {
+                slaveStages.forEach((stage, index) => {
+                    if (stage && stage.resetAt && now >= stage.resetAt) {
+                        resetStage(stage);
+                        const agent = getAgentByRole('slave', index);
+                        if (agent) agent.pauseUntil = null;
+                    }
+                });
+
+                agents.forEach((agent) => {
+                    const level = levels[agent.levelIndex];
+                    if (!level.layout) return;
+                    if (agent.pauseUntil && now < agent.pauseUntil) return;
+                    const container = level.layout.containers[agent.containerIndex];
+
+                    if (agent.role === 'slave') {
+                        const stage = slaveStages[agent.containerIndex];
+                        if (!stage || stage.completeAt) return;
+                        if (stage.path.length < 2) return;
+                        const current = stage.path[stage.pathIndex];
+                        const next = stage.path[stage.pathIndex + 1];
+                        if (!next) {
+                            stage.completeAt = now;
+                            stage.resetAt = now + 3;
+                            agent.pauseUntil = stage.resetAt;
+                            return;
+                        }
+
+                        stage.pathProgress += delta * stage.speed;
+                        if (stage.pathProgress >= 1) {
+                            stage.pathProgress = 0;
+                            stage.pathIndex += 1;
+                            const dot = stage.dots[stage.pathIndex];
+                            if (dot) dot.active = false;
+                            if (stage.pathIndex >= stage.path.length - 1) {
+                                stage.completeAt = now;
+                                stage.resetAt = now + 3;
+                                agent.pauseUntil = stage.resetAt;
+                                return;
+                            }
+                        }
+
+                        const t = stage.pathProgress;
+                        const x = current.x + (next.x - current.x) * t;
+                        const y = current.y + (next.y - current.y) * t;
+                        agent.x = container.x + container.w * x;
+                        agent.y = container.y + container.h * y;
+                        agent.heading = Math.atan2(next.y - current.y, next.x - current.x);
+                        agent.dir = next.x >= current.x ? 1 : -1;
+                        return;
+                    }
+
+                    const minX = container.x + 18;
+                    const maxX = container.x + container.w - 18;
+                    const range = maxX - minX;
+                    agent.progress += delta * roleStyles[agent.role].speed * agent.dir;
+                    if (agent.progress > 1) {
+                        agent.progress = 1;
+                        agent.dir *= -1;
+                    }
+                    if (agent.progress < 0) {
+                        agent.progress = 0;
+                        agent.dir *= -1;
+                    }
+                    agent.x = minX + range * agent.progress;
+                    agent.y = container.y + container.h * (agent.role === 'master' ? 0.45 : agent.role === 'servant' ? 0.55 : 0.7);
+                    agent.heading = agent.dir > 0 ? 0 : Math.PI;
+                });
+            }
+
+            function drawScene(delta) {
+                ctx.clearRect(0, 0, width, height);
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                gradient.addColorStop(1, 'rgba(248, 250, 252, 0.9)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                const offsetX = mouse.active ? (mouse.x / width - 0.5) * 18 : 0;
+                const offsetY = mouse.active ? (mouse.y / height - 0.5) * 10 : 0;
+
+                const hoveredLevel = mouse.active
+                    ? levels.find((level) => mouse.y >= level.layout.top && mouse.y <= level.layout.top + level.layout.height)
+                    : null;
+
+                const levelStates = levels.map((level, index) => ({
+                    sway: Math.sin(time * 0.6 + index) * 6,
+                    level
+                }));
+
+                levelStates.forEach((state, index) => {
+                    const level = state.level;
+                    const sway = state.sway;
+                    const levelTop = level.layout.top + offsetY;
+                    const levelHeight = level.layout.height;
+
+                    ctx.save();
+                    if (hoveredLevel && hoveredLevel !== level) {
+                        ctx.globalAlpha = 0.5;
+                    }
+                    ctx.fillStyle = level.env;
+                    ctx.fillRect(0, levelTop + sway, width, levelHeight);
+                    ctx.restore();
+
+                    level.layout.containers.forEach((container, idx) => {
+                        const rect = {
+                            x: container.x + offsetX + sway,
+                            y: container.y + offsetY + sway,
+                            w: container.w,
+                            h: container.h
+                        };
+                        if (level.name === 'Slave') {
+                            hitRects.slave[idx] = rect;
+                        }
+                        ctx.save();
+                        if (hoveredLevel && hoveredLevel !== level) {
+                            ctx.globalAlpha = 0.6;
+                        }
+                        drawContainer(rect, level.pattern, `${level.name} ${idx + 1}`);
+                        if (level.name === 'Slave') {
+                            drawStageDots(rect, slaveStages[idx], time * 2 + idx);
+                            drawStageStatus(rect, slaveStages[idx]);
+                        } else {
+                            drawDots(rect, 8, time * 2 + idx);
+                        }
+                        ctx.restore();
+                    });
+                });
+
+                masterServantLinks.forEach((servantIndices, masterIndex) => {
+                    const masterRect = getContainerRect(0, masterIndex, offsetX, offsetY, levelStates[0].sway);
+                    const from = { x: masterRect.x + masterRect.w / 2, y: masterRect.y + masterRect.h };
+                    servantIndices.forEach((servantIndex, idx) => {
+                        const servantRect = getContainerRect(1, servantIndex, offsetX, offsetY, levelStates[1].sway);
+                        const to = { x: servantRect.x + servantRect.w / 2, y: servantRect.y };
+                        drawPipe(from, to, time + idx * 0.3 + masterIndex, 'rgba(52, 152, 219, 0.8)');
+                    });
+                });
+
+                servantSlaveLinks.forEach((slaveIndices, servantIndex) => {
+                    const servantRect = getContainerRect(1, servantIndex, offsetX, offsetY, levelStates[1].sway);
+                    const from = { x: servantRect.x + servantRect.w / 2, y: servantRect.y + servantRect.h };
+                    slaveIndices.forEach((slaveIndex, idx) => {
+                        const slaveRect = getContainerRect(2, slaveIndex, offsetX, offsetY, levelStates[2].sway);
+                        const to = { x: slaveRect.x + slaveRect.w / 2, y: slaveRect.y };
+                        drawPipe(from, to, time + idx * 0.4 + servantIndex, 'rgba(46, 204, 113, 0.75)');
+                    });
+                });
+
+                masterServantLinks.forEach((servantIndices, masterIndex) => {
+                    const masterAgent = getAgentByRole('master', masterIndex);
+                    if (!masterAgent) return;
+                    servantIndices.forEach((servantIndex) => {
+                        const servantAgent = getAgentByRole('servant', servantIndex);
+                        if (!servantAgent) return;
+                        drawStrings(
+                            [{ x: masterAgent.x + offsetX + levelStates[0].sway, y: masterAgent.y + offsetY + levelStates[0].sway }],
+                            [{ x: servantAgent.x + offsetX + levelStates[1].sway, y: servantAgent.y + offsetY + levelStates[1].sway }],
+                            time
+                        );
+                    });
+                });
+
+                servantSlaveLinks.forEach((slaveIndices, servantIndex) => {
+                    const servantAgent = getAgentByRole('servant', servantIndex);
+                    if (!servantAgent) return;
+                    slaveIndices.forEach((slaveIndex) => {
+                        const slaveAgent = getAgentByRole('slave', slaveIndex);
+                        if (!slaveAgent) return;
+                        drawStrings(
+                            [{ x: servantAgent.x + offsetX + levelStates[1].sway, y: servantAgent.y + offsetY + levelStates[1].sway }],
+                            [{ x: slaveAgent.x + offsetX + levelStates[2].sway, y: slaveAgent.y + offsetY + levelStates[2].sway }],
+                            time + 1.5
+                        );
+                    });
+                });
+
+                agents.forEach((agent, index) => {
+                    const sway = levelStates[agent.levelIndex]?.sway || 0;
+                    drawAgent(agent, agent.x + offsetX + sway, agent.y + offsetY + sway, time * 3 + index);
+                });
+            }
+
+            function tick(timestamp) {
+                if (!paused) {
+                    const delta = 0.016;
+                    time += delta;
+                    updateAgents(delta, time);
+                }
+                drawScene();
+                requestAnimationFrame(tick);
+            }
+
+            canvas.addEventListener('mousemove', (event) => {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = event.clientX - rect.left;
+                mouse.y = event.clientY - rect.top;
+                mouse.active = true;
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                mouse.active = false;
+            });
+
+            canvas.addEventListener('click', (event) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                const hitIndex = hitRects.slave.findIndex((hit) => hit && x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h);
+                if (hitIndex !== -1) {
+                    window.location.href = `playground.html?container=${hitIndex + 1}`;
+                    return;
+                }
+                paused = !paused;
+            });
+
+            window.addEventListener('resize', resize);
+
+            resize();
+            initAgents();
+            updateAgents(0, time);
+            drawScene();
+            requestAnimationFrame(tick);
+        })();
+    </script>
+</body>
+</html>

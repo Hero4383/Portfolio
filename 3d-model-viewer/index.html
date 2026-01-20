@@ -330,6 +330,7 @@
             <button onclick="loadNewFiles()">Load New</button>
             <button id="startStreamBtn" onclick="startStream()">Start Stream</button>
             <button id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
+            <button onclick="openMatchingRtcViewer()" style="margin-top:6px;">Open Matching RTC Viewer</button>
             <div id="streamStatus" class="control-note">Stream: idle</div>
             <div class="control-note">Make sure your model and textures are fully loaded before starting the stream.</div>
             <div class="control-note">For smooth streaming, keep this tab visible (not in the background).</div>
@@ -2303,6 +2304,23 @@ window.applyTextureBinding = applyTextureBinding;
                 sessionId: streamSessionId,
                 sdp: streamOfferSdp
             });
+        }
+
+        function getMatchingRtcViewerUrl() {
+            const href = window.location.href;
+            if (href.includes('/3d-model-viewer/')) {
+                return href.replace('/3d-model-viewer/', '/rtc-viewer/');
+            }
+            if (href.includes('3d-model-viewer/index.html')) {
+                return href.replace(/3d-model-viewer\/index\.html(\?.*)?$/, 'rtc-viewer/index.html');
+            }
+            const base = href.replace(/\/[^\/]*$/, '/');
+            return `${base}rtc-viewer/`;
+        }
+
+        function openMatchingRtcViewer() {
+            const url = getMatchingRtcViewerUrl();
+            window.open(url, '_blank', 'noopener');
         }
 
         async function startStream() {

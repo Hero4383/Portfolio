@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Lab Playground | Tree of Life</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top, #1f2a36 0%, #141b24 60%, #0c1118 100%);
+            color: #ecf0f1;
+            overflow: hidden;
+        }
+
+        #playgroundCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .hud {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            background: rgba(15, 21, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.2rem 1.4rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(10px);
+            max-width: 320px;
+        }
+
+        .hud h1 {
+            font-size: 1.2rem;
+            margin-bottom: 0.4rem;
+            color: #f5f7fa;
+        }
+
+        .hud p {
+            font-size: 0.9rem;
+            color: rgba(236, 240, 241, 0.75);
+            margin-bottom: 0.6rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            color: #a9d2f4;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .controls {
+            font-size: 0.85rem;
+            color: rgba(236, 240, 241, 0.7);
+            line-height: 1.5;
+        }
+
+        .status {
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            color: #9bd5ff;
+        }
+
+        .narration {
+            margin-top: 0.6rem;
+            font-size: 0.82rem;
+            color: rgba(236, 240, 241, 0.75);
+            background: rgba(15, 21, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 0.6rem 0.7rem;
+            line-height: 1.4;
+        }
+
+        .scoreboard {
+            margin-top: 0.6rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            font-size: 0.85rem;
+            color: rgba(236, 240, 241, 0.8);
+        }
+
+        .chain {
+            margin-top: 0.7rem;
+        }
+
+        .chain-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(236, 240, 241, 0.55);
+            margin-bottom: 0.35rem;
+        }
+
+        .chain-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .chain-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.6;
+        }
+
+        .chain-dot.active {
+            opacity: 1;
+            box-shadow: 0 0 8px currentColor;
+            transform: scale(1.1);
+        }
+
+        .chain-dot.completed {
+            opacity: 0.9;
+            filter: brightness(1.1);
+        }
+
+        .chain-next {
+            font-size: 0.82rem;
+            color: rgba(236, 240, 241, 0.78);
+            margin-bottom: 0.2rem;
+        }
+
+        .legend {
+            margin-top: 0.8rem;
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            color: rgba(236, 240, 241, 0.7);
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .legend-swatch.power {
+            border-radius: 50%;
+        }
+
+        .corner-button {
+            position: fixed;
+            right: 24px;
+            top: 24px;
+            background: rgba(15, 21, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ecf0f1;
+            padding: 0.7rem 1.1rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .corner-button:hover {
+            background: rgba(52, 152, 219, 0.25);
+        }
+
+        .banner {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 21, 30, 0.75);
+            border: 1px solid rgba(46, 204, 113, 0.35);
+            color: #b5f5cc;
+            padding: 0.6rem 1.4rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .banner.visible {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="playgroundCanvas" aria-label="Interactive container lab playground"></canvas>
+
+    <div class="hud">
+        <div class="badge" id="containerBadge">Slave Container</div>
+        <h1>Autonomous Task Runner</h1>
+        <p>Each level represents a sealed container environment. Dots are work units; power nodes unlock specialized actions.</p>
+        <div class="controls">
+            P: toggle player mode (demo defaults to autopilot)<br>
+            Arrow keys (W/S/D optional): move in player mode<br>
+            Hold Space: eat dots in player mode<br>
+            T: deploy tool (wildcard)<br>
+            M: toggle sound<br>
+            Esc: pause<br>
+            R: reset level
+        </div>
+        <div class="status" id="statusText">Mode: Demo | Autopilot: On</div>
+        <div class="narration" id="narrationText">Autoplay demo: collecting task dots in the required order.</div>
+        <div class="scoreboard">
+            <div>Score: <span id="scoreValue">0</span></div>
+            <div>Level: <span id="levelValue">1</span></div>
+            <div>Lives: <span id="livesValue">3</span></div>
+            <div>Tools: <span id="toolValue">0</span></div>
+        </div>
+        <div class="chain">
+            <div class="chain-label">Chain Order</div>
+            <div class="chain-row" id="chainRow"></div>
+            <div class="chain-next">Next: <span id="nextValue">Executing Script</span></div>
+            <div class="chain-next">Progress: <span id="chainValue">0/7</span></div>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><span class="legend-swatch" style="background:#e74c3c;"></span>Executing Script</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#f39c12;"></span>Utilizing Tool</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#f1c40f;"></span>Accessing MCP</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#3498db;"></span>Utilizing Skill</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#2ecc71;"></span>Validating Output</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#8e5b3a;"></span>Persisting State</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#2d3436;"></span>Finalizing Run</div>
+            <div class="legend-item"><span class="legend-swatch power" style="background:#ff7675;"></span>Power Node (Tool Access)</div>
+            <div class="legend-item"><span class="legend-swatch power" style="background:#00cec9;"></span>Script Boost (Speed)</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#ff5c5c;"></span>Bug (Ghost)</div>
+        </div>
+    </div>
+
+    <a class="corner-button" href="index.html">Back to Container Lab</a>
+    <div class="banner" id="completeBanner">Task Complete - Re-seeding level</div>
+
+    <script>
+        (() => {
+            const canvas = document.getElementById('playgroundCanvas');
+            const ctx = canvas.getContext('2d');
+            const statusText = document.getElementById('statusText');
+            const scoreValue = document.getElementById('scoreValue');
+            const levelValue = document.getElementById('levelValue');
+            const livesValue = document.getElementById('livesValue');
+            const toolValue = document.getElementById('toolValue');
+            const chainValue = document.getElementById('chainValue');
+            const nextValue = document.getElementById('nextValue');
+            const chainRow = document.getElementById('chainRow');
+            const narrationText = document.getElementById('narrationText');
+            const banner = document.getElementById('completeBanner');
+            const badge = document.getElementById('containerBadge');
+            const params = new URLSearchParams(window.location.search);
+            const containerId = params.get('container') || '1';
+            badge.textContent = `Slave Container ${containerId}`;
+
+            const layout = [
+                '###################',
+                '#........#........#',
+                '#.###.###.#.###.###',
+                '#o###.###.#.###.###',
+                '#.................#',
+                '#.###.#.#####.#.###',
+                '#.....#...#...#...#',
+                '#####.###.#.###.###',
+                '#........#........#',
+                '#.###.###.#.###.###',
+                '#...#.....#.....#.#',
+                '#.###.###.#.###.###',
+                '#........#........#',
+                '#####.###.#.###.###',
+                '#.....#...#...#...#',
+                '#.###.#.#####.#.###',
+                '#.................#',
+                '#o###.###.#.###.###',
+                '#.###.###.#.###.###',
+                '#........#........#',
+                '###################'
+            ];
+
+            const chainSequence = [
+                { key: 'red', label: 'Executing Script', color: '#e74c3c', points: 12 },
+                { key: 'orange', label: 'Utilizing Tool', color: '#f39c12', points: 14 },
+                { key: 'yellow', label: 'Accessing MCP', color: '#f1c40f', points: 16 },
+                { key: 'blue', label: 'Utilizing Skill', color: '#3498db', points: 18 },
+                { key: 'green', label: 'Validating Output', color: '#2ecc71', points: 20 },
+                { key: 'brown', label: 'Persisting State', color: '#8e5b3a', points: 22 },
+                { key: 'black', label: 'Finalizing Run', color: '#2d3436', points: 24 }
+            ];
+
+            const powerNode = { key: 'power', label: 'Tool Access', color: '#ff7675', points: 30 };
+            const boostNode = { key: 'boost', label: 'Script Boost', color: '#00cec9', points: 40, duration: 5000, speedBonus: 1.4 };
+
+            const sound = {
+                enabled: true,
+                ctx: null
+            };
+
+            const narrationScript = [
+                'Dots follow the chain order: red > orange > yellow > blue > green > brown > black.',
+                'Power nodes grant Tool access (wildcard steps) and can weaken bugs.',
+                'Bugs react to mistakes. Higher chain errors can trigger bug surges.',
+                'Script boosts speed execution and helps finish chains faster.',
+                'This autoplay demo mirrors agent workflows without exposing private data.'
+            ];
+
+            const state = {
+                width: 0,
+                height: 0,
+                levelRect: { x: 0, y: 0, w: 0, h: 0 },
+                cols: layout[0].length,
+                rows: layout.length,
+                cellSize: 0,
+                walls: new Set(),
+                dots: [],
+                dotMap: new Map(),
+                player: {
+                    c: 1,
+                    r: 1,
+                    dirX: 1,
+                    dirY: 0,
+                    heading: 0,
+                    baseSpeed: 4.2
+                },
+                ghosts: [],
+                autopilot: true,
+                playerMode: false,
+                eatHeld: false,
+                paused: false,
+                autoPath: [],
+                autoStep: 0,
+                score: 0,
+                level: 1,
+                lives: 3,
+                toolCharges: 0,
+                wildcardSteps: 0,
+                wildcardUntil: 0,
+                chainIndex: 0,
+                chainStreak: 0,
+                chainStartTime: 0,
+                lastChainTime: 0,
+                speedBoostUntil: 0,
+                bugBoostUntil: 0,
+                bugBoostFactor: 1,
+                frightenedUntil: 0,
+                mode: 'scatter',
+                modeTimer: 0,
+                lastTime: 0,
+                freezeUntil: 0,
+                narrationIndex: 0,
+                narrationHoldUntil: 0,
+                narrationTimer: 0
+            };
+
+            const ghostConfigs = [
+                { id: 'bug-alpha', color: '#ff5c5c', personality: 'chase' },
+                { id: 'bug-beta', color: '#6dd5fa', personality: 'ambush' },
+                { id: 'bug-gamma', color: '#f093fb', personality: 'random' },
+                { id: 'bug-delta', color: '#feca57', personality: 'guard' }
+            ];
+
+            function unlockAudio() {
+                if (!sound.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    sound.ctx = new AudioContext();
+                }
+                if (sound.ctx.state === 'suspended') {
+                    sound.ctx.resume();
+                }
+            }
+
+            function playTone(freq, duration, type, gainValue) {
+                if (!sound.enabled || !sound.ctx) return;
+                const ctx = sound.ctx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const now = ctx.currentTime;
+                osc.type = type || 'sine';
+                osc.frequency.value = freq;
+                gain.gain.value = 0.0001;
+                gain.gain.linearRampToValueAtTime(gainValue || 0.08, now + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + duration + 0.02);
+            }
+
+            function playEvent(name) {
+                const map = {
+                    chain: { freq: 520, duration: 0.08 },
+                    complete: { freq: 760, duration: 0.12 },
+                    power: { freq: 640, duration: 0.1 },
+                    tool: { freq: 420, duration: 0.09 },
+                    break: { freq: 180, duration: 0.14 },
+                    bug: { freq: 130, duration: 0.18 }
+                };
+                const setting = map[name] || { freq: 440, duration: 0.08 };
+                playTone(setting.freq, setting.duration, 'triangle', 0.07);
+            }
+
+            function initChainRow() {
+                chainRow.innerHTML = '';
+                chainSequence.forEach((entry, index) => {
+                    const dot = document.createElement('span');
+                    dot.className = 'chain-dot';
+                    dot.dataset.index = index;
+                    dot.style.backgroundColor = entry.color;
+                    dot.style.color = entry.color;
+                    chainRow.appendChild(dot);
+                });
+            }
+
+            function updateChainDisplay() {
+                const expected = getExpectedKey();
+                const expectedEntry = chainSequence.find((entry) => entry.key === expected) || chainSequence[0];
+                nextValue.textContent = expectedEntry.label;
+                chainValue.textContent = `${state.chainIndex}/${chainSequence.length}`;
+                Array.from(chainRow.children).forEach((dot, index) => {
+                    dot.classList.remove('active', 'completed');
+                    if (index < state.chainIndex) {
+                        dot.classList.add('completed');
+                    }
+                    if (index === state.chainIndex) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+
+            function showBanner(message, duration) {
+                banner.textContent = message;
+                banner.classList.add('visible');
+                setTimeout(() => {
+                    banner.classList.remove('visible');
+                }, duration || 1400);
+            }
+
+            function setNarration(message, holdMs) {
+                if (!narrationText) return;
+                narrationText.textContent = message;
+                state.narrationHoldUntil = performance.now() + (holdMs || 2600);
+            }
+
+            function updateNarration(delta, now) {
+                if (state.playerMode || !narrationText) return;
+                if (now < state.narrationHoldUntil) return;
+                state.narrationTimer += delta;
+                if (state.narrationTimer >= 6) {
+                    state.narrationTimer = 0;
+                    state.narrationIndex = (state.narrationIndex + 1) % narrationScript.length;
+                    narrationText.textContent = narrationScript[state.narrationIndex];
+                }
+            }
+
+            function resize() {
+                const dpr = window.devicePixelRatio || 1;
+                state.width = canvas.clientWidth;
+                state.height = canvas.clientHeight;
+                canvas.width = Math.floor(state.width * dpr);
+                canvas.height = Math.floor(state.height * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                const padding = Math.min(state.width, state.height) * 0.08;
+                const gridW = state.width - padding * 2;
+                const gridH = state.height - padding * 2;
+                state.cellSize = Math.floor(Math.min(gridW / state.cols, gridH / state.rows));
+                const levelW = state.cellSize * state.cols;
+                const levelH = state.cellSize * state.rows;
+                state.levelRect = {
+                    x: (state.width - levelW) / 2,
+                    y: (state.height - levelH) / 2,
+                    w: levelW,
+                    h: levelH
+                };
+                buildLevel();
+            }
+
+            function buildLevel() {
+                state.walls.clear();
+                state.dots = [];
+                state.dotMap.clear();
+                let dotIndex = 0;
+
+                layout.forEach((row, r) => {
+                    for (let c = 0; c < row.length; c++) {
+                        const tile = row[c];
+                        if (tile === '#') {
+                            state.walls.add(key(c, r));
+                            continue;
+                        }
+                        if (tile === '.' || tile === 'o') {
+                            if (tile === 'o') {
+                                const dot = { c, r, active: true, type: powerNode.key, points: powerNode.points };
+                                state.dots.push(dot);
+                                state.dotMap.set(key(c, r), dot);
+                            } else {
+                                const sequence = chainSequence[dotIndex % chainSequence.length];
+                                const dot = { c, r, active: true, type: sequence.key, points: sequence.points };
+                                state.dots.push(dot);
+                                state.dotMap.set(key(c, r), dot);
+                                dotIndex += 1;
+                            }
+                        }
+                    }
+                });
+
+                state.chainIndex = 0;
+                state.chainStreak = 0;
+                state.chainStartTime = 0;
+                state.lastChainTime = 0;
+                state.toolCharges = 0;
+                state.frightenedUntil = 0;
+                state.speedBoostUntil = 0;
+                state.bugBoostUntil = 0;
+                state.bugBoostFactor = 1;
+                state.wildcardSteps = 0;
+                state.wildcardUntil = 0;
+                resetPositions();
+                updateHud();
+            }
+
+            function resetPositions() {
+                const start = findOpenCell(1, state.rows - 2);
+                state.player.c = start.c;
+                state.player.r = start.r;
+                state.player.dirX = 1;
+                state.player.dirY = 0;
+                state.player.heading = 0;
+                state.autoPath = [];
+                state.autoStep = 0;
+                resetGhosts();
+            }
+
+            function resetGhosts() {
+                const spawnPoints = [
+                    findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2) - 1),
+                    findOpenCell(Math.floor(state.cols / 2) - 1, Math.floor(state.rows / 2)),
+                    findOpenCell(Math.floor(state.cols / 2) + 1, Math.floor(state.rows / 2)),
+                    findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2) + 1)
+                ];
+                state.ghosts = ghostConfigs.map((config, index) => {
+                    const spawn = spawnPoints[index % spawnPoints.length];
+                    return {
+                        ...config,
+                        c: spawn.c,
+                        r: spawn.r,
+                        dirX: 0,
+                        dirY: -1,
+                        heading: -Math.PI / 2,
+                        speed: 3.2 + Math.min(state.level * 0.1, 0.8)
+                    };
+                });
+            }
+
+            function key(c, r) {
+                return `${c},${r}`;
+            }
+
+            function isWall(c, r) {
+                if (c < 0 || r < 0 || c >= state.cols || r >= state.rows) {
+                    return true;
+                }
+                return state.walls.has(key(c, r));
+            }
+
+            function findOpenCell(c, r) {
+                if (!isWall(c, r)) return { c, r };
+                for (let radius = 1; radius < 6; radius++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        for (let dx = -radius; dx <= radius; dx++) {
+                            const nc = c + dx;
+                            const nr = r + dy;
+                            if (nc < 0 || nr < 0 || nc >= state.cols || nr >= state.rows) continue;
+                            if (!isWall(nc, nr)) return { c: nc, r: nr };
+                        }
+                    }
+                }
+                return { c, r };
+            }
+
+            function updateHud() {
+                const modeLabel = state.playerMode ? 'Player' : 'Demo';
+                statusText.textContent = `Mode: ${modeLabel} | Autopilot: ${state.autopilot ? 'On' : 'Off'} | Remaining: ${remainingDots()}`;
+                scoreValue.textContent = state.score;
+                levelValue.textContent = state.level;
+                livesValue.textContent = state.lives;
+                toolValue.textContent = state.toolCharges;
+                updateChainDisplay();
+            }
+
+            function remainingDots() {
+                return state.dots.filter((dot) => dot.active).length;
+            }
+
+            function hasDotOfType(typeKey) {
+                return state.dots.some((dot) => dot.active && dot.type === typeKey);
+            }
+
+            function getExpectedKey() {
+                const total = chainSequence.length;
+                for (let offset = 0; offset < total; offset += 1) {
+                    const index = (state.chainIndex + offset) % total;
+                    const keyName = chainSequence[index].key;
+                    if (hasDotOfType(keyName)) {
+                        if (index !== state.chainIndex) {
+                            state.chainIndex = index;
+                        }
+                        return keyName;
+                    }
+                }
+                return chainSequence[state.chainIndex].key;
+            }
+
+            function cellCenter(c, r) {
+                const rect = state.levelRect;
+                return {
+                    x: rect.x + state.cellSize * (c + 0.5),
+                    y: rect.y + state.cellSize * (r + 0.5)
+                };
+            }
+
+            function updateMode(delta) {
+                if (state.frightenedUntil > performance.now()) {
+                    return;
+                }
+                state.modeTimer += delta;
+                const scatterDuration = 6;
+                const chaseDuration = 16;
+                if (state.mode === 'scatter' && state.modeTimer >= scatterDuration) {
+                    state.mode = 'chase';
+                    state.modeTimer = 0;
+                }
+                if (state.mode === 'chase' && state.modeTimer >= chaseDuration) {
+                    state.mode = 'scatter';
+                    state.modeTimer = 0;
+                }
+            }
+
+            function bfsPath(start, targetCheck) {
+                const queue = [start];
+                const visited = new Set([key(start.c, start.r)]);
+                const parent = new Map();
+                while (queue.length) {
+                    const current = queue.shift();
+                    if (targetCheck(current)) {
+                        return buildPathFromParent(current, parent);
+                    }
+                    const neighbors = getNeighbors(current.c, current.r);
+                    neighbors.forEach((next) => {
+                        const k = key(next.c, next.r);
+                        if (visited.has(k)) return;
+                        visited.add(k);
+                        parent.set(k, current);
+                        queue.push(next);
+                    });
+                }
+                return [];
+            }
+
+            function buildPathFromParent(end, parent) {
+                const path = [end];
+                let current = end;
+                while (parent.has(key(current.c, current.r))) {
+                    current = parent.get(key(current.c, current.r));
+                    path.unshift(current);
+                }
+                return path;
+            }
+
+            function getNeighbors(c, r) {
+                const options = [
+                    { c: c + 1, r, dirX: 1, dirY: 0 },
+                    { c: c - 1, r, dirX: -1, dirY: 0 },
+                    { c, r: r + 1, dirX: 0, dirY: 1 },
+                    { c, r: r - 1, dirX: 0, dirY: -1 }
+                ];
+                return options.filter((opt) => !isWall(opt.c, opt.r));
+            }
+
+            function updateAutopilot() {
+                if (!state.autopilot) return;
+                const cell = { c: Math.round(state.player.c), r: Math.round(state.player.r) };
+                const expectedKey = getExpectedKey();
+                const hasExpected = hasDotOfType(expectedKey);
+                const now = performance.now();
+                const shouldSeekBoost = hasDotOfType(boostNode.key) && state.chainIndex === 0 && state.speedBoostUntil < now;
+                if (!state.autoPath.length || state.autoStep >= state.autoPath.length - 1) {
+                    state.autoPath = bfsPath(cell, (node) => {
+                        const dot = state.dotMap.get(key(node.c, node.r));
+                        if (!dot || !dot.active) return false;
+                        if (dot.type === expectedKey) return true;
+                        if (dot.type === boostNode.key && shouldSeekBoost) return true;
+                        if (dot.type === powerNode.key && (!hasExpected || state.toolCharges === 0)) return true;
+                        return false;
+                    });
+                    state.autoStep = 0;
+                }
+                const next = state.autoPath[state.autoStep + 1];
+                if (!next) return;
+                const dirX = Math.sign(next.c - cell.c);
+                const dirY = Math.sign(next.r - cell.r);
+                state.player.dirX = dirX;
+                state.player.dirY = dirY;
+            }
+
+            function updatePlayer(delta) {
+                if (state.autopilot) {
+                    updateAutopilot();
+                }
+
+                const now = performance.now();
+                const speedBoost = state.speedBoostUntil > now ? boostNode.speedBonus : 1;
+                const speed = state.player.baseSpeed * speedBoost;
+                const nextC = state.player.c + state.player.dirX * speed * delta;
+                const nextR = state.player.r + state.player.dirY * speed * delta;
+                if (!isWall(Math.round(nextC), Math.round(nextR))) {
+                    state.player.c = nextC;
+                    state.player.r = nextR;
+                }
+
+                const snappedC = Math.round(state.player.c);
+                const snappedR = Math.round(state.player.r);
+                if (Math.abs(state.player.c - snappedC) < 0.1 && Math.abs(state.player.r - snappedR) < 0.1) {
+                    state.player.c = snappedC;
+                    state.player.r = snappedR;
+                    state.player.heading = Math.atan2(state.player.dirY, state.player.dirX);
+                    if (state.autopilot && state.autoPath.length > 1) {
+                        state.autoStep = Math.min(state.autoStep + 1, state.autoPath.length - 1);
+                    }
+                    const shouldEat = state.autopilot || (state.playerMode && state.eatHeld);
+                    if (shouldEat) {
+                        const dot = state.dotMap.get(key(snappedC, snappedR));
+                        if (!dot || !dot.active) return;
+                        if (state.autopilot) {
+                            const expectedKey = getExpectedKey();
+                            const canAutoEat = dot.type === expectedKey
+                                || dot.type === powerNode.key
+                                || dot.type === boostNode.key;
+                            if (canAutoEat) {
+                                eatDot(snappedC, snappedR);
+                            }
+                            return;
+                        }
+                        eatDot(snappedC, snappedR);
+                    }
+                }
+            }
+
+            function eatDot(c, r) {
+                const dot = state.dotMap.get(key(c, r));
+                if (!dot || !dot.active) return;
+                dot.active = false;
+                const now = performance.now();
+                if (dot.type === powerNode.key) {
+                    state.toolCharges += 1;
+                    state.score += powerNode.points;
+                    showBanner('Tool Access Granted');
+                    playEvent('power');
+                    setNarration('Power node collected. Tool access increased.');
+                    updateHud();
+                    return;
+                }
+                if (dot.type === boostNode.key) {
+                    state.speedBoostUntil = now + boostNode.duration;
+                    state.score += boostNode.points;
+                    showBanner('Script Boost: Speed Up');
+                    playEvent('power');
+                    setNarration('Script boost engaged to speed up the chain.');
+                    updateHud();
+                    return;
+                }
+                handleChainDot(dot, now);
+                updateHud();
+                if (remainingDots() === 0) {
+                    completeLevel();
+                }
+            }
+
+            function handleChainDot(dot, now) {
+                const expectedKey = getExpectedKey();
+                if (dot.type === expectedKey) {
+                    applyChainSuccess(dot, now, false);
+                    return;
+                }
+                if (state.wildcardSteps > 0 && now <= state.wildcardUntil) {
+                    state.wildcardSteps -= 1;
+                    applyChainSuccess(dot, now, true);
+                    showBanner('Wildcard Step Applied');
+                    playEvent('tool');
+                    setNarration('Wildcard used to preserve the chain.');
+                    return;
+                }
+                breakChain(dot.type, expectedKey);
+            }
+
+            function applyChainSuccess(dot, now, usedTool) {
+                if (state.chainIndex === 0) {
+                    state.chainStartTime = now;
+                }
+                const chainBonus = Math.floor(state.chainStreak * 2);
+                const timeBonus = state.lastChainTime ? Math.max(0, Math.round(12 - (now - state.lastChainTime) * 0.006)) : 6;
+                const toolPenalty = usedTool ? 6 : 0;
+                const points = Math.max(1, dot.points + chainBonus + timeBonus - toolPenalty);
+                state.score += points;
+                state.chainIndex += 1;
+                state.chainStreak = usedTool ? Math.max(0, state.chainStreak - 1) : state.chainStreak + 1;
+                state.lastChainTime = now;
+                playEvent('chain');
+                const stepLabel = chainSequence.find((entry) => entry.key === dot.type)?.label || 'Chain Step';
+                setNarration(`${stepLabel} complete. ${usedTool ? 'Wildcard applied.' : 'Order maintained.'}`);
+
+                if (state.chainIndex >= chainSequence.length) {
+                    const chainDuration = now - state.chainStartTime;
+                    const efficiency = Math.max(0, Math.round(300 - chainDuration * 0.05 - state.toolCharges * 5));
+                    const chainBonusScore = 120 + efficiency;
+                    state.score += chainBonusScore;
+                    showBanner(`Chain Complete +${chainBonusScore}`);
+                    playEvent('complete');
+                    spawnBonusNodes(1, powerNode);
+                    spawnBonusNodes(1, boostNode);
+                    setNarration('Chain complete. Bonus powerups deployed.');
+                    state.chainIndex = 0;
+                    state.chainStreak = 0;
+                    state.chainStartTime = 0;
+                    state.lastChainTime = 0;
+                }
+            }
+
+            function breakChain(actualKey, expectedKey) {
+                state.chainIndex = 0;
+                state.chainStreak = 0;
+                state.chainStartTime = 0;
+                state.lastChainTime = 0;
+                state.score = Math.max(0, state.score - 8);
+                showBanner('Chain Broken');
+                playEvent('break');
+                const severity = getChainSeverity(actualKey, expectedKey);
+                triggerBugSurge(severity);
+                setNarration(`Chain broken. Bugs intensify (severity ${severity}).`);
+            }
+
+            function getSequenceIndex(keyName) {
+                return chainSequence.findIndex((entry) => entry.key === keyName);
+            }
+
+            function getChainSeverity(actualKey, expectedKey) {
+                const total = chainSequence.length;
+                const actualIndex = getSequenceIndex(actualKey);
+                const expectedIndex = getSequenceIndex(expectedKey);
+                if (actualIndex < 0 || expectedIndex < 0) return 2;
+                const diff = (actualIndex - expectedIndex + total) % total;
+                const severity = Math.max(1, Math.min(4, diff));
+                return severity;
+            }
+
+            function triggerBugSurge(severity) {
+                const now = performance.now();
+                const chance = Math.min(0.2 + 0.12 * severity, 0.85);
+                if (Math.random() < chance) {
+                    if (state.ghosts.length < 6 && severity >= 2) {
+                        spawnExtraGhost();
+                        showBanner('Bug Spawned');
+                    } else {
+                        state.bugBoostUntil = now + 3000 + severity * 600;
+                        state.bugBoostFactor = 1 + 0.12 * severity;
+                        showBanner('Bug Surge: Severity Increased');
+                    }
+                }
+            }
+
+            function spawnExtraGhost() {
+                const base = ghostConfigs[Math.floor(Math.random() * ghostConfigs.length)];
+                const spawn = findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2));
+                state.ghosts.push({
+                    ...base,
+                    id: `${base.id}-${state.ghosts.length + 1}`,
+                    c: spawn.c,
+                    r: spawn.r,
+                    dirX: 0,
+                    dirY: -1,
+                    heading: -Math.PI / 2,
+                    speed: 3.3
+                });
+            }
+
+            function spawnBonusNodes(count, nodeType) {
+                const available = state.dots.filter((dot) => dot.active && dot.type !== powerNode.key && dot.type !== boostNode.key);
+                for (let i = 0; i < count && available.length; i++) {
+                    const index = Math.floor(Math.random() * available.length);
+                    const dot = available.splice(index, 1)[0];
+                    dot.type = nodeType.key;
+                    dot.points = nodeType.points;
+                }
+            }
+
+            function deployTool() {
+                if (state.toolCharges <= 0) return;
+                state.toolCharges -= 1;
+                state.frightenedUntil = performance.now() + 5000;
+                state.wildcardSteps = 2;
+                state.wildcardUntil = performance.now() + 8000;
+                showBanner('Tool Deployed: Wildcard + Bug Suppression');
+                playEvent('tool');
+                setNarration('Tool deployed: wildcard steps enabled and bugs suppressed.');
+                updateHud();
+            }
+
+            function completeLevel() {
+                banner.textContent = 'Level Complete - Re-seeding level';
+                banner.classList.add('visible');
+                state.level += 1;
+                state.chainIndex = 0;
+                state.chainStreak = 0;
+                state.chainStartTime = 0;
+                state.lastChainTime = 0;
+                state.toolCharges = 0;
+                state.wildcardSteps = 0;
+                state.wildcardUntil = 0;
+                state.speedBoostUntil = 0;
+                state.bugBoostUntil = 0;
+                state.bugBoostFactor = 1;
+                setTimeout(() => {
+                    state.dots.forEach((dot) => {
+                        dot.active = true;
+                    });
+                    state.frightenedUntil = 0;
+                    resetPositions();
+                    banner.classList.remove('visible');
+                    updateHud();
+                }, 1800);
+            }
+
+            function updateGhosts(delta) {
+                if (state.freezeUntil > performance.now()) return;
+                const frightened = state.frightenedUntil > performance.now();
+                const bugBoost = state.bugBoostUntil > performance.now() ? state.bugBoostFactor : 1;
+                state.ghosts.forEach((ghost) => {
+                    const atCenter = Math.abs(ghost.c - Math.round(ghost.c)) < 0.05 && Math.abs(ghost.r - Math.round(ghost.r)) < 0.05;
+                    if (atCenter) {
+                        ghost.c = Math.round(ghost.c);
+                        ghost.r = Math.round(ghost.r);
+                        const target = getGhostTarget(ghost);
+                        const options = getNeighbors(ghost.c, ghost.r);
+                        let filtered = options;
+                        if (options.length > 1) {
+                            filtered = options.filter((opt) => !(opt.dirX === -ghost.dirX && opt.dirY === -ghost.dirY));
+                        }
+                        let best = filtered[0];
+                        if (ghost.personality === 'random') {
+                            best = filtered[Math.floor(Math.random() * filtered.length)];
+                        } else {
+                            best = chooseBestDirection(filtered, target, frightened);
+                        }
+                        if (best) {
+                            ghost.dirX = best.dirX;
+                            ghost.dirY = best.dirY;
+                            ghost.heading = Math.atan2(best.dirY, best.dirX);
+                        }
+                    }
+
+                    const speed = (frightened ? ghost.speed * 0.6 : ghost.speed) * bugBoost;
+                    const nextC = ghost.c + ghost.dirX * speed * delta;
+                    const nextR = ghost.r + ghost.dirY * speed * delta;
+                    if (!isWall(Math.round(nextC), Math.round(nextR))) {
+                        ghost.c = nextC;
+                        ghost.r = nextR;
+                    }
+                });
+            }
+
+            function chooseBestDirection(options, target, frightened) {
+                let best = options[0];
+                let bestScore = frightened ? -Infinity : Infinity;
+                options.forEach((opt) => {
+                    const dist = Math.abs(target.c - opt.c) + Math.abs(target.r - opt.r);
+                    if (frightened) {
+                        if (dist > bestScore) {
+                            bestScore = dist;
+                            best = opt;
+                        }
+                    } else if (dist < bestScore) {
+                        bestScore = dist;
+                        best = opt;
+                    }
+                });
+                return best;
+            }
+
+            function getGhostTarget(ghost) {
+                if (state.frightenedUntil > performance.now()) {
+                    return { c: ghost.c, r: ghost.r };
+                }
+                if (state.mode === 'scatter') {
+                    const corners = [
+                        { c: 1, r: 1 },
+                        { c: state.cols - 2, r: 1 },
+                        { c: 1, r: state.rows - 2 },
+                        { c: state.cols - 2, r: state.rows - 2 }
+                    ];
+                    return corners[ghostConfigs.findIndex((g) => g.id === ghost.id)] || corners[0];
+                }
+                if (ghost.personality === 'chase') {
+                    return { c: Math.round(state.player.c), r: Math.round(state.player.r) };
+                }
+                if (ghost.personality === 'ambush') {
+                    return {
+                        c: Math.round(state.player.c + state.player.dirX * 4),
+                        r: Math.round(state.player.r + state.player.dirY * 4)
+                    };
+                }
+                if (ghost.personality === 'guard') {
+                    return {
+                        c: Math.round(state.player.c + (state.player.c - state.cols / 2) * 0.5),
+                        r: Math.round(state.player.r + (state.player.r - state.rows / 2) * 0.5)
+                    };
+                }
+                return { c: Math.round(state.player.c), r: Math.round(state.player.r) };
+            }
+
+            function checkCollisions() {
+                const frightened = state.frightenedUntil > performance.now();
+                state.ghosts.forEach((ghost) => {
+                    const dist = Math.hypot(state.player.c - ghost.c, state.player.r - ghost.r);
+                    if (dist < 0.4) {
+                        if (frightened) {
+                            state.score += 200;
+                            showBanner('Bug Squashed +200');
+                            playEvent('chain');
+                            setNarration('Bug squashed. Tool suppression is active.');
+                            const spawn = findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2));
+                            ghost.c = spawn.c;
+                            ghost.r = spawn.r;
+                            ghost.dirX = 0;
+                            ghost.dirY = -1;
+                            ghost.heading = -Math.PI / 2;
+                        } else {
+                            state.lives -= 1;
+                            playEvent('bug');
+                            state.chainIndex = 0;
+                            state.chainStreak = 0;
+                            state.chainStartTime = 0;
+                            state.lastChainTime = 0;
+                            updateHud();
+                            if (state.lives <= 0) {
+                                banner.textContent = 'System Integrity Lost - Restarting';
+                                banner.classList.add('visible');
+                                setNarration('System integrity lost. Restarting the demo.');
+                                state.lives = 3;
+                                state.score = 0;
+                                state.level = 1;
+                                setTimeout(() => {
+                                    buildLevel();
+                                    banner.classList.remove('visible');
+                                }, 2200);
+                            } else {
+                                showBanner('Bug Encountered - Recovering');
+                                setNarration('Bug encountered. Resetting agent position.');
+                                state.freezeUntil = performance.now() + 1200;
+                                resetPositions();
+                            }
+                        }
+                    }
+                });
+            }
+
+            function drawBackground() {
+                const gradient = ctx.createLinearGradient(0, 0, 0, state.height);
+                gradient.addColorStop(0, '#1f2a36');
+                gradient.addColorStop(1, '#0f151e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, state.width, state.height);
+            }
+
+            function drawWalls() {
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.16)';
+                ctx.strokeStyle = 'rgba(52, 152, 219, 0.5)';
+                ctx.lineWidth = 2;
+                for (let r = 0; r < state.rows; r++) {
+                    for (let c = 0; c < state.cols; c++) {
+                        if (!isWall(c, r)) continue;
+                        const x = state.levelRect.x + c * state.cellSize;
+                        const y = state.levelRect.y + r * state.cellSize;
+                        ctx.fillRect(x, y, state.cellSize, state.cellSize);
+                        ctx.strokeRect(x + 1, y + 1, state.cellSize - 2, state.cellSize - 2);
+                    }
+                }
+            }
+
+            function drawDots(time) {
+                state.dots.forEach((dot) => {
+                    if (!dot.active) return;
+                    const center = cellCenter(dot.c, dot.r);
+                    const pulse = 0.6 + Math.sin(time * 4) * 0.2;
+                    const radius = dot.type === powerNode.key ? state.cellSize * 0.22 * pulse : state.cellSize * 0.1 * pulse;
+                    let color = powerNode.color;
+                    if (dot.type === boostNode.key) {
+                        color = boostNode.color;
+                    } else if (dot.type !== powerNode.key) {
+                        const match = chainSequence.find((entry) => entry.key === dot.type);
+                        color = match ? match.color : '#ecf0f1';
+                    }
+                    ctx.fillStyle = color;
+                    if (dot.type === boostNode.key) {
+                        ctx.save();
+                        ctx.translate(center.x, center.y);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+                        ctx.restore();
+                        ctx.strokeStyle = 'rgba(236, 240, 241, 0.6)';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(center.x - radius * 1.1, center.y - radius * 1.1, radius * 2.2, radius * 2.2);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        if (dot.type === 'black') {
+                            ctx.strokeStyle = 'rgba(236, 240, 241, 0.6)';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                });
+            }
+
+            function drawRoundedRect(x, y, w, h, r) {
+                const radius = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + w - radius, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+                ctx.lineTo(x + w, y + h - radius);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+                ctx.lineTo(x + radius, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            function drawRobot(time) {
+                const center = cellCenter(state.player.c, state.player.r);
+                const size = state.cellSize * 0.75;
+                const mouthPulse = 0.35 + Math.abs(Math.sin(time * 6)) * 0.35;
+                const mouthHeight = size * (0.14 + mouthPulse * 0.15);
+                ctx.save();
+                ctx.translate(center.x, center.y);
+                ctx.rotate(state.player.heading || 0);
+
+                ctx.fillStyle = '#dfe6e9';
+                ctx.strokeStyle = '#95a5a6';
+                ctx.lineWidth = 2;
+                drawRoundedRect(-size / 2, -size / 2, size, size * 0.85, size * 0.18);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#2f3640';
+                ctx.fillRect(-size * 0.35, size * 0.05, size * 0.7, mouthHeight);
+
+                ctx.fillStyle = '#f5f6fa';
+                const toothCount = 5;
+                const toothWidth = (size * 0.6) / toothCount;
+                for (let i = 0; i < toothCount; i++) {
+                    const tx = -size * 0.3 + i * toothWidth;
+                    ctx.fillRect(tx, size * 0.05, toothWidth * 0.6, mouthHeight * 0.4);
+                    ctx.fillRect(tx, size * 0.05 + mouthHeight * 0.6, toothWidth * 0.6, mouthHeight * 0.35);
+                }
+
+                ctx.fillStyle = '#2d3436';
+                ctx.beginPath();
+                ctx.arc(-size * 0.18, -size * 0.08, size * 0.08, 0, Math.PI * 2);
+                ctx.arc(size * 0.18, -size * 0.08, size * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#00cec9';
+                ctx.beginPath();
+                ctx.arc(-size * 0.18, -size * 0.08, size * 0.04, 0, Math.PI * 2);
+                ctx.arc(size * 0.18, -size * 0.08, size * 0.04, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            function drawGhosts(time) {
+                const frightened = state.frightenedUntil > performance.now();
+                state.ghosts.forEach((ghost) => {
+                    const center = cellCenter(ghost.c, ghost.r);
+                    const size = state.cellSize * 0.7;
+                    const wave = Math.sin(time * 4) * 2;
+                    ctx.save();
+                    ctx.translate(center.x, center.y);
+                    ctx.fillStyle = frightened ? '#5dade2' : ghost.color;
+                    ctx.beginPath();
+                    ctx.moveTo(-size / 2, size / 2);
+                    ctx.lineTo(-size / 2, -size / 4);
+                    ctx.quadraticCurveTo(0, -size / 2, size / 2, -size / 4);
+                    ctx.lineTo(size / 2, size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#ecf0f1';
+                    ctx.beginPath();
+                    ctx.arc(-size * 0.2, -size * 0.1 + wave * 0.1, size * 0.12, 0, Math.PI * 2);
+                    ctx.arc(size * 0.2, -size * 0.1 + wave * 0.1, size * 0.12, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#1b1f24';
+                    ctx.beginPath();
+                    ctx.arc(-size * 0.2, -size * 0.1 + wave * 0.1, size * 0.05, 0, Math.PI * 2);
+                    ctx.arc(size * 0.2, -size * 0.1 + wave * 0.1, size * 0.05, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+
+            function drawFrame() {
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(state.levelRect.x - 4, state.levelRect.y - 4, state.levelRect.w + 8, state.levelRect.h + 8);
+            }
+
+            function render(time) {
+                drawBackground();
+                drawWalls();
+                drawDots(time);
+                drawGhosts(time);
+                drawRobot(time);
+                drawFrame();
+            }
+
+            function update(delta) {
+                if (state.paused) return;
+                if (state.freezeUntil > performance.now()) return;
+                updateMode(delta);
+                updatePlayer(delta);
+                updateGhosts(delta);
+                checkCollisions();
+                updateHud();
+                updateNarration(delta, performance.now());
+            }
+
+            function loop(timestamp) {
+                if (!state.lastTime) state.lastTime = timestamp;
+                const delta = Math.min(0.05, (timestamp - state.lastTime) / 1000);
+                state.lastTime = timestamp;
+                update(delta);
+                render(timestamp / 1000);
+                requestAnimationFrame(loop);
+            }
+
+            function handleInteraction() {
+                if (sound.enabled && !sound.ctx) {
+                    unlockAudio();
+                }
+            }
+
+            document.addEventListener('keydown', (event) => {
+                handleInteraction();
+                if (event.key === 'Escape') {
+                    state.paused = !state.paused;
+                    return;
+                }
+                if (event.code === 'Space') {
+                    if (state.playerMode) {
+                        state.eatHeld = true;
+                    }
+                    return;
+                }
+                if (event.key.toLowerCase() === 'm') {
+                    sound.enabled = !sound.enabled;
+                    showBanner(`Sound ${sound.enabled ? 'On' : 'Off'}`);
+                    if (sound.enabled && !sound.ctx) {
+                        unlockAudio();
+                    }
+                    return;
+                }
+                if (event.key.toLowerCase() === 'p') {
+                    state.playerMode = !state.playerMode;
+                    state.autopilot = !state.playerMode;
+                    state.eatHeld = false;
+                    showBanner(state.playerMode ? 'Player Mode Enabled' : 'Demo Mode Enabled');
+                    setNarration(state.playerMode
+                        ? 'Player mode: use arrows and hold Space to eat.'
+                        : 'Demo mode: autoplay resumes to explain the system.');
+                    updateHud();
+                    return;
+                }
+                if (event.key.toLowerCase() === 'a' && state.playerMode) {
+                    state.autopilot = !state.autopilot;
+                    updateHud();
+                    return;
+                }
+                if (event.key.toLowerCase() === 't') {
+                    deployTool();
+                    return;
+                }
+                if (event.key.toLowerCase() === 'r') {
+                    buildLevel();
+                    return;
+                }
+
+                const keyName = event.key.toLowerCase();
+                if (!state.playerMode) {
+                    return;
+                }
+                if (['arrowup', 'w'].includes(keyName)) {
+                    state.autopilot = false;
+                    state.player.dirX = 0;
+                    state.player.dirY = -1;
+                    state.player.heading = -Math.PI / 2;
+                }
+                if (['arrowdown', 's'].includes(keyName)) {
+                    state.autopilot = false;
+                    state.player.dirX = 0;
+                    state.player.dirY = 1;
+                    state.player.heading = Math.PI / 2;
+                }
+                if (['arrowleft'].includes(keyName)) {
+                    state.autopilot = false;
+                    state.player.dirX = -1;
+                    state.player.dirY = 0;
+                    state.player.heading = Math.PI;
+                }
+                if (['arrowright', 'd'].includes(keyName)) {
+                    state.autopilot = false;
+                    state.player.dirX = 1;
+                    state.player.dirY = 0;
+                    state.player.heading = 0;
+                }
+                updateHud();
+            });
+
+            document.addEventListener('keyup', (event) => {
+                if (event.code === 'Space') {
+                    state.eatHeld = false;
+                }
+            });
+
+            document.addEventListener('pointerdown', handleInteraction, { passive: true });
+            window.addEventListener('resize', resize);
+            initChainRow();
+            resize();
+            updateHud();
+            setNarration(narrationScript[0], 4000);
+            requestAnimationFrame(loop);
+        })();
+    </script>
+</body>
+</html>

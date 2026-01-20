@@ -417,6 +417,7 @@
                 <div id="status" class="status">Status: waiting for offer</div>
                 <button id="requestBtn">Request Stream</button>
                 <button id="disconnectBtn" disabled>Disconnect</button>
+                <button id="open3dBtn">Open Matching 3D Viewer</button>
 
                 <div class="file-input" style="margin-top:12px;">Render mode:</div>
                 <select id="renderMode" class="control-select">
@@ -547,6 +548,7 @@
         const entitySelectEl = document.getElementById('entitySelect');
         const actionTargetEl = document.getElementById('actionTarget');
         const actionStatusEl = document.getElementById('actionStatus');
+        const open3dBtn = document.getElementById('open3dBtn');
         const actionUpBtn = document.getElementById('actionUp');
         const actionDownBtn = document.getElementById('actionDown');
         const actionLeftBtn = document.getElementById('actionLeft');
@@ -610,6 +612,7 @@
         let deltaLastAt = null;
         const actionStep = 0.08;
         const actionRotateDeg = 15;
+        let deltaReadyTimeout = null;
 
         const moduleState = {
             transport: { label: 'Transport', enabled: true, locked: true, detail: '' },
@@ -668,6 +671,18 @@
                 noStream.textContent = 'Waiting for stream...';
             }
             renderModules();
+        }
+
+        function getMatching3dViewerUrl() {
+            const href = window.location.href;
+            if (href.includes('/rtc-viewer/')) {
+                return href.replace('/rtc-viewer/', '/3d-model-viewer/');
+            }
+            if (href.includes('rtc-viewer/index.html')) {
+                return href.replace(/rtc-viewer\/index\.html(\?.*)?$/, '3d-model-viewer/index.html');
+            }
+            const base = href.replace(/\/[^\/]*$/, '/');
+            return `${base}3d-model-viewer/`;
         }
 
         function updateDeltaStats() {
@@ -1820,6 +1835,10 @@
                 if (msg.role === 'rtc') return;
                 if (msg.type === 'delta-ready') {
                     deltaSessionId = msg.sessionId;
+                    if (deltaReadyTimeout) {
+                        clearTimeout(deltaReadyTimeout);
+                        deltaReadyTimeout = null;
+                    }
                     if (renderMode === 'delta') {
                         setStatus('delta ready, requesting assets');
                         sendChannelMessage({ type: 'delta-request-assets', role: 'rtc', sessionId: deltaSessionId });
@@ -1828,6 +1847,10 @@
                 }
                 if (msg.type === 'delta-assets') {
                     if (!msg.sessionId || msg.sessionId !== deltaSessionId) return;
+                    if (deltaReadyTimeout) {
+                        clearTimeout(deltaReadyTimeout);
+                        deltaReadyTimeout = null;
+                    }
                     const payload = msg.data || msg.buffer;
                     const snapshot = msg.snapshot || null;
                     const textures = msg.textures || [];
@@ -1897,6 +1920,11 @@
                 if (!deltaSessionId) {
                     setStatus('waiting for 3D viewer');
                     sendChannelMessage({ type: 'delta-ping', role: 'rtc' });
+                    if (deltaReadyTimeout) clearTimeout(deltaReadyTimeout);
+                    deltaReadyTimeout = setTimeout(() => {
+                        const url = getMatching3dViewerUrl();
+                        setStatus(`no delta source detected (open ${url})`);
+                    }, 3000);
                     return;
                 }
                 setStatus('requesting delta assets');
@@ -2037,6 +2065,13 @@
                 const op = { type: 'spawnEntity', primitive: 'cube', entityId: id, size: 0.2 };
                 const ok = sendDeltaOpsToSource([op]);
                 setActionStatus(ok ? `spawned ${id}` : 'source not ready');
+            });
+        }
+
+        if (open3dBtn) {
+            open3dBtn.addEventListener('click', () => {
+                const url = getMatching3dViewerUrl();
+                window.open(url, '_blank', 'noopener');
             });
         }
 
