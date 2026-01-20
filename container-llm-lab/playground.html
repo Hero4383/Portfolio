@@ -203,6 +203,73 @@
         .banner.visible {
             display: inline-block;
         }
+
+        .debug-panel {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            background: rgba(15, 21, 30, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 0.75rem;
+            color: rgba(236, 240, 241, 0.85);
+            white-space: pre;
+            max-width: 320px;
+            z-index: 5;
+        }
+
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 12, 18, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        .tutorial-overlay.visible {
+            display: flex;
+        }
+
+        .tutorial-card {
+            background: rgba(15, 21, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 1.6rem 1.8rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
+        }
+
+        .tutorial-card h2 {
+            font-size: 1.1rem;
+            color: #f5f7fa;
+            margin-bottom: 0.6rem;
+        }
+
+        .tutorial-card p {
+            font-size: 0.92rem;
+            color: rgba(236, 240, 241, 0.8);
+            line-height: 1.5;
+            margin-bottom: 1.2rem;
+        }
+
+        .tutorial-card button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            color: #ffffff;
+            padding: 0.6rem 1.4rem;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tutorial-card button:hover {
+            filter: brightness(1.05);
+        }
     </style>
 </head>
 <body>
@@ -216,10 +283,12 @@
             P: toggle player mode (demo defaults to autopilot)<br>
             Arrow keys (W/S/D optional): move in player mode<br>
             Hold Space: eat dots in player mode<br>
-            T: deploy tool (wildcard)<br>
+            T: use hat ability<br>
+            B: toggle safe mode (debug)<br>
             M: toggle sound<br>
             Esc: pause<br>
-            R: reset level
+            R: reset level<br>
+            Hats: S=Script, W=Wall, C=Wrench, Z=Zap
         </div>
         <div class="status" id="statusText">Mode: Demo | Autopilot: On</div>
         <div class="narration" id="narrationText">Autoplay demo: collecting task dots in the required order.</div>
@@ -227,7 +296,7 @@
             <div>Score: <span id="scoreValue">0</span></div>
             <div>Level: <span id="levelValue">1</span></div>
             <div>Lives: <span id="livesValue">3</span></div>
-            <div>Tools: <span id="toolValue">0</span></div>
+            <div>Hats: <span id="toolValue">S0 W0 C0 Z0</span></div>
         </div>
         <div class="chain">
             <div class="chain-label">Chain Order</div>
@@ -251,6 +320,14 @@
 
     <a class="corner-button" href="index.html">Back to Container Lab</a>
     <div class="banner" id="completeBanner">Task Complete - Re-seeding level</div>
+    <div class="debug-panel" id="debugPanel"></div>
+    <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
+        <div class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+            <h2 id="tutorialTitle">Automation Insight</h2>
+            <p id="tutorialMessage"></p>
+            <button id="tutorialOk">OK, continue</button>
+        </div>
+    </div>
 
     <script>
         (() => {
@@ -267,9 +344,29 @@
             const narrationText = document.getElementById('narrationText');
             const banner = document.getElementById('completeBanner');
             const badge = document.getElementById('containerBadge');
+            const hudTitle = document.querySelector('.hud h1');
+            const hudDescription = document.querySelector('.hud p');
+            const debugPanel = document.getElementById('debugPanel');
+            const tutorialOverlay = document.getElementById('tutorialOverlay');
+            const tutorialTitle = document.getElementById('tutorialTitle');
+            const tutorialMessage = document.getElementById('tutorialMessage');
+            const tutorialOk = document.getElementById('tutorialOk');
             const params = new URLSearchParams(window.location.search);
-            const containerId = params.get('container') || '1';
-            badge.textContent = `Slave Container ${containerId}`;
+            const roleParam = (params.get('role') || 'slave').toLowerCase();
+            const debugEnabled = params.get('debug') === '1';
+            const safeEnabled = params.get('safe') === '1';
+            const roleConfigs = {
+                slave: { label: 'Slave Container', levels: [1, 2, 3, 4, 5], nextRole: 'servant' },
+                servant: { label: 'Servant Container', levels: [2, 3, 4], nextRole: null }
+            };
+            const roleKey = roleConfigs[roleParam] ? roleParam : 'slave';
+            const roleConfig = roleConfigs[roleKey];
+            const rawContainer = parseInt(params.get('container') || '1', 10) || 1;
+            const containerIndex = Math.min(Math.max(1, rawContainer), roleConfig.levels.length);
+            const levelParam = Number(params.get('level'));
+            const selectedLevel = Number.isFinite(levelParam) && levelParam > 0
+                ? levelParam
+                : (roleConfig.levels[containerIndex - 1] || roleConfig.levels[0] || 1);
 
             const layout = [
                 '###################',
@@ -282,7 +379,7 @@
                 '#####.###.#.###.###',
                 '#........#........#',
                 '#.###.###.#.###.###',
-                '#...#.....#.....#.#',
+                '#...#.....#.......#',
                 '#.###.###.#.###.###',
                 '#........#........#',
                 '#####.###.#.###.###',
@@ -308,18 +405,173 @@
             const powerNode = { key: 'power', label: 'Tool Access', color: '#ff7675', points: 30 };
             const boostNode = { key: 'boost', label: 'Script Boost', color: '#00cec9', points: 40, duration: 5000, speedBonus: 1.4 };
 
+            const toolConfigs = {
+                speed: { label: 'Script Hat', color: '#74b9ff', duration: 5000, speedBonus: 1.6 },
+                wall: { label: 'Phase Hat', color: '#3498db', duration: 4500 },
+                paint: { label: 'Wrench Override', color: '#f39c12' },
+                zap: { label: 'Red-Eye Zap', color: '#e74c3c' }
+            };
+            const toolCycle = ['speed', 'wall', 'paint', 'zap'];
+
             const sound = {
                 enabled: true,
                 ctx: null
             };
 
-            const narrationScript = [
+            const levelConfigs = [
+                {
+                    id: 1,
+                    name: 'Sequence Primer',
+                    title: 'Autonomous Task Runner',
+                    summary: 'Three mini-chains demonstrate build, validate, and finalize loops.',
+                    chainSets: [
+                        ['red', 'orange', 'yellow'],
+                        ['blue', 'green', 'brown'],
+                        ['red', 'orange', 'black']
+                    ],
+                    chainKeys: ['red', 'orange', 'yellow', 'blue', 'green', 'brown', 'black'],
+                    tutorialKeys: ['red', 'orange', 'yellow', 'blue', 'green', 'brown', 'black'],
+                    ghostCount: 0,
+                    allowPowerNodes: false,
+                    allowBoostNodes: false,
+                    bugsEnabled: false,
+                    autoMistake: false,
+                    speedMultiplier: 1,
+                    narration: [
+                        'Primer level: three rotating task chains run in sequence.',
+                        'No bugs here. Focus on understanding why order matters.',
+                        'Each dot is a task step inside a sealed container.'
+                    ]
+                },
+                {
+                    id: 2,
+                    name: 'Tooling Path',
+                    title: 'Tool Access & Wildcards',
+                    summary: 'Power nodes unlock tools that can preserve the chain.',
+                    chainKeys: ['red', 'orange', 'yellow', 'blue'],
+                    tutorialKeys: ['blue', 'power'],
+                    ghostCount: 1,
+                    allowPowerNodes: true,
+                    allowBoostNodes: false,
+                    bugsEnabled: true,
+                    autoMistake: false,
+                    speedMultiplier: 1,
+                    narration: [
+                        'Power nodes grant tools that can skip chain steps.',
+                        'Blue dots mark skill execution in this sequence.',
+                        'Tools reduce bug impact when the chain slips.'
+                    ]
+                },
+                {
+                    id: 3,
+                    name: 'Bug Mitigation',
+                    title: 'Bug Containment',
+                    summary: 'Bugs enter the maze; boosts keep execution fast.',
+                    chainKeys: ['red', 'orange', 'yellow', 'blue', 'green'],
+                    ghostCount: 2,
+                    allowPowerNodes: true,
+                    allowBoostNodes: true,
+                    bugsEnabled: true,
+                    autoMistake: false,
+                    speedMultiplier: 1.05,
+                    narration: [
+                        'Bugs now patrol the container lanes.',
+                        'Script boosts accelerate execution when timing matters.',
+                        'Green dots confirm validation before the next step.'
+                    ]
+                },
+                {
+                    id: 4,
+                    name: 'Full Pipeline',
+                    title: 'Workflow Orchestration',
+                    summary: 'Full chain, more bugs, and an intentional mis-order demo.',
+                    chainKeys: ['red', 'orange', 'yellow', 'blue', 'green', 'brown', 'black'],
+                    ghostCount: 3,
+                    allowPowerNodes: true,
+                    allowBoostNodes: true,
+                    bugsEnabled: true,
+                    autoMistake: true,
+                    mistakeIntervalMs: 16000,
+                    mistakeWindowMs: 7000,
+                    speedMultiplier: 1.08,
+                    narration: [
+                        'Full pipeline: all seven steps are required.',
+                        'Autopilot will occasionally show a mis-order to trigger bugs.',
+                        'Brown and black finalize persistence and handoff.'
+                    ]
+                },
+                {
+                    id: 5,
+                    name: 'Stress Test',
+                    title: 'High-Pressure Execution',
+                    summary: 'All systems active with higher bug pressure and faster pacing.',
+                    chainKeys: ['red', 'orange', 'yellow', 'blue', 'green', 'brown', 'black'],
+                    ghostCount: 4,
+                    allowPowerNodes: true,
+                    allowBoostNodes: true,
+                    bugsEnabled: true,
+                    autoMistake: true,
+                    mistakeIntervalMs: 11000,
+                    mistakeWindowMs: 6000,
+                    speedMultiplier: 1.16,
+                    narration: [
+                        'Stress test shows peak load handling.',
+                        'Mistakes trigger aggressive bug surges.',
+                        'Tools and boosts keep throughput steady.'
+                    ]
+                }
+            ];
+
+            const baseNarrationScript = [
                 'Dots follow the chain order: red > orange > yellow > blue > green > brown > black.',
-                'Power nodes grant Tool access (wildcard steps) and can weaken bugs.',
+                'Power nodes grant limited-use hats that unlock special abilities.',
                 'Bugs react to mistakes. Higher chain errors can trigger bug surges.',
                 'Script boosts speed execution and helps finish chains faster.',
                 'This autoplay demo mirrors agent workflows without exposing private data.'
             ];
+
+            const tutorialMessages = {
+                intro: {
+                    title: 'Autopilot Overview',
+                    body: 'This demo shows a container agent executing a strict task chain. The robot must collect dots in order to keep workflows deterministic and repeatable.'
+                },
+                red: {
+                    title: 'Executing Script',
+                    body: 'The first dot represents a controlled script run. It sets the baseline context before tools or external services are used.'
+                },
+                orange: {
+                    title: 'Utilizing Tool',
+                    body: 'Tool access is scoped and deliberate. This step shows the agent invoking a tool only when the chain requires it.'
+                },
+                yellow: {
+                    title: 'Accessing MCP',
+                    body: 'MCP access pulls the right context at the right time. Following the chain reduces errors and keeps output trustworthy.'
+                },
+                power: {
+                    title: 'Tool Access',
+                    body: 'Power nodes grant limited-use hats: script speed, phase-through walls, wrench overrides, or bug zaps.'
+                },
+                boost: {
+                    title: 'Script Boost',
+                    body: 'Script boosts speed execution and reduce time spent between chain steps.'
+                },
+                blue: {
+                    title: 'Utilizing Skill',
+                    body: 'Skills apply domain expertise to the task. This chain step represents specialized execution.'
+                },
+                green: {
+                    title: 'Validating Output',
+                    body: 'Validation confirms results before anything is persisted or finalized.'
+                },
+                brown: {
+                    title: 'Persisting State',
+                    body: 'State is stored only after validation passes to keep the system consistent.'
+                },
+                black: {
+                    title: 'Finalizing Run',
+                    body: 'Finalization seals the workflow and marks the task as complete.'
+                }
+            };
 
             const state = {
                 width: 0,
@@ -331,6 +583,24 @@
                 walls: new Set(),
                 dots: [],
                 dotMap: new Map(),
+                activeChainSequence: [],
+                allowedChainSequence: null,
+                chainSets: null,
+                chainSetIndex: 0,
+                narrationScript: baseNarrationScript,
+                levelConfig: null,
+                autoMistakeTargetKey: null,
+                autoMistakeUntil: 0,
+                nextMistakeAt: 0,
+                lastPosition: { c: 0, r: 0 },
+                stuckSince: 0,
+                tutorialQueue: [],
+                tutorialActive: false,
+                tutorialShown: {},
+                modalAction: null,
+                bugThreatUntil: 0,
+                inefficiencyCooldownUntil: 0,
+                safeMode: safeEnabled,
                 player: {
                     c: 1,
                     r: 1,
@@ -349,9 +619,14 @@
                 score: 0,
                 level: 1,
                 lives: 3,
-                toolCharges: 0,
-                wildcardSteps: 0,
-                wildcardUntil: 0,
+                tools: {
+                    speed: 0,
+                    wall: 0,
+                    paint: 0,
+                    zap: 0
+                },
+                toolCycleIndex: 0,
+                wallPassUntil: 0,
                 chainIndex: 0,
                 chainStreak: 0,
                 chainStartTime: 0,
@@ -366,7 +641,11 @@
                 freezeUntil: 0,
                 narrationIndex: 0,
                 narrationHoldUntil: 0,
-                narrationTimer: 0
+                narrationTimer: 0,
+                recoveryMode: false,
+                savedChainSequence: null,
+                savedChainSetIndex: 0,
+                zapFlashUntil: 0
             };
 
             const ghostConfigs = [
@@ -416,9 +695,166 @@
                 playTone(setting.freq, setting.duration, 'triangle', 0.07);
             }
 
+            function grantToolCharge(forceKey) {
+                const toolKey = forceKey || toolCycle[state.toolCycleIndex % toolCycle.length];
+                if (!forceKey) {
+                    state.toolCycleIndex = (state.toolCycleIndex + 1) % toolCycle.length;
+                }
+                state.tools[toolKey] += 1;
+                const label = toolConfigs[toolKey]?.label || 'Tool';
+                showBanner(`${label} Charged`);
+                playEvent('power');
+                setNarration(`${label} acquired. Limited uses available.`);
+                updateHud();
+            }
+
+            function useSpeedTool(now) {
+                if (state.tools.speed <= 0) return false;
+                state.tools.speed -= 1;
+                state.speedBoostUntil = now + toolConfigs.speed.duration;
+                showBanner('Script Hat: Speed Boost');
+                playEvent('tool');
+                setNarration('Script hat engaged. Execution speed increased.');
+                updateHud();
+                return true;
+            }
+
+            function useWallTool(now) {
+                if (state.tools.wall <= 0) return false;
+                state.tools.wall -= 1;
+                state.wallPassUntil = now + toolConfigs.wall.duration;
+                state.autoPath = [];
+                state.autoStep = 0;
+                showBanner('Phase Hat: Wall Pass');
+                playEvent('tool');
+                setNarration('Phase hat active. Passing through walls temporarily.');
+                updateHud();
+                return true;
+            }
+
+            function useZapTool(now) {
+                if (state.tools.zap <= 0) return false;
+                if (!state.ghosts.length) return false;
+                let closest = state.ghosts[0];
+                let bestDist = Math.hypot(state.player.c - closest.c, state.player.r - closest.r);
+                state.ghosts.forEach((ghost) => {
+                    const dist = Math.hypot(state.player.c - ghost.c, state.player.r - ghost.r);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        closest = ghost;
+                    }
+                });
+                if (bestDist > 4) return false;
+                state.tools.zap -= 1;
+                const spawn = findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2));
+                closest.c = spawn.c;
+                closest.r = spawn.r;
+                closest.dirX = 0;
+                closest.dirY = -1;
+                closest.heading = -Math.PI / 2;
+                state.zapFlashUntil = now + 400;
+                state.frightenedUntil = Math.max(state.frightenedUntil, now + 1500);
+                state.bugThreatUntil = Math.max(0, state.bugThreatUntil - 1500);
+                showBanner('Red-Eye Zap: Bug Cleared');
+                playEvent('tool');
+                setNarration('Bug zapped. Threat window reduced.');
+                updateHud();
+                return true;
+            }
+
+            function useToolAuto(now, force) {
+                if (!state.safeMode && state.bugThreatUntil > now && state.tools.zap > 0) {
+                    if (useZapTool(now)) return true;
+                }
+                if (state.tools.speed > 0 && state.speedBoostUntil < now) {
+                    if (useSpeedTool(now)) return true;
+                }
+                if (state.tools.wall > 0 && state.wallPassUntil < now) {
+                    if (force || state.autoPath.length > 18) {
+                        if (useWallTool(now)) return true;
+                    }
+                }
+                return false;
+            }
+
+            function getActiveChainSequence() {
+                if (state.activeChainSequence && state.activeChainSequence.length) {
+                    return state.activeChainSequence;
+                }
+                return chainSequence;
+            }
+
+            function scheduleNextMistake(now) {
+                if (!state.levelConfig || !state.levelConfig.autoMistake) {
+                    state.nextMistakeAt = 0;
+                    return;
+                }
+                const base = state.levelConfig.mistakeIntervalMs || 14000;
+                const jitter = base * 0.3 * Math.random();
+                state.nextMistakeAt = now + base + jitter;
+            }
+
+            function applyLevelConfig() {
+                const config = levelConfigs.find((entry) => entry.id === selectedLevel) || levelConfigs[0];
+                state.levelConfig = config;
+                state.chainSets = Array.isArray(config.chainSets) ? config.chainSets : null;
+                state.chainSetIndex = 0;
+                if (state.chainSets && state.chainSets.length) {
+                    const allowedKeys = new Set();
+                    state.chainSets.forEach((setKeys) => {
+                        if (Array.isArray(setKeys)) {
+                            setKeys.forEach((keyName) => allowedKeys.add(keyName));
+                        }
+                    });
+                    state.allowedChainSequence = chainSequence.filter((entry) => allowedKeys.has(entry.key));
+                    const firstSet = state.chainSets[0] || [];
+                    state.activeChainSequence = chainSequence.filter((entry) => firstSet.includes(entry.key));
+                } else {
+                    state.allowedChainSequence = null;
+                    state.activeChainSequence = chainSequence.filter((entry) => config.chainKeys.includes(entry.key));
+                }
+                if (!state.activeChainSequence.length) {
+                    state.activeChainSequence = chainSequence.slice();
+                }
+                state.playerMode = false;
+                state.autopilot = true;
+                state.eatHeld = false;
+                state.player.baseSpeed = 5.4 * (config.speedMultiplier || 1);
+                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
+                state.toolCycleIndex = 0;
+                state.wallPassUntil = 0;
+                state.autoMistakeTargetKey = null;
+                state.autoMistakeUntil = 0;
+                scheduleNextMistake(performance.now());
+                state.narrationScript = config.narration && config.narration.length
+                    ? config.narration
+                    : baseNarrationScript;
+                state.narrationIndex = 0;
+                state.narrationTimer = 0;
+                state.tutorialQueue = [];
+                state.tutorialActive = false;
+                state.tutorialShown = {};
+                state.recoveryMode = false;
+                state.savedChainSequence = null;
+                state.savedChainSetIndex = 0;
+                if (config.id === 1) {
+                    const intro = tutorialMessages.intro;
+                    if (intro) enqueueTutorial(intro.body, intro.title);
+                }
+                if (badge) {
+                    badge.textContent = `${roleConfig.label} ${containerIndex} - ${config.name}`;
+                }
+                if (hudTitle) {
+                    hudTitle.textContent = config.title;
+                }
+                if (hudDescription) {
+                    hudDescription.textContent = config.summary;
+                }
+            }
+
             function initChainRow() {
                 chainRow.innerHTML = '';
-                chainSequence.forEach((entry, index) => {
+                getActiveChainSequence().forEach((entry, index) => {
                     const dot = document.createElement('span');
                     dot.className = 'chain-dot';
                     dot.dataset.index = index;
@@ -429,10 +865,15 @@
             }
 
             function updateChainDisplay() {
+                const sequence = getActiveChainSequence();
                 const expected = getExpectedKey();
-                const expectedEntry = chainSequence.find((entry) => entry.key === expected) || chainSequence[0];
+                const expectedEntry = sequence.find((entry) => entry.key === expected) || chainSequence[0];
                 nextValue.textContent = expectedEntry.label;
-                chainValue.textContent = `${state.chainIndex}/${chainSequence.length}`;
+                if (state.chainSets && state.chainSets.length) {
+                    chainValue.textContent = `${state.chainIndex}/${sequence.length} (Set ${state.chainSetIndex + 1}/${state.chainSets.length})`;
+                } else {
+                    chainValue.textContent = `${state.chainIndex}/${sequence.length}`;
+                }
                 Array.from(chainRow.children).forEach((dot, index) => {
                     dot.classList.remove('active', 'completed');
                     if (index < state.chainIndex) {
@@ -464,9 +905,80 @@
                 state.narrationTimer += delta;
                 if (state.narrationTimer >= 6) {
                     state.narrationTimer = 0;
-                    state.narrationIndex = (state.narrationIndex + 1) % narrationScript.length;
-                    narrationText.textContent = narrationScript[state.narrationIndex];
+                    const script = state.narrationScript || baseNarrationScript;
+                    if (!script.length) return;
+                    state.narrationIndex = (state.narrationIndex + 1) % script.length;
+                    narrationText.textContent = script[state.narrationIndex];
                 }
+            }
+
+            function enqueueTutorial(message, title) {
+                if (!message || !tutorialOverlay) return;
+                state.tutorialQueue.push({ message, title: title || 'Automation Insight' });
+                if (!state.tutorialActive) {
+                    showNextTutorial();
+                }
+            }
+
+            function showNextTutorial() {
+                const next = state.tutorialQueue.shift();
+                if (!next) {
+                    state.tutorialActive = false;
+                    return;
+                }
+                state.tutorialActive = true;
+                state.paused = true;
+                tutorialTitle.textContent = next.title;
+                tutorialMessage.textContent = next.message;
+                tutorialOk.textContent = 'OK, continue';
+                state.modalAction = null;
+                tutorialOverlay.classList.add('visible');
+                tutorialOverlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function dismissTutorial() {
+                if (!tutorialOverlay || !state.tutorialActive) return;
+                tutorialOverlay.classList.remove('visible');
+                tutorialOverlay.setAttribute('aria-hidden', 'true');
+                state.paused = false;
+                state.tutorialActive = false;
+                if (state.chainIndex > 0) {
+                    state.lastChainTime = performance.now();
+                }
+                if (state.modalAction) {
+                    const action = state.modalAction;
+                    state.modalAction = null;
+                    action();
+                    return;
+                }
+                if (state.tutorialQueue.length) {
+                    showNextTutorial();
+                }
+            }
+
+            function showModal(message, title, buttonLabel, action) {
+                if (!tutorialOverlay) return;
+                state.tutorialQueue = [];
+                state.tutorialActive = true;
+                state.paused = true;
+                state.modalAction = typeof action === 'function' ? action : null;
+                tutorialTitle.textContent = title || 'Automation Insight';
+                tutorialMessage.textContent = message;
+                tutorialOk.textContent = buttonLabel || 'OK, continue';
+                tutorialOverlay.classList.add('visible');
+                tutorialOverlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function maybeShowTutorialForDot(dotType) {
+                if (!state.levelConfig) return;
+                if (state.levelConfig.tutorialKeys && !state.levelConfig.tutorialKeys.includes(dotType)) {
+                    return;
+                }
+                if (state.tutorialShown[dotType]) return;
+                const entry = tutorialMessages[dotType];
+                if (!entry) return;
+                state.tutorialShown[dotType] = true;
+                enqueueTutorial(entry.body, entry.title);
             }
 
             function resize() {
@@ -497,6 +1009,12 @@
                 state.dots = [];
                 state.dotMap.clear();
                 let dotIndex = 0;
+                let nodeIndex = 0;
+                const sequence = state.allowedChainSequence && state.allowedChainSequence.length
+                    ? state.allowedChainSequence
+                    : getActiveChainSequence();
+                const allowPowerNodes = state.levelConfig ? state.levelConfig.allowPowerNodes : true;
+                const allowBoostNodes = state.levelConfig ? state.levelConfig.allowBoostNodes : false;
 
                 layout.forEach((row, r) => {
                     for (let c = 0; c < row.length; c++) {
@@ -506,13 +1024,16 @@
                             continue;
                         }
                         if (tile === '.' || tile === 'o') {
-                            if (tile === 'o') {
-                                const dot = { c, r, active: true, type: powerNode.key, points: powerNode.points };
+                            if (tile === 'o' && allowPowerNodes) {
+                                const nodeType = allowBoostNodes && nodeIndex % 2 === 1 ? boostNode.key : powerNode.key;
+                                const nodePoints = nodeType === boostNode.key ? boostNode.points : powerNode.points;
+                                const dot = { c, r, active: true, type: nodeType, points: nodePoints, isNode: true };
                                 state.dots.push(dot);
                                 state.dotMap.set(key(c, r), dot);
+                                nodeIndex += 1;
                             } else {
-                                const sequence = chainSequence[dotIndex % chainSequence.length];
-                                const dot = { c, r, active: true, type: sequence.key, points: sequence.points };
+                                const pick = sequence[dotIndex % sequence.length] || chainSequence[0];
+                                const dot = { c, r, active: true, type: pick.key, points: pick.points, isNode: false };
                                 state.dots.push(dot);
                                 state.dotMap.set(key(c, r), dot);
                                 dotIndex += 1;
@@ -525,13 +1046,21 @@
                 state.chainStreak = 0;
                 state.chainStartTime = 0;
                 state.lastChainTime = 0;
-                state.toolCharges = 0;
+                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
+                state.toolCycleIndex = 0;
                 state.frightenedUntil = 0;
                 state.speedBoostUntil = 0;
+                state.wallPassUntil = 0;
                 state.bugBoostUntil = 0;
                 state.bugBoostFactor = 1;
-                state.wildcardSteps = 0;
-                state.wildcardUntil = 0;
+                state.recoveryMode = false;
+                state.savedChainSequence = null;
+                state.savedChainSetIndex = 0;
+                state.bugThreatUntil = 0;
+                state.inefficiencyCooldownUntil = 0;
+                state.autoMistakeTargetKey = null;
+                state.autoMistakeUntil = 0;
+                scheduleNextMistake(performance.now());
                 resetPositions();
                 updateHud();
             }
@@ -546,6 +1075,7 @@
                 state.autoPath = [];
                 state.autoStep = 0;
                 resetGhosts();
+                primeAutopilot();
             }
 
             function resetGhosts() {
@@ -555,7 +1085,11 @@
                     findOpenCell(Math.floor(state.cols / 2) + 1, Math.floor(state.rows / 2)),
                     findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2) + 1)
                 ];
-                state.ghosts = ghostConfigs.map((config, index) => {
+                const ghostCount = Math.max(0, Math.min(
+                    state.levelConfig ? state.levelConfig.ghostCount : ghostConfigs.length,
+                    ghostConfigs.length
+                ));
+                state.ghosts = ghostConfigs.slice(0, ghostCount).map((config, index) => {
                     const spawn = spawnPoints[index % spawnPoints.length];
                     return {
                         ...config,
@@ -580,6 +1114,10 @@
                 return state.walls.has(key(c, r));
             }
 
+            function isOutOfBounds(c, r) {
+                return c < 0 || r < 0 || c >= state.cols || r >= state.rows;
+            }
+
             function findOpenCell(c, r) {
                 if (!isWall(c, r)) return { c, r };
                 for (let radius = 1; radius < 6; radius++) {
@@ -597,27 +1135,66 @@
 
             function updateHud() {
                 const modeLabel = state.playerMode ? 'Player' : 'Demo';
-                statusText.textContent = `Mode: ${modeLabel} | Autopilot: ${state.autopilot ? 'On' : 'Off'} | Remaining: ${remainingDots()}`;
+                const scenario = state.levelConfig ? state.levelConfig.name : 'Demo';
+                const safeLabel = state.safeMode ? 'On' : 'Off';
+                statusText.textContent = `Mode: ${modeLabel} | Autopilot: ${state.autopilot ? 'On' : 'Off'} | Role: ${roleConfig.label} | Safe: ${safeLabel} | Scenario: ${scenario} | Remaining: ${remainingDots()}`;
                 scoreValue.textContent = state.score;
                 levelValue.textContent = state.level;
                 livesValue.textContent = state.lives;
-                toolValue.textContent = state.toolCharges;
+                toolValue.textContent = formatToolCounts();
                 updateChainDisplay();
             }
 
+            function totalToolCharges() {
+                return Object.values(state.tools).reduce((sum, count) => sum + count, 0);
+            }
+
+            function formatToolCounts() {
+                return `S${state.tools.speed} W${state.tools.wall} C${state.tools.paint} Z${state.tools.zap}`;
+            }
+
+            function updateDebug(now) {
+                if (!debugPanel || !debugEnabled) return;
+                const expectedKey = getExpectedKey();
+                const pos = `${state.player.c.toFixed(2)}, ${state.player.r.toFixed(2)}`;
+                const dir = `${state.player.dirX}, ${state.player.dirY}`;
+                const freezeLeft = Math.max(0, Math.round((state.freezeUntil - now) / 100) / 10);
+                const autoTarget = state.autoMistakeTargetKey ? state.autoMistakeTargetKey : 'none';
+                debugPanel.textContent = [
+                    `role: ${roleKey} | autopilot: ${state.autopilot} | player: ${state.playerMode} | safe: ${state.safeMode}`,
+                    `pos: ${pos} | dir: ${dir}`,
+                    `expected: ${expectedKey} | chain: ${state.chainIndex}/${getActiveChainSequence().length}`,
+                    `path: ${state.autoPath.length} | step: ${state.autoStep} | target: ${state.targetCell ? `${state.targetCell.c},${state.targetCell.r}` : 'none'}`,
+                    `tools: ${formatToolCounts()} | wall pass: ${Math.max(0, Math.round((state.wallPassUntil - now) / 100) / 10)}s`,
+                    `ghosts: ${state.ghosts.length} | freeze: ${freezeLeft}s | bug window: ${Math.max(0, Math.round((state.bugThreatUntil - now) / 100) / 10)}s`,
+                    `mistake target: ${autoTarget}`
+                ].join('\n');
+            }
+
             function remainingDots() {
-                return state.dots.filter((dot) => dot.active).length;
+                return state.dots.filter((dot) => dot.active && !dot.isNode).length;
             }
 
             function hasDotOfType(typeKey) {
                 return state.dots.some((dot) => dot.active && dot.type === typeKey);
             }
 
+            function getMistakeDotType(expectedKey) {
+                const sequence = getActiveChainSequence();
+                for (const entry of sequence) {
+                    if (entry.key !== expectedKey && hasDotOfType(entry.key)) {
+                        return entry.key;
+                    }
+                }
+                return null;
+            }
+
             function getExpectedKey() {
-                const total = chainSequence.length;
+                const sequence = getActiveChainSequence();
+                const total = sequence.length;
                 for (let offset = 0; offset < total; offset += 1) {
                     const index = (state.chainIndex + offset) % total;
-                    const keyName = chainSequence[index].key;
+                    const keyName = sequence[index].key;
                     if (hasDotOfType(keyName)) {
                         if (index !== state.chainIndex) {
                             state.chainIndex = index;
@@ -625,7 +1202,7 @@
                         return keyName;
                     }
                 }
-                return chainSequence[state.chainIndex].key;
+                return sequence[state.chainIndex].key;
             }
 
             function cellCenter(c, r) {
@@ -653,7 +1230,7 @@
                 }
             }
 
-            function bfsPath(start, targetCheck) {
+            function bfsPath(start, targetCheck, allowWalls) {
                 const queue = [start];
                 const visited = new Set([key(start.c, start.r)]);
                 const parent = new Map();
@@ -662,7 +1239,7 @@
                     if (targetCheck(current)) {
                         return buildPathFromParent(current, parent);
                     }
-                    const neighbors = getNeighbors(current.c, current.r);
+                    const neighbors = getNeighbors(current.c, current.r, allowWalls);
                     neighbors.forEach((next) => {
                         const k = key(next.c, next.r);
                         if (visited.has(k)) return;
@@ -684,13 +1261,16 @@
                 return path;
             }
 
-            function getNeighbors(c, r) {
+            function getNeighbors(c, r, allowWalls) {
                 const options = [
                     { c: c + 1, r, dirX: 1, dirY: 0 },
                     { c: c - 1, r, dirX: -1, dirY: 0 },
                     { c, r: r + 1, dirX: 0, dirY: 1 },
                     { c, r: r - 1, dirX: 0, dirY: -1 }
                 ];
+                if (allowWalls) {
+                    return options.filter((opt) => !isOutOfBounds(opt.c, opt.r));
+                }
                 return options.filter((opt) => !isWall(opt.c, opt.r));
             }
 
@@ -700,64 +1280,199 @@
                 const expectedKey = getExpectedKey();
                 const hasExpected = hasDotOfType(expectedKey);
                 const now = performance.now();
-                const shouldSeekBoost = hasDotOfType(boostNode.key) && state.chainIndex === 0 && state.speedBoostUntil < now;
+                const allowWalls = state.wallPassUntil > now;
+                if (state.autoMistakeTargetKey && now > state.autoMistakeUntil) {
+                    state.autoMistakeTargetKey = null;
+                    state.autoMistakeUntil = 0;
+                }
+                const config = state.levelConfig || {};
+                const allowBoosts = config.allowBoostNodes !== false;
+                const shouldSeekBoost = allowBoosts && hasDotOfType(boostNode.key)
+                    && state.tools.speed === 0 && state.speedBoostUntil < now;
+                const shouldMisorder = config.autoMistake
+                    && !state.playerMode
+                    && !state.autoMistakeTargetKey
+                    && state.nextMistakeAt > 0
+                    && now >= state.nextMistakeAt;
+                const mistakeKey = shouldMisorder ? getMistakeDotType(expectedKey) : null;
                 if (!state.autoPath.length || state.autoStep >= state.autoPath.length - 1) {
                     state.autoPath = bfsPath(cell, (node) => {
                         const dot = state.dotMap.get(key(node.c, node.r));
                         if (!dot || !dot.active) return false;
+                        if (mistakeKey) {
+                            return dot.type === mistakeKey;
+                        }
                         if (dot.type === expectedKey) return true;
                         if (dot.type === boostNode.key && shouldSeekBoost) return true;
-                        if (dot.type === powerNode.key && (!hasExpected || state.toolCharges === 0)) return true;
+                        if (dot.type === powerNode.key && (!hasExpected || totalToolCharges() === 0)) return true;
                         return false;
-                    });
+                    }, allowWalls);
                     state.autoStep = 0;
+                    if (mistakeKey && state.autoPath.length) {
+                        const target = state.autoPath[state.autoPath.length - 1];
+                        state.autoMistakeTargetKey = key(target.c, target.r);
+                        state.autoMistakeUntil = now + (config.mistakeWindowMs || 6500);
+                        scheduleNextMistake(now);
+                        setNarration('Autopilot demo: intentional mis-order to surface bug behavior.', 2400);
+                    }
                 }
                 const next = state.autoPath[state.autoStep + 1];
-                if (!next) return;
+                if (!next) {
+                    const neighbors = getNeighbors(cell.c, cell.r, allowWalls);
+                    let fallback = neighbors.find((opt) => {
+                        const dot = state.dotMap.get(key(opt.c, opt.r));
+                        return dot && dot.active && dot.type === expectedKey;
+                    });
+                    if (!fallback) {
+                        fallback = neighbors[0];
+                    }
+                    if (fallback) {
+                        state.player.dirX = fallback.dirX;
+                        state.player.dirY = fallback.dirY;
+                        state.targetCell = { c: fallback.c, r: fallback.r };
+                    }
+                    return;
+                }
                 const dirX = Math.sign(next.c - cell.c);
                 const dirY = Math.sign(next.r - cell.r);
                 state.player.dirX = dirX;
                 state.player.dirY = dirY;
+                state.targetCell = { c: next.c, r: next.r };
+            }
+
+            function primeAutopilot() {
+                if (!state.autopilot || state.playerMode) return;
+                const now = performance.now();
+                const allowWalls = state.wallPassUntil > now;
+                const cell = { c: Math.round(state.player.c), r: Math.round(state.player.r) };
+                const expectedKey = getExpectedKey();
+                const currentDot = state.dotMap.get(key(cell.c, cell.r));
+                if (currentDot && currentDot.active && currentDot.type === expectedKey) {
+                    eatDot(cell.c, cell.r);
+                }
+                if (state.autoPath.length > 1 && state.autoStep < state.autoPath.length - 1) return;
+                const path = bfsPath(cell, (node) => {
+                    const dot = state.dotMap.get(key(node.c, node.r));
+                    return dot && dot.active && dot.type === expectedKey;
+                }, allowWalls);
+                if (path.length > 1) {
+                    state.autoPath = path;
+                    state.autoStep = 0;
+                    const next = path[1];
+                    state.player.dirX = Math.sign(next.c - cell.c);
+                    state.player.dirY = Math.sign(next.r - cell.r);
+                    state.targetCell = { c: next.c, r: next.r };
+                    return;
+                }
+                const fallback = bfsPath(cell, (node) => {
+                    const dot = state.dotMap.get(key(node.c, node.r));
+                    return dot && dot.active;
+                }, allowWalls);
+                if (fallback.length > 1) {
+                    state.autoPath = fallback;
+                    state.autoStep = 0;
+                    const next = fallback[1];
+                    state.player.dirX = Math.sign(next.c - cell.c);
+                    state.player.dirY = Math.sign(next.r - cell.r);
+                    state.targetCell = { c: next.c, r: next.r };
+                }
             }
 
             function updatePlayer(delta) {
-                if (state.autopilot) {
-                    updateAutopilot();
+                const now = performance.now();
+                const speedBoost = state.speedBoostUntil > now ? toolConfigs.speed.speedBonus : 1;
+                const speed = state.player.baseSpeed * speedBoost;
+
+                if (!state.safeMode && (!state.levelConfig || state.levelConfig.bugsEnabled !== false) && state.chainIndex > 0 && state.lastChainTime) {
+                    const slowThreshold = 6500;
+                    if (now - state.lastChainTime > slowThreshold && now > state.inefficiencyCooldownUntil) {
+                        state.inefficiencyCooldownUntil = now + 9000;
+                        activateBugThreat(1);
+                        showBanner('Efficiency Drop: Bug Risk');
+                        setNarration('Efficiency dip detected. Bugs are more likely until the chain resumes.');
+                    }
                 }
 
-                const now = performance.now();
-                const speedBoost = state.speedBoostUntil > now ? boostNode.speedBonus : 1;
-                const speed = state.player.baseSpeed * speedBoost;
+                if (state.autopilot) {
+                    if (!state.playerMode) {
+                        useToolAuto(now, false);
+                    }
+                    updateAutopilot();
+                    if (!state.targetCell) {
+                        primeAutopilot();
+                    }
+                    if (state.targetCell) {
+                        const dx = state.targetCell.c - state.player.c;
+                        const dy = state.targetCell.r - state.player.r;
+                        const dist = Math.hypot(dx, dy);
+                        const step = speed * delta;
+                        if (dist > 0) {
+                            const ratio = Math.min(1, step / dist);
+                            state.player.c += dx * ratio;
+                            state.player.r += dy * ratio;
+                            state.player.dirX = Math.sign(dx);
+                            state.player.dirY = Math.sign(dy);
+                            state.player.heading = Math.atan2(dy, dx);
+                        }
+                        if (dist <= step + 0.001) {
+                            state.player.c = state.targetCell.c;
+                            state.player.r = state.targetCell.r;
+                            const positionKey = key(state.targetCell.c, state.targetCell.r);
+                            const dot = state.dotMap.get(positionKey);
+                            const expectedKey = getExpectedKey();
+                            const canAutoEat = dot && dot.active && (dot.type === expectedKey
+                                || dot.type === powerNode.key
+                                || dot.type === boostNode.key
+                                || (state.autoMistakeTargetKey === positionKey && now <= state.autoMistakeUntil));
+                            if (canAutoEat) {
+                                if (state.autoMistakeTargetKey === positionKey) {
+                                    state.autoMistakeTargetKey = null;
+                                    state.autoMistakeUntil = 0;
+                                }
+                                eatDot(state.targetCell.c, state.targetCell.r);
+                            }
+                            if (state.autoPath.length > 1) {
+                                state.autoStep = Math.min(state.autoStep + 1, state.autoPath.length - 1);
+                            }
+                            state.targetCell = null;
+                        }
+                    }
+
+                    const moved = Math.hypot(state.player.c - state.lastPosition.c, state.player.r - state.lastPosition.r) > 0.002;
+                    if (moved) {
+                        state.lastPosition = { c: state.player.c, r: state.player.r };
+                        state.stuckSince = 0;
+                    } else if (!state.playerMode) {
+                        if (!state.stuckSince) {
+                            state.stuckSince = now;
+                        } else if (now - state.stuckSince > 1400) {
+                            state.autoPath = [];
+                            state.autoStep = 0;
+                            state.targetCell = null;
+                            primeAutopilot();
+                            state.stuckSince = now;
+                        }
+                    }
+                    return;
+                }
+
                 const nextC = state.player.c + state.player.dirX * speed * delta;
                 const nextR = state.player.r + state.player.dirY * speed * delta;
-                if (!isWall(Math.round(nextC), Math.round(nextR))) {
+                const canPhase = state.wallPassUntil > now;
+                if (!isWall(Math.round(nextC), Math.round(nextR)) || canPhase) {
                     state.player.c = nextC;
                     state.player.r = nextR;
                 }
 
                 const snappedC = Math.round(state.player.c);
                 const snappedR = Math.round(state.player.r);
-                if (Math.abs(state.player.c - snappedC) < 0.1 && Math.abs(state.player.r - snappedR) < 0.1) {
+                const snapThreshold = 0.04;
+                if (Math.abs(state.player.c - snappedC) < snapThreshold && Math.abs(state.player.r - snappedR) < snapThreshold) {
                     state.player.c = snappedC;
                     state.player.r = snappedR;
                     state.player.heading = Math.atan2(state.player.dirY, state.player.dirX);
-                    if (state.autopilot && state.autoPath.length > 1) {
-                        state.autoStep = Math.min(state.autoStep + 1, state.autoPath.length - 1);
-                    }
-                    const shouldEat = state.autopilot || (state.playerMode && state.eatHeld);
+                    const shouldEat = state.playerMode && state.eatHeld;
                     if (shouldEat) {
-                        const dot = state.dotMap.get(key(snappedC, snappedR));
-                        if (!dot || !dot.active) return;
-                        if (state.autopilot) {
-                            const expectedKey = getExpectedKey();
-                            const canAutoEat = dot.type === expectedKey
-                                || dot.type === powerNode.key
-                                || dot.type === boostNode.key;
-                            if (canAutoEat) {
-                                eatDot(snappedC, snappedR);
-                            }
-                            return;
-                        }
                         eatDot(snappedC, snappedR);
                     }
                 }
@@ -769,21 +1484,15 @@
                 dot.active = false;
                 const now = performance.now();
                 if (dot.type === powerNode.key) {
-                    state.toolCharges += 1;
                     state.score += powerNode.points;
-                    showBanner('Tool Access Granted');
-                    playEvent('power');
-                    setNarration('Power node collected. Tool access increased.');
-                    updateHud();
+                    grantToolCharge();
+                    maybeShowTutorialForDot('power');
                     return;
                 }
                 if (dot.type === boostNode.key) {
-                    state.speedBoostUntil = now + boostNode.duration;
                     state.score += boostNode.points;
-                    showBanner('Script Boost: Speed Up');
-                    playEvent('power');
-                    setNarration('Script boost engaged to speed up the chain.');
-                    updateHud();
+                    grantToolCharge('speed');
+                    maybeShowTutorialForDot('boost');
                     return;
                 }
                 handleChainDot(dot, now);
@@ -799,15 +1508,23 @@
                     applyChainSuccess(dot, now, false);
                     return;
                 }
-                if (state.wildcardSteps > 0 && now <= state.wildcardUntil) {
-                    state.wildcardSteps -= 1;
-                    applyChainSuccess(dot, now, true);
-                    showBanner('Wildcard Step Applied');
-                    playEvent('tool');
-                    setNarration('Wildcard used to preserve the chain.');
+                if (state.tools.paint > 0) {
+                    usePaintTool(dot, expectedKey, now);
                     return;
                 }
                 breakChain(dot.type, expectedKey);
+            }
+
+            function usePaintTool(dot, expectedKey, now) {
+                if (!dot || !expectedKey || state.tools.paint <= 0) return false;
+                state.tools.paint -= 1;
+                dot.type = expectedKey;
+                showBanner('Wrench Override: Color Shift');
+                playEvent('tool');
+                setNarration('Wrench applied. Dot color aligned to the chain.');
+                updateHud();
+                applyChainSuccess(dot, now, true);
+                return true;
             }
 
             function applyChainSuccess(dot, now, usedTool) {
@@ -823,23 +1540,50 @@
                 state.chainStreak = usedTool ? Math.max(0, state.chainStreak - 1) : state.chainStreak + 1;
                 state.lastChainTime = now;
                 playEvent('chain');
-                const stepLabel = chainSequence.find((entry) => entry.key === dot.type)?.label || 'Chain Step';
+                const sequence = getActiveChainSequence();
+                const stepLabel = sequence.find((entry) => entry.key === dot.type)?.label
+                    || chainSequence.find((entry) => entry.key === dot.type)?.label
+                    || 'Chain Step';
                 setNarration(`${stepLabel} complete. ${usedTool ? 'Wildcard applied.' : 'Order maintained.'}`);
+                maybeShowTutorialForDot(dot.type);
 
-                if (state.chainIndex >= chainSequence.length) {
+                if (state.chainIndex >= sequence.length) {
                     const chainDuration = now - state.chainStartTime;
-                    const efficiency = Math.max(0, Math.round(300 - chainDuration * 0.05 - state.toolCharges * 5));
+                    const efficiency = Math.max(0, Math.round(300 - chainDuration * 0.05 - totalToolCharges() * 5));
                     const chainBonusScore = 120 + efficiency;
                     state.score += chainBonusScore;
                     showBanner(`Chain Complete +${chainBonusScore}`);
                     playEvent('complete');
                     spawnBonusNodes(1, powerNode);
                     spawnBonusNodes(1, boostNode);
-                    setNarration('Chain complete. Bonus powerups deployed.');
+                    setNarration('Chain complete. Container tasks advanced.');
                     state.chainIndex = 0;
                     state.chainStreak = 0;
                     state.chainStartTime = 0;
                     state.lastChainTime = 0;
+                    if (state.recoveryMode) {
+                        state.recoveryMode = false;
+                        state.activeChainSequence = state.savedChainSequence || chainSequence.slice();
+                        state.chainSetIndex = state.savedChainSetIndex || 0;
+                        state.savedChainSequence = null;
+                        state.savedChainSetIndex = 0;
+                        initChainRow();
+                        showBanner('Recovery Complete');
+                        setNarration('Bug resolved. Returning to the primary chain.');
+                        updateHud();
+                        return;
+                    }
+                    if (state.chainSets && state.chainSets.length) {
+                        state.chainSetIndex = (state.chainSetIndex + 1) % state.chainSets.length;
+                        const nextSet = state.chainSets[state.chainSetIndex] || [];
+                        state.activeChainSequence = chainSequence.filter((entry) => nextSet.includes(entry.key));
+                        if (!state.activeChainSequence.length) {
+                            state.activeChainSequence = chainSequence.slice();
+                        }
+                        initChainRow();
+                        showBanner(`Chain Set ${state.chainSetIndex + 1}/${state.chainSets.length}`);
+                        updateHud();
+                    }
                 }
             }
 
@@ -848,20 +1592,24 @@
                 state.chainStreak = 0;
                 state.chainStartTime = 0;
                 state.lastChainTime = 0;
+                state.autoMistakeTargetKey = null;
+                state.autoMistakeUntil = 0;
+                scheduleNextMistake(performance.now());
                 state.score = Math.max(0, state.score - 8);
                 showBanner('Chain Broken');
                 playEvent('break');
                 const severity = getChainSeverity(actualKey, expectedKey);
+                activateBugThreat(severity);
                 triggerBugSurge(severity);
                 setNarration(`Chain broken. Bugs intensify (severity ${severity}).`);
             }
 
             function getSequenceIndex(keyName) {
-                return chainSequence.findIndex((entry) => entry.key === keyName);
+                return getActiveChainSequence().findIndex((entry) => entry.key === keyName);
             }
 
             function getChainSeverity(actualKey, expectedKey) {
-                const total = chainSequence.length;
+                const total = getActiveChainSequence().length;
                 const actualIndex = getSequenceIndex(actualKey);
                 const expectedIndex = getSequenceIndex(expectedKey);
                 if (actualIndex < 0 || expectedIndex < 0) return 2;
@@ -871,6 +1619,9 @@
             }
 
             function triggerBugSurge(severity) {
+                if (state.safeMode || (state.levelConfig && state.levelConfig.bugsEnabled === false)) {
+                    return;
+                }
                 const now = performance.now();
                 const chance = Math.min(0.2 + 0.12 * severity, 0.85);
                 if (Math.random() < chance) {
@@ -883,6 +1634,30 @@
                         showBanner('Bug Surge: Severity Increased');
                     }
                 }
+            }
+
+            function activateBugThreat(severity) {
+                if (state.safeMode || (state.levelConfig && state.levelConfig.bugsEnabled === false)) {
+                    return;
+                }
+                const now = performance.now();
+                const duration = 4000 + severity * 800;
+                state.bugThreatUntil = Math.max(state.bugThreatUntil, now + duration);
+            }
+
+            function enterRecoveryMode() {
+                if (state.recoveryMode) return;
+                state.recoveryMode = true;
+                state.savedChainSequence = state.activeChainSequence ? state.activeChainSequence.slice() : null;
+                state.savedChainSetIndex = state.chainSetIndex;
+                state.chainIndex = 0;
+                state.chainStreak = 0;
+                state.chainStartTime = 0;
+                state.lastChainTime = 0;
+                state.activeChainSequence = chainSequence.slice();
+                initChainRow();
+                showBanner('Bug Recovery: Extended Chain');
+                setNarration('Bug detected. Run the extended recovery chain to stabilize.');
             }
 
             function spawnExtraGhost() {
@@ -901,50 +1676,70 @@
             }
 
             function spawnBonusNodes(count, nodeType) {
-                const available = state.dots.filter((dot) => dot.active && dot.type !== powerNode.key && dot.type !== boostNode.key);
+                if (nodeType === powerNode && state.levelConfig && !state.levelConfig.allowPowerNodes) return;
+                if (nodeType === boostNode && state.levelConfig && !state.levelConfig.allowBoostNodes) return;
+                const available = state.dots.filter((dot) => dot.isNode && dot.type === nodeType.key && !dot.active);
                 for (let i = 0; i < count && available.length; i++) {
                     const index = Math.floor(Math.random() * available.length);
                     const dot = available.splice(index, 1)[0];
-                    dot.type = nodeType.key;
+                    dot.active = true;
                     dot.points = nodeType.points;
                 }
             }
 
             function deployTool() {
-                if (state.toolCharges <= 0) return;
-                state.toolCharges -= 1;
-                state.frightenedUntil = performance.now() + 5000;
-                state.wildcardSteps = 2;
-                state.wildcardUntil = performance.now() + 8000;
-                showBanner('Tool Deployed: Wildcard + Bug Suppression');
-                playEvent('tool');
-                setNarration('Tool deployed: wildcard steps enabled and bugs suppressed.');
-                updateHud();
+                const now = performance.now();
+                if (!useToolAuto(now, true)) {
+                    showBanner('No Hat Ability Available');
+                }
             }
 
             function completeLevel() {
-                banner.textContent = 'Level Complete - Re-seeding level';
+                banner.textContent = 'Container Complete';
                 banner.classList.add('visible');
                 state.level += 1;
                 state.chainIndex = 0;
                 state.chainStreak = 0;
                 state.chainStartTime = 0;
                 state.lastChainTime = 0;
-                state.toolCharges = 0;
-                state.wildcardSteps = 0;
-                state.wildcardUntil = 0;
+                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
+                state.toolCycleIndex = 0;
                 state.speedBoostUntil = 0;
+                state.wallPassUntil = 0;
                 state.bugBoostUntil = 0;
                 state.bugBoostFactor = 1;
-                setTimeout(() => {
-                    state.dots.forEach((dot) => {
-                        dot.active = true;
-                    });
-                    state.frightenedUntil = 0;
-                    resetPositions();
+                state.autoMistakeTargetKey = null;
+                state.autoMistakeUntil = 0;
+                state.bugThreatUntil = 0;
+                state.inefficiencyCooldownUntil = 0;
+                state.recoveryMode = false;
+                state.savedChainSequence = null;
+                state.savedChainSetIndex = 0;
+                scheduleNextMistake(performance.now());
+
+                const nextContainer = containerIndex + 1;
+                const hasNextInRole = nextContainer <= roleConfig.levels.length;
+                const nextRoleKey = hasNextInRole ? roleKey : roleConfig.nextRole;
+                const nextRoleConfig = nextRoleKey ? roleConfigs[nextRoleKey] : null;
+                const hasNext = hasNextInRole || !!nextRoleConfig;
+                const nextContainerIndex = hasNextInRole ? nextContainer : 1;
+                const nextLevel = hasNext
+                    ? (hasNextInRole ? roleConfig.levels[nextContainerIndex - 1] : nextRoleConfig.levels[0])
+                    : null;
+                const nextLabel = hasNextInRole ? roleConfig.label : (nextRoleConfig ? nextRoleConfig.label : '');
+                const message = hasNext
+                    ? `${roleConfig.label} ${containerIndex} finished. It was destroyed to preserve resources. Spinning up ${nextLabel} ${nextContainerIndex}.`
+                    : 'All slave and servant containers completed. Returning to the Container Lab overview.';
+                const title = hasNext ? `${roleConfig.label} ${containerIndex} Complete` : 'All Containers Complete';
+                const action = () => {
                     banner.classList.remove('visible');
-                    updateHud();
-                }, 1800);
+                    if (hasNext) {
+                        window.location.href = `playground.html?role=${nextRoleKey}&container=${nextContainerIndex}&level=${nextLevel}`;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                };
+                showModal(message, title, hasNext ? `Deploy ${nextLabel} ${nextContainerIndex}` : 'Return to lab', action);
             }
 
             function updateGhosts(delta) {
@@ -1035,7 +1830,12 @@
             }
 
             function checkCollisions() {
-                const frightened = state.frightenedUntil > performance.now();
+                const now = performance.now();
+                const frightened = state.frightenedUntil > now;
+                const bugThreatActive = state.bugThreatUntil > now;
+                if (state.safeMode || (state.levelConfig && state.levelConfig.bugsEnabled === false)) {
+                    return;
+                }
                 state.ghosts.forEach((ghost) => {
                     const dist = Math.hypot(state.player.c - ghost.c, state.player.r - ghost.r);
                     if (dist < 0.4) {
@@ -1050,31 +1850,15 @@
                             ghost.dirX = 0;
                             ghost.dirY = -1;
                             ghost.heading = -Math.PI / 2;
-                        } else {
-                            state.lives -= 1;
+                        } else if (bugThreatActive) {
                             playEvent('bug');
-                            state.chainIndex = 0;
-                            state.chainStreak = 0;
-                            state.chainStartTime = 0;
-                            state.lastChainTime = 0;
-                            updateHud();
-                            if (state.lives <= 0) {
-                                banner.textContent = 'System Integrity Lost - Restarting';
-                                banner.classList.add('visible');
-                                setNarration('System integrity lost. Restarting the demo.');
-                                state.lives = 3;
-                                state.score = 0;
-                                state.level = 1;
-                                setTimeout(() => {
-                                    buildLevel();
-                                    banner.classList.remove('visible');
-                                }, 2200);
-                            } else {
-                                showBanner('Bug Encountered - Recovering');
-                                setNarration('Bug encountered. Resetting agent position.');
-                                state.freezeUntil = performance.now() + 1200;
-                                resetPositions();
-                            }
+                            state.score = Math.max(0, state.score - 20);
+                            showBanner('Bug Encountered - Recovery Mode');
+                            setNarration('Bug triggered. Agent is recovering and resuming the chain.');
+                            state.freezeUntil = now + 800;
+                            resetPositions();
+                            state.bugThreatUntil = now + 2000;
+                            enterRecoveryMode();
                         }
                     }
                 });
@@ -1159,6 +1943,7 @@
                 const size = state.cellSize * 0.75;
                 const mouthPulse = 0.35 + Math.abs(Math.sin(time * 6)) * 0.35;
                 const mouthHeight = size * (0.14 + mouthPulse * 0.15);
+                const zapActive = state.zapFlashUntil > performance.now();
                 ctx.save();
                 ctx.translate(center.x, center.y);
                 ctx.rotate(state.player.heading || 0);
@@ -1187,7 +1972,7 @@
                 ctx.arc(-size * 0.18, -size * 0.08, size * 0.08, 0, Math.PI * 2);
                 ctx.arc(size * 0.18, -size * 0.08, size * 0.08, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#00cec9';
+                ctx.fillStyle = zapActive ? '#ff3b30' : '#00cec9';
                 ctx.beginPath();
                 ctx.arc(-size * 0.18, -size * 0.08, size * 0.04, 0, Math.PI * 2);
                 ctx.arc(size * 0.18, -size * 0.08, size * 0.04, 0, Math.PI * 2);
@@ -1249,6 +2034,7 @@
                 updateGhosts(delta);
                 checkCollisions();
                 updateHud();
+                updateDebug(performance.now());
                 updateNarration(delta, performance.now());
             }
 
@@ -1307,6 +2093,15 @@
                     deployTool();
                     return;
                 }
+                if (event.key.toLowerCase() === 'b') {
+                    state.safeMode = !state.safeMode;
+                    if (state.safeMode) {
+                        state.bugThreatUntil = 0;
+                    }
+                    showBanner(`Safe Mode ${state.safeMode ? 'On' : 'Off'}`);
+                    updateHud();
+                    return;
+                }
                 if (event.key.toLowerCase() === 'r') {
                     buildLevel();
                     return;
@@ -1349,12 +2144,32 @@
                 }
             });
 
+            if (tutorialOk) {
+                tutorialOk.addEventListener('click', () => {
+                    dismissTutorial();
+                });
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (state.tutorialActive && event.key === 'Enter') {
+                    dismissTutorial();
+                }
+            });
+
             document.addEventListener('pointerdown', handleInteraction, { passive: true });
             window.addEventListener('resize', resize);
+            applyLevelConfig();
             initChainRow();
             resize();
             updateHud();
-            setNarration(narrationScript[0], 4000);
+            if (state.narrationScript && state.narrationScript.length) {
+                setNarration(state.narrationScript[0], 4000);
+            }
+            window.__labState = state;
+            if (debugPanel) {
+                debugPanel.style.display = debugEnabled ? 'block' : 'none';
+                updateDebug(performance.now());
+            }
             requestAnimationFrame(loop);
         })();
     </script>

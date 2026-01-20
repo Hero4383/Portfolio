@@ -401,7 +401,7 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 </div>
                 <div class="canvas-wrap">
                     <canvas id="containerLabCanvas" role="img" aria-label="Animated diagram of nested containers, protocol tunnels, and AI agent tiers."></canvas>
-                    <div class="canvas-note">Move your cursor to shift the view. Click a slave container to open the full-screen playground, or click elsewhere to pause.</div>
+                    <div class="canvas-note">Move your cursor to shift the view. Click a slave container to open its scenario (each one ramps the difficulty), or click elsewhere to pause.</div>
                 </div>
             </div>
         </section>
@@ -444,6 +444,7 @@ Observability <----- Metrics + Logs ---- Cache</div>
             const agents = [];
             const slaveStages = [];
             const hitRects = { slave: [] };
+            const slaveLevelMap = [1, 2, 3, 4, 5];
             const roleStyles = {
                 master: { radius: 14, speed: 0.35, color: '#e67e22' },
                 servant: { radius: 11, speed: 0.55, color: '#f39c12' },
@@ -994,7 +995,8 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 const y = event.clientY - rect.top;
                 const hitIndex = hitRects.slave.findIndex((hit) => hit && x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h);
                 if (hitIndex !== -1) {
-                    window.location.href = `playground.html?container=${hitIndex + 1}`;
+                    const level = slaveLevelMap[hitIndex] || 1;
+                    window.location.href = `playground.html?role=slave&container=${hitIndex + 1}&level=${level}`;
                     return;
                 }
                 paused = !paused;
