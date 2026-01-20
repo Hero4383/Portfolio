@@ -1257,7 +1257,7 @@
                 color: 0xffffff,
                 roughness: 0.8,
                 metalness: 0.1,
-                side: THREE.FrontSide,
+                side: THREE.DoubleSide,
                 transparent: false
             });
 
@@ -1312,10 +1312,6 @@
                     if (typeof settings.transparent === 'boolean') mat.transparent = settings.transparent;
                     if (typeof settings.wireframe === 'boolean') mat.wireframe = settings.wireframe;
                     if (typeof settings.side === 'number') mat.side = settings.side;
-                    if (mat.transparent) {
-                        mat.side = THREE.FrontSide;
-                        mat.depthWrite = true;
-                    }
                     mat.depthWrite = true;
                     mat.needsUpdate = true;
                 });
