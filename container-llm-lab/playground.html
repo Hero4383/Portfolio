@@ -357,22 +357,90 @@
             line-height: 1.5;
         }
 
-        .hat-options {
+        .robot-options {
             display: grid;
-            gap: 0.6rem;
+            gap: 0.7rem;
             margin-bottom: 1rem;
         }
 
-        .hat-option {
-            display: flex;
-            gap: 0.6rem;
-            align-items: flex-start;
-            font-size: 0.85rem;
-            color: rgba(236, 240, 241, 0.75);
+        .robot-option {
+            display: block;
         }
 
-        .hat-option input {
-            margin-top: 0.2rem;
+        .robot-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .robot-card {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            padding: 0.6rem 0.7rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(18, 25, 36, 0.9);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .robot-option input:checked + .robot-card {
+            border-color: rgba(52, 152, 219, 0.8);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .robot-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .robot-avatar::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(15, 20, 26, 0.9);
+            box-shadow: 14px 0 0 rgba(15, 20, 26, 0.9);
+        }
+
+        .robot-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: 7px;
+            left: 9px;
+            width: 24px;
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .robot-speed { background: #74b9ff; }
+        .robot-wall { background: #3498db; }
+        .robot-paint { background: #f39c12; }
+        .robot-zap { background: #e74c3c; }
+
+        .robot-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .robot-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: rgba(236, 240, 241, 0.92);
+        }
+
+        .robot-desc {
+            font-size: 0.78rem;
+            color: rgba(236, 240, 241, 0.65);
         }
 
         .hat-select-card button {
@@ -401,12 +469,12 @@
             P: toggle player mode (demo defaults to autopilot)<br>
             Arrow keys (W/S/D optional): move in player mode<br>
             Hold Space: eat dots in player mode<br>
-            T: use hat ability<br>
+            T: use powerup<br>
             B: toggle safe mode (debug)<br>
             M: toggle sound<br>
             Esc: pause<br>
             R: reset level<br>
-            Hats: Script, Phase, Wrench, Zap (equip on deploy)
+            Powerup: choose a robot color at deploy
         </div>
         <div class="status" id="statusText">Mode: Demo | Autopilot: On</div>
         <div class="narration" id="narrationText">Autoplay demo: collecting task dots in the required order.</div>
@@ -440,7 +508,7 @@
     <div class="banner" id="completeBanner">Task Complete - Re-seeding level</div>
     <div class="debug-panel" id="debugPanel"></div>
     <div class="hat-panel" id="hatPanel">
-        <h3>Equipped Hats</h3>
+        <h3>Powerup Charge</h3>
         <div id="hatList"></div>
     </div>
     <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
@@ -452,15 +520,51 @@
     </div>
     <div class="hat-select-overlay" id="hatSelectOverlay" aria-hidden="true">
         <div class="hat-select-card" role="dialog" aria-modal="true" aria-labelledby="hatSelectTitle">
-            <h2 id="hatSelectTitle">Equip Hat Loadout</h2>
-            <p>Select the initial tools for this slave container. Each hat has limited charge that refills slowly as chains complete.</p>
-            <div class="hat-options" id="hatOptions">
-                <label class="hat-option"><input type="checkbox" value="speed" checked> Script Hat (speed boost)</label>
-                <label class="hat-option"><input type="checkbox" value="wall"> Phase Hat (pass through walls)</label>
-                <label class="hat-option"><input type="checkbox" value="paint"> Wrench Override (change dot color)</label>
-                <label class="hat-option"><input type="checkbox" value="zap"> Red-Eye Zap (clear bugs)</label>
+            <h2 id="hatSelectTitle">Choose Your Robot</h2>
+            <p>Select a robot color to choose a single powerup for this container. The charge bar starts full and drains on each use.</p>
+            <div class="robot-options" id="hatOptions">
+                <label class="robot-option">
+                    <input type="radio" name="robot" value="speed" checked>
+                    <span class="robot-card">
+                        <span class="robot-avatar robot-speed"></span>
+                        <span class="robot-meta">
+                            <span class="robot-name">Script Runner</span>
+                            <span class="robot-desc">Speed burst to shorten chain time.</span>
+                        </span>
+                    </span>
+                </label>
+                <label class="robot-option">
+                    <input type="radio" name="robot" value="wall">
+                    <span class="robot-card">
+                        <span class="robot-avatar robot-wall"></span>
+                        <span class="robot-meta">
+                            <span class="robot-name">Phase Walker</span>
+                            <span class="robot-desc">Slip through walls to cut travel time.</span>
+                        </span>
+                    </span>
+                </label>
+                <label class="robot-option">
+                    <input type="radio" name="robot" value="paint">
+                    <span class="robot-card">
+                        <span class="robot-avatar robot-paint"></span>
+                        <span class="robot-meta">
+                            <span class="robot-name">Wrench Operator</span>
+                            <span class="robot-desc">Override dot color to preserve the chain.</span>
+                        </span>
+                    </span>
+                </label>
+                <label class="robot-option">
+                    <input type="radio" name="robot" value="zap">
+                    <span class="robot-card">
+                        <span class="robot-avatar robot-zap"></span>
+                        <span class="robot-meta">
+                            <span class="robot-name">Bug Zapper</span>
+                            <span class="robot-desc">Clear bugs when the threat spikes.</span>
+                        </span>
+                    </span>
+                </label>
             </div>
-            <button id="hatSelectConfirm">Deploy Container</button>
+            <button id="hatSelectConfirm">Deploy Robot</button>
         </div>
     </div>
 
@@ -546,15 +650,15 @@
             const boostNode = { key: 'boost', label: 'Script Boost', color: '#00cec9', points: 40, duration: 5000, speedBonus: 1.4 };
 
             const toolConfigs = {
-                speed: { label: 'Script Hat', color: '#74b9ff', duration: 5000, speedBonus: 1.6, cost: 15 },
-                wall: { label: 'Phase Hat', color: '#3498db', duration: 4500, cost: 30 },
+                speed: { label: 'Script Boost', color: '#74b9ff', duration: 5000, speedBonus: 1.6, cost: 15 },
+                wall: { label: 'Phase Shift', color: '#3498db', duration: 4500, cost: 30 },
                 paint: { label: 'Wrench Override', color: '#f39c12', cost: 20 },
-                zap: { label: 'Red-Eye Zap', color: '#e74c3c', cost: 25 }
+                zap: { label: 'Bug Zapper', color: '#e74c3c', cost: 25 }
             };
             const hatChargeConfig = {
-                start: 40,
-                perChain: 1,
-                comboBonus: 1,
+                start: 100,
+                perChain: 0,
+                comboBonus: 0,
                 powerBonus: 25,
                 boostBonus: 30,
                 comboWindowMs: 3500
@@ -671,7 +775,7 @@
 
             const baseNarrationScript = [
                 'Dots follow the chain order: red > orange > yellow > blue > green > brown > black.',
-                'Power nodes grant limited-use hats that unlock special abilities.',
+                'Power nodes grant limited-use powerups that unlock special abilities.',
                 'Bugs react to mistakes. Higher chain errors can trigger bug surges.',
                 'Script boosts speed execution and helps finish chains faster.',
                 'This autoplay demo mirrors agent workflows without exposing private data.'
@@ -696,7 +800,7 @@
                 },
                 power: {
                     title: 'Tool Access',
-                    body: 'Tool access equips a slave agent with targeted capabilities (scripts, overrides, bug fixes) that shorten execution time and keep workflows stable. In this demo, that idea is visualized as limited-use hats.'
+                    body: 'Tool access equips a slave agent with targeted capabilities (scripts, overrides, bug fixes) that shorten execution time and keep workflows stable. In this demo, that idea is visualized as a single robot powerup.'
                 },
                 boost: {
                     title: 'Script Boost',
@@ -744,6 +848,7 @@
                 tutorialQueue: [],
                 tutorialActive: false,
                 tutorialShown: {},
+                pendingIntro: false,
                 modalAction: null,
                 bugThreatUntil: 0,
                 inefficiencyCooldownUntil: 0,
@@ -855,7 +960,7 @@
                 if (!pick) return;
                 const amount = amountOverride ?? hatChargeConfig.powerBonus;
                 state.hatCharges[pick] = Math.min(100, (state.hatCharges[pick] || 0) + amount);
-                const label = toolConfigs[pick]?.label || 'Hat';
+                const label = toolConfigs[pick]?.label || 'Powerup';
                 showBanner(`${label} Charged`);
                 playEvent('power');
                 setNarration(`${label} charged. Limited power available.`);
@@ -866,9 +971,9 @@
                 if (state.hatCharges.speed < toolConfigs.speed.cost) return false;
                 state.hatCharges.speed -= toolConfigs.speed.cost;
                 state.speedBoostUntil = now + toolConfigs.speed.duration;
-                showBanner('Script Hat: Speed Boost');
+                showBanner('Script Boost: Speed Burst');
                 playEvent('tool');
-                setNarration('Script hat engaged. Execution speed increased.');
+                setNarration('Script boost engaged. Execution speed increased.');
                 updateHud();
                 return true;
             }
@@ -879,9 +984,9 @@
                 state.wallPassUntil = now + toolConfigs.wall.duration;
                 state.autoPath = [];
                 state.autoStep = 0;
-                showBanner('Phase Hat: Wall Pass');
+                showBanner('Phase Shift: Wall Pass');
                 playEvent('tool');
-                setNarration('Phase hat active. Passing through walls temporarily.');
+                setNarration('Phase shift active. Passing through walls temporarily.');
                 updateHud();
                 return true;
             }
@@ -989,15 +1094,12 @@
                 state.tutorialQueue = [];
                 state.tutorialActive = false;
                 state.tutorialShown = {};
+                state.pendingIntro = config.id === 1;
                 state.recoveryMode = false;
                 state.savedChainSequence = null;
                 state.savedChainSetIndex = 0;
-                state.runStartTime = performance.now();
+                state.runStartTime = 0;
                 showHatSelect();
-                if (config.id === 1) {
-                    const intro = tutorialMessages.intro;
-                    if (intro) enqueueTutorial(intro.body, intro.title);
-                }
                 if (badge) {
                     badge.textContent = `${roleConfig.label} ${containerIndex} - ${config.name}`;
                 }
@@ -1097,7 +1199,8 @@
                 if (!tutorialOverlay || !state.tutorialActive) return;
                 tutorialOverlay.classList.remove('visible');
                 tutorialOverlay.setAttribute('aria-hidden', 'true');
-                state.paused = false;
+                const hatSelectionOpen = hatSelectOverlay && hatSelectOverlay.classList.contains('visible');
+                state.paused = hatSelectionOpen ? true : false;
                 state.tutorialActive = false;
                 if (state.chainIndex > 0) {
                     state.lastChainTime = performance.now();
@@ -1135,19 +1238,20 @@
 
             function applyHatSelection() {
                 if (!hatOptions) return;
-                const selected = Array.from(hatOptions.querySelectorAll('input[type="checkbox"]'))
-                    .filter((input) => input.checked)
-                    .map((input) => input.value);
-                if (!selected.length) {
-                    selected.push('speed');
-                }
-                state.equippedHats = selected;
+                const selectedInput = hatOptions.querySelector('input[name="robot"]:checked');
+                const selected = selectedInput ? selectedInput.value : 'speed';
+                state.equippedHats = [selected];
                 resetHatCharges();
                 state.runStartTime = performance.now();
                 hatSelectOverlay.classList.remove('visible');
                 hatSelectOverlay.setAttribute('aria-hidden', 'true');
                 state.paused = false;
                 updateHud();
+                if (state.pendingIntro) {
+                    state.pendingIntro = false;
+                    const intro = tutorialMessages.intro;
+                    if (intro) enqueueTutorial(intro.body, intro.title);
+                }
             }
 
             function maybeShowTutorialForDot(dotType) {
@@ -1322,7 +1426,8 @@
                 levelValue.textContent = state.level;
                 livesValue.textContent = state.lives;
                 if (timeValue) {
-                    timeValue.textContent = formatTime(performance.now() - state.runStartTime);
+                    const elapsed = state.runStartTime ? performance.now() - state.runStartTime : 0;
+                    timeValue.textContent = formatTime(elapsed);
                 }
                 updateChainDisplay();
                 updateHatPanel();
@@ -1365,26 +1470,25 @@
                 if (!hats.length) {
                     const empty = document.createElement('div');
                     empty.className = 'hat-empty';
-                    empty.textContent = 'No hats equipped yet.';
+                    empty.textContent = 'Select a robot to arm the powerup.';
                     hatList.appendChild(empty);
                     return;
                 }
-                hats.forEach((key) => {
-                    const config = toolConfigs[key];
-                    const charge = Math.round(state.hatCharges[key] || 0);
-                    const row = document.createElement('div');
-                    row.className = 'hat-row';
-                    row.innerHTML = `
-                        <div class="hat-header">
-                            <span>${config.label}</span>
-                            <span>${charge}%</span>
-                        </div>
-                        <div class="hat-bar">
-                            <div class="hat-fill" style="width:${charge}%; background:${config.color};"></div>
-                        </div>
-                    `;
-                    hatList.appendChild(row);
-                });
+                const key = hats[0];
+                const config = toolConfigs[key];
+                const charge = Math.round(state.hatCharges[key] || 0);
+                const row = document.createElement('div');
+                row.className = 'hat-row';
+                row.innerHTML = `
+                    <div class="hat-header">
+                        <span>${config.label}</span>
+                        <span>${charge}%</span>
+                    </div>
+                    <div class="hat-bar">
+                        <div class="hat-fill" style="width:${charge}%; background:${config.color};"></div>
+                    </div>
+                `;
+                hatList.appendChild(row);
             }
 
             function updateDebug(now) {
@@ -1934,7 +2038,7 @@
             function deployTool() {
                 const now = performance.now();
                 if (!useToolAuto(now, true)) {
-                    showBanner('No Hat Ability Available');
+                    showBanner('No Powerup Charge Available');
                 }
             }
 
