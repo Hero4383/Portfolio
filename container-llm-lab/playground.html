@@ -220,6 +220,55 @@
             z-index: 5;
         }
 
+        .hat-panel {
+            position: fixed;
+            right: 24px;
+            top: 88px;
+            background: rgba(15, 21, 30, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1rem 1.2rem;
+            width: 240px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(10px);
+        }
+
+        .hat-panel h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
+            color: #f5f7fa;
+        }
+
+        .hat-row {
+            margin-bottom: 0.6rem;
+        }
+
+        .hat-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: rgba(236, 240, 241, 0.75);
+            margin-bottom: 0.3rem;
+        }
+
+        .hat-bar {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .hat-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .hat-empty {
+            font-size: 0.75rem;
+            color: rgba(236, 240, 241, 0.55);
+        }
+
         .tutorial-overlay {
             position: fixed;
             inset: 0;
@@ -270,6 +319,75 @@
         .tutorial-card button:hover {
             filter: brightness(1.05);
         }
+
+        .hat-select-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 12, 18, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+        }
+
+        .hat-select-overlay.visible {
+            display: flex;
+        }
+
+        .hat-select-card {
+            background: rgba(15, 21, 30, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 1.6rem 1.8rem;
+            max-width: 460px;
+            width: 92%;
+            box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
+        }
+
+        .hat-select-card h2 {
+            font-size: 1.1rem;
+            color: #f5f7fa;
+            margin-bottom: 0.6rem;
+        }
+
+        .hat-select-card p {
+            font-size: 0.88rem;
+            color: rgba(236, 240, 241, 0.75);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .hat-options {
+            display: grid;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .hat-option {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+            font-size: 0.85rem;
+            color: rgba(236, 240, 241, 0.75);
+        }
+
+        .hat-option input {
+            margin-top: 0.2rem;
+        }
+
+        .hat-select-card button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            color: #ffffff;
+            padding: 0.6rem 1.4rem;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .hat-select-card button:hover {
+            filter: brightness(1.05);
+        }
     </style>
 </head>
 <body>
@@ -288,7 +406,7 @@
             M: toggle sound<br>
             Esc: pause<br>
             R: reset level<br>
-            Hats: S=Script, W=Wall, C=Wrench, Z=Zap
+            Hats: Script, Phase, Wrench, Zap (equip on deploy)
         </div>
         <div class="status" id="statusText">Mode: Demo | Autopilot: On</div>
         <div class="narration" id="narrationText">Autoplay demo: collecting task dots in the required order.</div>
@@ -296,7 +414,7 @@
             <div>Score: <span id="scoreValue">0</span></div>
             <div>Level: <span id="levelValue">1</span></div>
             <div>Lives: <span id="livesValue">3</span></div>
-            <div>Hats: <span id="toolValue">S0 W0 C0 Z0</span></div>
+            <div>Time: <span id="timeValue">0:00</span></div>
         </div>
         <div class="chain">
             <div class="chain-label">Chain Order</div>
@@ -321,11 +439,28 @@
     <a class="corner-button" href="index.html">Back to Container Lab</a>
     <div class="banner" id="completeBanner">Task Complete - Re-seeding level</div>
     <div class="debug-panel" id="debugPanel"></div>
+    <div class="hat-panel" id="hatPanel">
+        <h3>Equipped Hats</h3>
+        <div id="hatList"></div>
+    </div>
     <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
         <div class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
             <h2 id="tutorialTitle">Automation Insight</h2>
             <p id="tutorialMessage"></p>
             <button id="tutorialOk">OK, continue</button>
+        </div>
+    </div>
+    <div class="hat-select-overlay" id="hatSelectOverlay" aria-hidden="true">
+        <div class="hat-select-card" role="dialog" aria-modal="true" aria-labelledby="hatSelectTitle">
+            <h2 id="hatSelectTitle">Equip Hat Loadout</h2>
+            <p>Select the initial tools for this slave container. Each hat has limited charge that refills slowly as chains complete.</p>
+            <div class="hat-options" id="hatOptions">
+                <label class="hat-option"><input type="checkbox" value="speed" checked> Script Hat (speed boost)</label>
+                <label class="hat-option"><input type="checkbox" value="wall"> Phase Hat (pass through walls)</label>
+                <label class="hat-option"><input type="checkbox" value="paint"> Wrench Override (change dot color)</label>
+                <label class="hat-option"><input type="checkbox" value="zap"> Red-Eye Zap (clear bugs)</label>
+            </div>
+            <button id="hatSelectConfirm">Deploy Container</button>
         </div>
     </div>
 
@@ -337,7 +472,7 @@
             const scoreValue = document.getElementById('scoreValue');
             const levelValue = document.getElementById('levelValue');
             const livesValue = document.getElementById('livesValue');
-            const toolValue = document.getElementById('toolValue');
+            const timeValue = document.getElementById('timeValue');
             const chainValue = document.getElementById('chainValue');
             const nextValue = document.getElementById('nextValue');
             const chainRow = document.getElementById('chainRow');
@@ -347,10 +482,15 @@
             const hudTitle = document.querySelector('.hud h1');
             const hudDescription = document.querySelector('.hud p');
             const debugPanel = document.getElementById('debugPanel');
+            const hatPanel = document.getElementById('hatPanel');
+            const hatList = document.getElementById('hatList');
             const tutorialOverlay = document.getElementById('tutorialOverlay');
             const tutorialTitle = document.getElementById('tutorialTitle');
             const tutorialMessage = document.getElementById('tutorialMessage');
             const tutorialOk = document.getElementById('tutorialOk');
+            const hatSelectOverlay = document.getElementById('hatSelectOverlay');
+            const hatSelectConfirm = document.getElementById('hatSelectConfirm');
+            const hatOptions = document.getElementById('hatOptions');
             const params = new URLSearchParams(window.location.search);
             const roleParam = (params.get('role') || 'slave').toLowerCase();
             const debugEnabled = params.get('debug') === '1';
@@ -406,12 +546,19 @@
             const boostNode = { key: 'boost', label: 'Script Boost', color: '#00cec9', points: 40, duration: 5000, speedBonus: 1.4 };
 
             const toolConfigs = {
-                speed: { label: 'Script Hat', color: '#74b9ff', duration: 5000, speedBonus: 1.6 },
-                wall: { label: 'Phase Hat', color: '#3498db', duration: 4500 },
-                paint: { label: 'Wrench Override', color: '#f39c12' },
-                zap: { label: 'Red-Eye Zap', color: '#e74c3c' }
+                speed: { label: 'Script Hat', color: '#74b9ff', duration: 5000, speedBonus: 1.6, cost: 15 },
+                wall: { label: 'Phase Hat', color: '#3498db', duration: 4500, cost: 30 },
+                paint: { label: 'Wrench Override', color: '#f39c12', cost: 20 },
+                zap: { label: 'Red-Eye Zap', color: '#e74c3c', cost: 25 }
             };
-            const toolCycle = ['speed', 'wall', 'paint', 'zap'];
+            const hatChargeConfig = {
+                start: 40,
+                perChain: 1,
+                comboBonus: 1,
+                powerBonus: 25,
+                boostBonus: 30,
+                comboWindowMs: 3500
+            };
 
             const sound = {
                 enabled: true,
@@ -549,7 +696,7 @@
                 },
                 power: {
                     title: 'Tool Access',
-                    body: 'Power nodes grant limited-use hats: script speed, phase-through walls, wrench overrides, or bug zaps.'
+                    body: 'Tool access equips a slave agent with targeted capabilities (scripts, overrides, bug fixes) that shorten execution time and keep workflows stable. In this demo, that idea is visualized as limited-use hats.'
                 },
                 boost: {
                     title: 'Script Boost',
@@ -619,13 +766,13 @@
                 score: 0,
                 level: 1,
                 lives: 3,
-                tools: {
+                hatCharges: {
                     speed: 0,
                     wall: 0,
                     paint: 0,
                     zap: 0
                 },
-                toolCycleIndex: 0,
+                equippedHats: [],
                 wallPassUntil: 0,
                 chainIndex: 0,
                 chainStreak: 0,
@@ -645,7 +792,8 @@
                 recoveryMode: false,
                 savedChainSequence: null,
                 savedChainSetIndex: 0,
-                zapFlashUntil: 0
+                zapFlashUntil: 0,
+                runStartTime: 0
             };
 
             const ghostConfigs = [
@@ -695,22 +843,28 @@
                 playTone(setting.freq, setting.duration, 'triangle', 0.07);
             }
 
-            function grantToolCharge(forceKey) {
-                const toolKey = forceKey || toolCycle[state.toolCycleIndex % toolCycle.length];
-                if (!forceKey) {
-                    state.toolCycleIndex = (state.toolCycleIndex + 1) % toolCycle.length;
-                }
-                state.tools[toolKey] += 1;
-                const label = toolConfigs[toolKey]?.label || 'Tool';
+            function grantHatCharge(preferKey, amountOverride) {
+                const available = state.equippedHats.length ? state.equippedHats : Object.keys(toolConfigs);
+                const pick = preferKey && available.includes(preferKey)
+                    ? preferKey
+                    : available.reduce((lowest, keyName) => {
+                        const charge = state.hatCharges[keyName] || 0;
+                        const lowestCharge = state.hatCharges[lowest] || 0;
+                        return charge < lowestCharge ? keyName : lowest;
+                    }, available[0]);
+                if (!pick) return;
+                const amount = amountOverride ?? hatChargeConfig.powerBonus;
+                state.hatCharges[pick] = Math.min(100, (state.hatCharges[pick] || 0) + amount);
+                const label = toolConfigs[pick]?.label || 'Hat';
                 showBanner(`${label} Charged`);
                 playEvent('power');
-                setNarration(`${label} acquired. Limited uses available.`);
+                setNarration(`${label} charged. Limited power available.`);
                 updateHud();
             }
 
             function useSpeedTool(now) {
-                if (state.tools.speed <= 0) return false;
-                state.tools.speed -= 1;
+                if (state.hatCharges.speed < toolConfigs.speed.cost) return false;
+                state.hatCharges.speed -= toolConfigs.speed.cost;
                 state.speedBoostUntil = now + toolConfigs.speed.duration;
                 showBanner('Script Hat: Speed Boost');
                 playEvent('tool');
@@ -720,8 +874,8 @@
             }
 
             function useWallTool(now) {
-                if (state.tools.wall <= 0) return false;
-                state.tools.wall -= 1;
+                if (state.hatCharges.wall < toolConfigs.wall.cost) return false;
+                state.hatCharges.wall -= toolConfigs.wall.cost;
                 state.wallPassUntil = now + toolConfigs.wall.duration;
                 state.autoPath = [];
                 state.autoStep = 0;
@@ -733,7 +887,7 @@
             }
 
             function useZapTool(now) {
-                if (state.tools.zap <= 0) return false;
+                if (state.hatCharges.zap < toolConfigs.zap.cost) return false;
                 if (!state.ghosts.length) return false;
                 let closest = state.ghosts[0];
                 let bestDist = Math.hypot(state.player.c - closest.c, state.player.r - closest.r);
@@ -745,7 +899,7 @@
                     }
                 });
                 if (bestDist > 4) return false;
-                state.tools.zap -= 1;
+                state.hatCharges.zap -= toolConfigs.zap.cost;
                 const spawn = findOpenCell(Math.floor(state.cols / 2), Math.floor(state.rows / 2));
                 closest.c = spawn.c;
                 closest.r = spawn.r;
@@ -763,13 +917,13 @@
             }
 
             function useToolAuto(now, force) {
-                if (!state.safeMode && state.bugThreatUntil > now && state.tools.zap > 0) {
+                if (!state.safeMode && state.bugThreatUntil > now && state.hatCharges.zap >= toolConfigs.zap.cost) {
                     if (useZapTool(now)) return true;
                 }
-                if (state.tools.speed > 0 && state.speedBoostUntil < now) {
+                if (state.hatCharges.speed >= toolConfigs.speed.cost && state.speedBoostUntil < now) {
                     if (useSpeedTool(now)) return true;
                 }
-                if (state.tools.wall > 0 && state.wallPassUntil < now) {
+                if (state.hatCharges.wall >= toolConfigs.wall.cost && state.wallPassUntil < now) {
                     if (force || state.autoPath.length > 18) {
                         if (useWallTool(now)) return true;
                     }
@@ -820,8 +974,9 @@
                 state.autopilot = true;
                 state.eatHeld = false;
                 state.player.baseSpeed = 5.4 * (config.speedMultiplier || 1);
-                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
-                state.toolCycleIndex = 0;
+                state.hatCharges = { speed: 0, wall: 0, paint: 0, zap: 0 };
+                state.equippedHats = [];
+                updateHatPanel();
                 state.wallPassUntil = 0;
                 state.autoMistakeTargetKey = null;
                 state.autoMistakeUntil = 0;
@@ -837,6 +992,8 @@
                 state.recoveryMode = false;
                 state.savedChainSequence = null;
                 state.savedChainSetIndex = 0;
+                state.runStartTime = performance.now();
+                showHatSelect();
                 if (config.id === 1) {
                     const intro = tutorialMessages.intro;
                     if (intro) enqueueTutorial(intro.body, intro.title);
@@ -969,6 +1126,30 @@
                 tutorialOverlay.setAttribute('aria-hidden', 'false');
             }
 
+            function showHatSelect() {
+                if (!hatSelectOverlay) return;
+                state.paused = true;
+                hatSelectOverlay.classList.add('visible');
+                hatSelectOverlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function applyHatSelection() {
+                if (!hatOptions) return;
+                const selected = Array.from(hatOptions.querySelectorAll('input[type="checkbox"]'))
+                    .filter((input) => input.checked)
+                    .map((input) => input.value);
+                if (!selected.length) {
+                    selected.push('speed');
+                }
+                state.equippedHats = selected;
+                resetHatCharges();
+                state.runStartTime = performance.now();
+                hatSelectOverlay.classList.remove('visible');
+                hatSelectOverlay.setAttribute('aria-hidden', 'true');
+                state.paused = false;
+                updateHud();
+            }
+
             function maybeShowTutorialForDot(dotType) {
                 if (!state.levelConfig) return;
                 if (state.levelConfig.tutorialKeys && !state.levelConfig.tutorialKeys.includes(dotType)) {
@@ -1046,8 +1227,7 @@
                 state.chainStreak = 0;
                 state.chainStartTime = 0;
                 state.lastChainTime = 0;
-                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
-                state.toolCycleIndex = 0;
+                resetHatCharges();
                 state.frightenedUntil = 0;
                 state.speedBoostUntil = 0;
                 state.wallPassUntil = 0;
@@ -1141,16 +1321,70 @@
                 scoreValue.textContent = state.score;
                 levelValue.textContent = state.level;
                 livesValue.textContent = state.lives;
-                toolValue.textContent = formatToolCounts();
+                if (timeValue) {
+                    timeValue.textContent = formatTime(performance.now() - state.runStartTime);
+                }
                 updateChainDisplay();
+                updateHatPanel();
             }
 
-            function totalToolCharges() {
-                return Object.values(state.tools).reduce((sum, count) => sum + count, 0);
+            function totalHatCharge() {
+                return Object.values(state.hatCharges).reduce((sum, count) => sum + count, 0);
             }
 
-            function formatToolCounts() {
-                return `S${state.tools.speed} W${state.tools.wall} C${state.tools.paint} Z${state.tools.zap}`;
+            function formatHatCharges() {
+                return `S${state.hatCharges.speed} W${state.hatCharges.wall} C${state.hatCharges.paint} Z${state.hatCharges.zap}`;
+            }
+
+            function formatTime(ms) {
+                const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function resetHatCharges() {
+                Object.keys(state.hatCharges).forEach((key) => {
+                    state.hatCharges[key] = state.equippedHats.includes(key) ? hatChargeConfig.start : 0;
+                });
+                updateHatPanel();
+            }
+
+            function rechargeHats(amount) {
+                if (!state.equippedHats.length) return;
+                state.equippedHats.forEach((key) => {
+                    state.hatCharges[key] = Math.min(100, (state.hatCharges[key] || 0) + amount);
+                });
+                updateHatPanel();
+            }
+
+            function updateHatPanel() {
+                if (!hatList) return;
+                const hats = state.equippedHats || [];
+                hatList.innerHTML = '';
+                if (!hats.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'hat-empty';
+                    empty.textContent = 'No hats equipped yet.';
+                    hatList.appendChild(empty);
+                    return;
+                }
+                hats.forEach((key) => {
+                    const config = toolConfigs[key];
+                    const charge = Math.round(state.hatCharges[key] || 0);
+                    const row = document.createElement('div');
+                    row.className = 'hat-row';
+                    row.innerHTML = `
+                        <div class="hat-header">
+                            <span>${config.label}</span>
+                            <span>${charge}%</span>
+                        </div>
+                        <div class="hat-bar">
+                            <div class="hat-fill" style="width:${charge}%; background:${config.color};"></div>
+                        </div>
+                    `;
+                    hatList.appendChild(row);
+                });
             }
 
             function updateDebug(now) {
@@ -1165,7 +1399,7 @@
                     `pos: ${pos} | dir: ${dir}`,
                     `expected: ${expectedKey} | chain: ${state.chainIndex}/${getActiveChainSequence().length}`,
                     `path: ${state.autoPath.length} | step: ${state.autoStep} | target: ${state.targetCell ? `${state.targetCell.c},${state.targetCell.r}` : 'none'}`,
-                    `tools: ${formatToolCounts()} | wall pass: ${Math.max(0, Math.round((state.wallPassUntil - now) / 100) / 10)}s`,
+                    `hats: ${formatHatCharges()} | wall pass: ${Math.max(0, Math.round((state.wallPassUntil - now) / 100) / 10)}s`,
                     `ghosts: ${state.ghosts.length} | freeze: ${freezeLeft}s | bug window: ${Math.max(0, Math.round((state.bugThreatUntil - now) / 100) / 10)}s`,
                     `mistake target: ${autoTarget}`
                 ].join('\n');
@@ -1287,8 +1521,9 @@
                 }
                 const config = state.levelConfig || {};
                 const allowBoosts = config.allowBoostNodes !== false;
-                const shouldSeekBoost = allowBoosts && hasDotOfType(boostNode.key)
-                    && state.tools.speed === 0 && state.speedBoostUntil < now;
+                const speedEquipped = state.equippedHats.includes('speed');
+                const shouldSeekBoost = allowBoosts && speedEquipped && hasDotOfType(boostNode.key)
+                    && state.hatCharges.speed < toolConfigs.speed.cost && state.speedBoostUntil < now;
                 const shouldMisorder = config.autoMistake
                     && !state.playerMode
                     && !state.autoMistakeTargetKey
@@ -1304,7 +1539,8 @@
                         }
                         if (dot.type === expectedKey) return true;
                         if (dot.type === boostNode.key && shouldSeekBoost) return true;
-                        if (dot.type === powerNode.key && (!hasExpected || totalToolCharges() === 0)) return true;
+                        const needsCharge = state.equippedHats.some((keyName) => state.hatCharges[keyName] < toolConfigs[keyName].cost);
+                        if (dot.type === powerNode.key && (!hasExpected || needsCharge)) return true;
                         return false;
                     }, allowWalls);
                     state.autoStep = 0;
@@ -1485,13 +1721,13 @@
                 const now = performance.now();
                 if (dot.type === powerNode.key) {
                     state.score += powerNode.points;
-                    grantToolCharge();
+                    grantHatCharge();
                     maybeShowTutorialForDot('power');
                     return;
                 }
                 if (dot.type === boostNode.key) {
                     state.score += boostNode.points;
-                    grantToolCharge('speed');
+                    grantHatCharge('speed', hatChargeConfig.boostBonus);
                     maybeShowTutorialForDot('boost');
                     return;
                 }
@@ -1508,7 +1744,7 @@
                     applyChainSuccess(dot, now, false);
                     return;
                 }
-                if (state.tools.paint > 0) {
+                if (state.hatCharges.paint >= toolConfigs.paint.cost) {
                     usePaintTool(dot, expectedKey, now);
                     return;
                 }
@@ -1516,8 +1752,8 @@
             }
 
             function usePaintTool(dot, expectedKey, now) {
-                if (!dot || !expectedKey || state.tools.paint <= 0) return false;
-                state.tools.paint -= 1;
+                if (!dot || !expectedKey || state.hatCharges.paint < toolConfigs.paint.cost) return false;
+                state.hatCharges.paint -= toolConfigs.paint.cost;
                 dot.type = expectedKey;
                 showBanner('Wrench Override: Color Shift');
                 playEvent('tool');
@@ -1531,6 +1767,7 @@
                 if (state.chainIndex === 0) {
                     state.chainStartTime = now;
                 }
+                const stepDelta = state.lastChainTime ? now - state.lastChainTime : null;
                 const chainBonus = Math.floor(state.chainStreak * 2);
                 const timeBonus = state.lastChainTime ? Math.max(0, Math.round(12 - (now - state.lastChainTime) * 0.006)) : 6;
                 const toolPenalty = usedTool ? 6 : 0;
@@ -1539,6 +1776,13 @@
                 state.chainIndex += 1;
                 state.chainStreak = usedTool ? Math.max(0, state.chainStreak - 1) : state.chainStreak + 1;
                 state.lastChainTime = now;
+                rechargeHats(hatChargeConfig.perChain);
+                if (state.chainStreak > 0
+                    && state.chainStreak % 5 === 0
+                    && stepDelta !== null
+                    && stepDelta <= hatChargeConfig.comboWindowMs) {
+                    rechargeHats(hatChargeConfig.comboBonus);
+                }
                 playEvent('chain');
                 const sequence = getActiveChainSequence();
                 const stepLabel = sequence.find((entry) => entry.key === dot.type)?.label
@@ -1549,7 +1793,7 @@
 
                 if (state.chainIndex >= sequence.length) {
                     const chainDuration = now - state.chainStartTime;
-                    const efficiency = Math.max(0, Math.round(300 - chainDuration * 0.05 - totalToolCharges() * 5));
+                    const efficiency = Math.max(0, Math.round(300 - chainDuration * 0.05 - totalHatCharge() * 5));
                     const chainBonusScore = 120 + efficiency;
                     state.score += chainBonusScore;
                     showBanner(`Chain Complete +${chainBonusScore}`);
@@ -1702,8 +1946,8 @@
                 state.chainStreak = 0;
                 state.chainStartTime = 0;
                 state.lastChainTime = 0;
-                state.tools = { speed: 0, wall: 0, paint: 0, zap: 0 };
-                state.toolCycleIndex = 0;
+                state.hatCharges = { speed: 0, wall: 0, paint: 0, zap: 0 };
+                state.equippedHats = [];
                 state.speedBoostUntil = 0;
                 state.wallPassUntil = 0;
                 state.bugBoostUntil = 0;
@@ -2150,9 +2394,18 @@
                 });
             }
 
+            if (hatSelectConfirm) {
+                hatSelectConfirm.addEventListener('click', () => {
+                    applyHatSelection();
+                });
+            }
+
             document.addEventListener('keydown', (event) => {
                 if (state.tutorialActive && event.key === 'Enter') {
                     dismissTutorial();
+                }
+                if (hatSelectOverlay && hatSelectOverlay.classList.contains('visible') && event.key === 'Enter') {
+                    applyHatSelection();
                 }
             });
 
