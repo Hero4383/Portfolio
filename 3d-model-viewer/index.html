@@ -2258,6 +2258,9 @@ window.applyTextureBinding = applyTextureBinding;
             const out = [];
             if (!window.sceneState || !sceneState.entityOrder || !sceneState.entities) return out;
             const entitiesRoot = (window.__teacher && window.__teacher.entitiesRoot) ? window.__teacher.entitiesRoot : null;
+            const pos = (typeof THREE !== 'undefined') ? new THREE.Vector3() : null;
+            const quat = (typeof THREE !== 'undefined') ? new THREE.Quaternion() : null;
+            const scale = (typeof THREE !== 'undefined') ? new THREE.Vector3() : null;
             for (const id of sceneState.entityOrder) {
                 const rec = sceneState.entities.get(id);
                 if (!rec) continue;
@@ -2266,6 +2269,22 @@ window.applyTextureBinding = applyTextureBinding;
                     wrapper = entitiesRoot.getObjectByName(rec.rootName);
                 }
                 if (!wrapper) continue;
+                const target = (wrapper.children && wrapper.children.length) ? wrapper.children[0] : wrapper;
+                if (target && typeof target.updateMatrixWorld === 'function') {
+                    target.updateMatrixWorld(true);
+                }
+                if (target && pos && quat && scale && typeof target.getWorldPosition === 'function') {
+                    target.getWorldPosition(pos);
+                    target.getWorldQuaternion(quat);
+                    target.getWorldScale(scale);
+                    out.push({
+                        entityId: rec.id || id,
+                        position: [pos.x, pos.y, pos.z],
+                        quaternion: [quat.x, quat.y, quat.z, quat.w],
+                        scale: [scale.x, scale.y, scale.z]
+                    });
+                    continue;
+                }
                 out.push({
                     entityId: rec.id || id,
                     position: [wrapper.position.x, wrapper.position.y, wrapper.position.z],
