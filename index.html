@@ -1,880 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nathan Storms - Contextual Directive Database Architectural Engineer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.7;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #4a6741 50%, #2980b9 75%, #3498db 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            min-height: 100vh;
-            color: #2c3e50;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Header */
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
-            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
-        }
-        
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            text-decoration: none;
-            letter-spacing: -0.5px;
-        }
-        
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: #2c3e50;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        
-        .nav-links a:hover {
-            background: rgba(52, 152, 219, 0.1);
-            color: #3498db;
-            transform: translateY(-1px);
-        }
-        
-        /* Hero Section */
-        .hero {
-            text-align: center;
-            padding: 8rem 0 6rem;
-            color: white;
-        }
-        
-        .hero h1 {
-            font-size: 3.2rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .hero .title {
-            font-size: 1.4rem;
-            margin-bottom: 2rem;
-            opacity: 0.95;
-            font-weight: 400;
-            color: #ecf0f1;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 3rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            color: #bdc3c7;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 1.2rem 3rem;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
-            border: 2px solid transparent;
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
-            background: linear-gradient(135deg, #2980b9, #3498db);
-        }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nathan Storms | AI Systems Architect &amp; Software Engineer</title>
+  <meta name="description" content="I build governed multi-agent systems with bounded execution, durable context, validation-gated delivery, and tested recovery.">
+  <meta name="author" content="Nathan Storms">
+  <meta name="theme-color" content="#081411">
+  <meta name="color-scheme" content="dark">
+  <link rel="canonical" href="https://hero4383.github.io/Portfolio/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
 
-        /* Biblical Quote Styles */
-        .biblical-quote {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 2.5rem;
-            margin: 3rem auto;
-            max-width: 700px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Nathan Storms Portfolio">
+  <meta property="og:title" content="Nathan Storms | AI Systems Architect &amp; Software Engineer">
+  <meta property="og:description" content="Governed AI systems, resilient automation, and interactive engineering work.">
+  <meta property="og:url" content="https://hero4383.github.io/Portfolio/">
+  <meta property="og:image" content="https://hero4383.github.io/Portfolio/assets/social-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Nathan Storms — AI Systems Architect and Software Engineer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nathan Storms | AI Systems Architect &amp; Software Engineer">
+  <meta name="twitter:description" content="Governed AI systems, resilient automation, and interactive engineering work.">
+  <meta name="twitter:image" content="https://hero4383.github.io/Portfolio/assets/social-card.png">
 
-        .biblical-quote-projects {
-            background: rgba(52, 152, 219, 0.08);
-            border: 1px solid rgba(52, 152, 219, 0.15);
-            border-radius: 15px;
-            padding: 2.5rem;
-            margin: 4rem auto;
-            max-width: 800px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.1);
-        }
-
-        .biblical-quote::before,
-        .biblical-quote-projects::before {
-            content: '"';
-            font-size: 4rem;
-            color: rgba(255, 255, 255, 0.3);
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            font-family: serif;
-            line-height: 1;
-        }
-
-        .biblical-quote-projects::before {
-            color: rgba(52, 152, 219, 0.2);
-        }
-
-        .quote-text {
-            font-size: 1.3rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            color: rgba(255, 255, 255, 0.95);
-            font-style: italic;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        .quote-text-projects {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-style: italic;
-        }
-
-        .quote-reference {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .quote-reference-projects {
-            font-size: 1rem;
-            color: #3498db;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Projects Section */
-        .projects {
-            padding: 8rem 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-        }
-        
-        .section-title {
-            text-align: center;
-            font-size: 2.8rem;
-            color: #2c3e50;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            margin-bottom: 4rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .project-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 3rem;
-            margin-top: 3rem;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .project-card {
-            background: white;
-            border-radius: 20px;
-            padding: 3rem;
-            border: 1px solid rgba(52, 73, 94, 0.1);
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(52, 73, 94, 0.08);
-        }
-        
-        .project-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px rgba(52, 73, 94, 0.15);
-            border-color: rgba(52, 152, 219, 0.2);
-        }
-        
-        .project-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            display: block;
-            color: #3498db;
-            line-height: 1;
-        }
-
-        .project-icon svg {
-            width: 1em;
-            height: 1em;
-            display: block;
-        }
-        
-        .project-card h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .project-card p {
-            margin-bottom: 2rem;
-            color: #5a6c7d;
-            line-height: 1.7;
-            font-size: 1.1rem;
-        }
-        
-        .project-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-            padding: 1rem 2.5rem;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(52, 73, 94, 0.2);
-        }
-
-        .project-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .project-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(52, 73, 94, 0.3);
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-        }
-        
-        /* Tech Stack */
-        .tech-stack {
-            margin: 2rem 0;
-            padding: 2rem;
-            background: rgba(52, 152, 219, 0.05);
-            border-radius: 15px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .tech-stack h4 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-        }
-
-        .heading-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 0.5rem;
-            color: #3498db;
-            vertical-align: middle;
-        }
-
-        .heading-icon svg {
-            width: 1em;
-            height: 1em;
-        }
-        
-        .tech-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-        }
-        
-        .tech-tag {
-            background: rgba(52, 152, 219, 0.1);
-            color: #2980b9;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border: 1px solid rgba(52, 152, 219, 0.2);
-        }
-        
-        /* About Section */
-        .about {
-            padding: 8rem 0;
-            color: white;
-        }
-        
-        .about-content {
-            max-width: 900px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        
-        .about h2 {
-            font-size: 2.8rem;
-            margin-bottom: 3rem;
-            font-weight: 700;
-        }
-        
-        .about-text {
-            display: grid;
-            gap: 2rem;
-            text-align: left;
-            margin-bottom: 3rem;
-        }
-        
-        .about-paragraph {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-        
-        /* Contact Section */
-        .contact {
-            padding: 8rem 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            text-align: center;
-        }
-        
-        .contact h2 {
-            font-size: 2.8rem;
-            color: #2c3e50;
-            margin-bottom: 2rem;
-            font-weight: 700;
-        }
-        
-        .contact p {
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            margin-bottom: 3rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .contact-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .contact-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            background: white;
-            color: #2c3e50;
-            padding: 1.2rem 2.5rem;
-            text-decoration: none;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            border: 2px solid rgba(52, 73, 94, 0.1);
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(52, 73, 94, 0.1);
-        }
-
-        .contact-link svg {
-            width: 1.1em;
-            height: 1.1em;
-        }
-        
-        .contact-link:hover {
-            background: #3498db;
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
-            border-color: #3498db;
-        }
-        
-        /* Footer */
-        footer {
-            background: rgba(44, 62, 80, 0.95);
-            backdrop-filter: blur(15px);
-            text-align: center;
-            padding: 3rem 0;
-            color: #bdc3c7;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .footer-content {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .footer-quote {
-            font-style: italic;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            color: #ecf0f1;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .hero .title {
-                font-size: 1.2rem;
-            }
-            
-            .nav-links {
-                gap: 1rem;
-            }
-            
-            .project-card {
-                padding: 2rem;
-            }
-            
-            .contact-links {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .about-text {
-                gap: 1.5rem;
-            }
-            
-            .about-paragraph {
-                padding: 1.5rem;
-            }
-
-            .biblical-quote,
-            .biblical-quote-projects {
-                padding: 2rem;
-                margin: 2rem auto;
-            }
-
-            .quote-text,
-            .quote-text-projects {
-                font-size: 1.1rem;
-            }
-        }
-        
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .project-card {
-            animation: fadeInUp 0.8s ease-out;
-        }
-        
-        /* Scroll animations */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
-        }
-        
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Nathan Storms",
+    "url": "https://hero4383.github.io/Portfolio/",
+    "sameAs": ["https://github.com/Hero4383"],
+    "jobTitle": "AI Systems Architect and Software Engineer",
+    "knowsAbout": [
+      "Multi-agent systems",
+      "AI orchestration",
+      "Software reliability",
+      "Disaster recovery",
+      "Interactive web engineering"
+    ]
+  }
+  </script>
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <a href="#" class="logo">Nathan Storms</a>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <main>
-        <section id="home" class="hero">
-            <div class="container">
-                <h1>Nathan Storms</h1>
-                <div class="title">Contextual Directive Database Architectural Engineer</div>
-                <p>Building AI systems that don't just work, but work beautifully, reliably, and with intention</p>
-                
-                <div class="biblical-quote fade-in">
-                    <div class="quote-text">By wisdom a house is built, And by understanding it is established; And by knowledge the rooms are filled With all precious and pleasant riches.</div>
-                    <div class="quote-reference">Proverbs 24:3-4 (LSB)</div>
-                </div>
-                
-                <a href="#projects" class="cta-button">Explore My Work</a>
-            </div>
-        </section>
-
-        <section id="projects" class="projects">
-            <div class="container">
-                <p class="section-subtitle fade-in">These portfolio pieces are streamlined, browser-ready adaptations of a larger Tree of Life system I am actively building. They emphasize the core ideas and interactions; some advanced features require full deployment to operate. Sections like the Container Lab are intentional analogies for how technologies coordinate behind the scenes.</p>
-                <h2 class="section-title fade-in">Featured Project</h2>
-                <p class="section-subtitle fade-in">Where human creativity meets cutting-edge technology</p>
-                
-                <div class="project-grid">
-                    <div class="project-card fade-in">
-                        <span class="project-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2l9 5-9 5-9-5 9-5z"></path>
-                                <path d="M3 7v10l9 5 9-5V7"></path>
-                                <path d="M12 12v10"></path>
-                            </svg>
-                        </span>
-                        <h3>3D Model Viewer</h3>
-                        <p>Advanced UV-mapped 3D visualization system showcasing the intersection of medical technology and interactive design. Features real-time 3D rendering, PBR material systems, and contextual data integration - demonstrating how thoughtful engineering creates meaningful user experiences.</p>
-                        
-                        <div class="tech-stack">
-                            <h4>
-                                <span class="heading-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                                        <path d="M9 6V3M15 6V3M9 21v-3M15 21v-3M6 9H3M6 15H3M21 9h-3M21 15h-3"></path>
-                                    </svg>
-                                </span>
-                                Technologies & Frameworks
-                            </h4>
-                            <div class="tech-tags">
-                                <span class="tech-tag">Three.js</span>
-                                <span class="tech-tag">WebGL</span>
-                                <span class="tech-tag">PBR Rendering</span>
-                                <span class="tech-tag">UV Mapping</span>
-                                <span class="tech-tag">Real-time 3D</span>
-                                <span class="tech-tag">Interactive Systems</span>
-                                <span class="tech-tag">Contextual Design</span>
-                            </div>
-                        </div>
-                        
-                        <div class="project-links">
-                            <a href="3d-model-viewer/index.html" class="project-link">Launch 3D Viewer</a>
-                            <a href="3d-model-viewer/extra-resources.zip" class="project-link">Download Resources</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="project-card fade-in">
-                    <span class="project-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="2"></circle>
-                            <path d="M4.5 12a7.5 7.5 0 0 1 15 0"></path>
-                            <path d="M7.5 12a4.5 4.5 0 0 1 9 0"></path>
-                        </svg>
-                    </span>
-                    <h3>Thin Render RTC Viewer</h3>
-                    <p>Low-latency WebRTC thin client that mirrors the 3D Model Viewer canvas. Start streaming from the viewer, complete the SDP exchange, and monitor the live feed with optional watermark overlays. Built to validate latency, reconnection behavior, and stream stability for remote rendering.</p>
-                    
-                    <div class="tech-stack">
-                        <h4>Technologies & Concepts</h4>
-                        <div class="tech-tags">
-                            <span class="tech-tag">WebRTC</span>
-                            <span class="tech-tag">RTCPeerConnection</span>
-                            <span class="tech-tag">Canvas Capture</span>
-                            <span class="tech-tag">SDP Signaling</span>
-                            <span class="tech-tag">Latency Tuning</span>
-                            <span class="tech-tag">Live Streaming</span>
-                        </div>
-                    </div>
-
-                    <div class="project-links">
-                        <a href="https://hero4383.github.io/Portfolio/rtc-viewer/" class="project-link">Launch RTC Viewer</a>
-                    </div>
-                </div>
-               
-                <div class="project-card fade-in">
-                    <span class="project-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="6" cy="7" r="2"></circle>
-                            <circle cx="18" cy="7" r="2"></circle>
-                            <circle cx="6" cy="17" r="2"></circle>
-                            <circle cx="18" cy="17" r="2"></circle>
-                            <path d="M8 7h8M6 9v6M18 9v6M8 17h8"></path>
-                        </svg>
-                    </span>
-                    <h3>Containerized LLM Ops Lab</h3>
-                    <p>Container-first lab for deploying and iterating on LLM workflows. Docker Compose spins up a model server, API gateway, vector store, and observability so experiments stay reproducible across machines and environments.</p>
-                    
-                    <div class="tech-stack">
-                        <h4>Technologies & Concepts</h4>
-                        <div class="tech-tags">
-                            <span class="tech-tag">Docker</span>
-                            <span class="tech-tag">Docker Compose</span>
-                            <span class="tech-tag">LLM Inference</span>
-                            <span class="tech-tag">Vector DB</span>
-                            <span class="tech-tag">API Gateway</span>
-                            <span class="tech-tag">Health Checks</span>
-                            <span class="tech-tag">Container Networking</span>
-                            <span class="tech-tag">Observability</span>
-                        </div>
-                    </div>
-                    
-                    <a href="container-llm-lab/index.html" class="project-link">Explore the Container Lab</a>
-                </div>
-
-                <div class="biblical-quote-projects fade-in">
-                    <div class="quote-text-projects">And those who have insight will shine brightly like the brightness of the expanse of heaven, And those who lead the many to righteousness, like the stars forever and ever.</div>
-                    <div class="quote-reference-projects">Daniel 12:3 (LSB)</div>
-                </div>
-
-                <div style="text-align: center; margin-top: 4rem;" class="fade-in">
-                    <div class="tech-stack" style="max-width: 800px; margin: 0 auto;">
-                        <h4>
-                            <span class="heading-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 3l9 5-9 5-9-5 9-5z"></path>
-                                    <path d="M3 12l9 5 9-5"></path>
-                                    <path d="M3 17l9 5 9-5"></path>
-                                </svg>
-                            </span>
-                            Core Technologies & Platforms
-                        </h4>
-                        <div class="tech-tags">
-                            <span class="tech-tag">LLMs</span>
-                            <span class="tech-tag">Docker</span>
-                            <span class="tech-tag">Containers</span>
-                            <span class="tech-tag">Docker Compose</span>
-                            <span class="tech-tag">Cursor</span>
-                            <span class="tech-tag">Visual Studio</span>
-                            <span class="tech-tag">GitHub</span>
-                            <span class="tech-tag">Emerging Framework Platforms</span>
-                            <span class="tech-tag">NotebookLM</span>
-                            <span class="tech-tag">Perplexity</span>
-                            <span class="tech-tag">Context7</span>
-                            <span class="tech-tag">AI Architecture</span>
-                            <span class="tech-tag">Directive Systems</span>
-                            <span class="tech-tag">Contextual Databases</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="about" class="about">
-            <div class="container">
-                <div class="about-content fade-in">
-                    <h2>About Me</h2>
-                    <div class="about-text">
-                        <div class="about-paragraph">
-                            I'm driven by the belief that the most powerful systems emerge when human creativity meets divine inspiration and cutting-edge technology. As a passionate gamer, I've spent countless hours understanding how complex systems create engaging, meaningful experiences - insights I now apply to architecting AI directive frameworks that turn chaotic possibilities into purposeful outcomes.
-                        </div>
-                        
-                        <div class="about-paragraph">
-                            My journey as a software developer taught me that elegant code isn't just functional - it's a form of digital craftsmanship that honors both the creator and the created. This philosophy shapes how I approach Contextual Directive Database Architecture: building AI systems that don't just work, but work beautifully, reliably, and with intention.
-                        </div>
-                        
-                        <div class="about-paragraph">
-                            Rooted in my faith and love for Jesus, I believe we're called to be good stewards of the incredible technological capabilities we've been given. AI isn't something to fear - it's an opportunity to amplify human potential and solve problems that matter. Every directive architecture I design is guided by the conviction that technology should serve humanity's highest purposes.
-                        </div>
-                        
-                        <div class="about-paragraph">
-                            I'm energized by a future where AI agents don't just follow instructions, but truly understand context, learn from experience, and help us build a world that reflects our best intentions. Through systematic engineering of how we direct AI systems, we're not just writing better prompts - we're laying the foundation for a more thoughtful, capable, and beneficial AI-integrated future.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="contact" class="contact">
-            <div class="container fade-in">
-                <h2>Let's Build the Future Together</h2>
-                <p>Ready to create AI systems that truly understand context and serve humanity's highest purposes? Let's discuss how we can turn your vision into reality.</p>
-                <div class="contact-links">
-                    <a href="mailto:ittnathanstorms@gmail.com" class="contact-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                            <path d="M3 7l9 6 9-6"></path>
-                        </svg>
-                        Email Me
-                    </a>
-                    <a href="https://github.com/Hero4383" class="contact-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M8 9l-4 3 4 3"></path>
-                            <path d="M16 9l4 3-4 3"></path>
-                            <path d="M11 19l2-14"></path>
-                        </svg>
-                        GitHub
-                    </a>
-                    
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <p class="footer-quote">     <a href="container-llm-lab/index.html"         style="color: inherit; text-decoration: none; cursor: pointer;"        title="Containerized LLM Ops Lab - Click to explore">         "Technology should serve humanity's highest purposes"     </a> </p>
-                <p>&copy; 2025 Nathan Storms. Building AI systems with intention and faith.</p>
-<div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.2);">
-    <p style="text-align: center; margin-bottom: 1rem;">
-        If my work helped you, consider supporting it.
-    </p>
-    <p style="text-align: center; margin-bottom: 1rem; font-size: 0.95rem; color: #bdc3c7;">
-        If you want your donation to support a specific area of development, let me know and I will direct it there.
-    </p>
-    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-        <a href="https://www.paypal.com/donate/?business=nathanstorms%40ymail.com&no_recurring=0&currency_code=USD" 
-           target="_blank"
-           style="background: linear-gradient(135deg, #0070ba, #003087); color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; display: inline-block;">
-            Support via PayPal
-        </a>
-        <a href="https://ko-fi.com/nathanstorms" 
-           target="_blank"
-           style="background: linear-gradient(135deg, #ff5f5f, #ff9500); color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; display: inline-block;">
-            Support on Ko-fi
-        </a>
-        <a href="bank-transfer/index.html" 
-           style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; display: inline-block;">
-            Bank Transfer / Zelle / USDC
-        </a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="#top" aria-label="NS — Nathan Storms, home">
+        <span class="brand-mark" aria-hidden="true">NS</span>
+        <span>Nathan Storms</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <ul class="nav-list">
+          <li><a href="#work">Work</a></li>
+          <li><a href="#approach">Approach</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a class="nav-contact" href="#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
-    <p style="text-align: center; margin-top: 0.75rem; font-size: 0.95rem; color: #bdc3c7;">
-        Bank transfer, Zelle, or USDC available for contracted work. Contract ID required.
-    </p>
-</div>
-            </div>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span aria-hidden="true"></span> AI systems architecture</p>
+          <h1 id="hero-title">Building AI systems that earn trust.</h1>
+          <p class="hero-lede">
+            I design the infrastructure around AI models—how specialized agents receive context,
+            coordinate work, prove results, recover from failure, and ship changes safely.
+          </p>
+          <div class="hero-actions" role="group" aria-label="Featured links">
+            <a class="button button-primary" href="#treeoflife">Explore TreeOfLife</a>
+            <a class="button button-secondary" href="#projects">View interactive work</a>
+          </div>
+          <ul class="signal-list" aria-label="Current focus areas">
+            <li>Governed autonomy</li>
+            <li>Resilient delivery</li>
+            <li>Human accountability</li>
+          </ul>
         </div>
-    </footer>
 
-    <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+        <div class="system-card" role="img" aria-label="A conceptual Plan, Act, Verify, Recover system loop">
+          <div class="system-card-top">
+            <span>System loop</span>
+            <span class="status-dot">Active development</span>
+          </div>
+          <div class="system-map" aria-hidden="true">
+            <div class="map-ring map-ring-outer"></div>
+            <div class="map-ring map-ring-inner"></div>
+            <div class="map-core">
+              <span class="core-leaf"></span>
+              <strong>TreeOfLife</strong>
+              <small>bounded orchestration</small>
+            </div>
+            <span class="map-node node-plan">Plan</span>
+            <span class="map-node node-act">Act</span>
+            <span class="map-node node-verify">Verify</span>
+            <span class="map-node node-recover">Recover</span>
+          </div>
+          <p class="system-note">Conceptual view. Operational details remain private by design.</p>
+        </div>
+      </div>
+    </section>
 
-        // Add scroll effect to header
-        let lastScrollY = window.scrollY;
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            const currentScrollY = window.scrollY;
-            
-            if (currentScrollY > 100) {
-                header.style.background = 'rgba(255, 255, 255, 0.98)';
-                header.style.boxShadow = '0 4px 30px rgba(52, 73, 94, 0.15)';
-            } else {
-                header.style.background = 'rgba(255, 255, 255, 0.95)';
-                header.style.boxShadow = '0 2px 20px rgba(52, 73, 94, 0.1)';
-            }
-            
-            lastScrollY = currentScrollY;
-        });
+    <section class="section flagship-section" id="work" aria-labelledby="work-title">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="eyebrow">Flagship engineering work</p>
+          <h2 id="work-title">From ambitious idea to verified system.</h2>
+          <p>
+            TreeOfLife is my private R&amp;D platform. This case study shares verified outcomes and
+            selected design ideas while intentionally keeping implementation details out of public view.
+          </p>
+        </div>
 
-        // Intersection Observer for fade-in animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        <article class="flagship-card" id="treeoflife">
+          <div class="flagship-intro">
+            <div>
+              <p class="project-kicker">Private system <span aria-hidden="true">·</span> Active hardening</p>
+              <h3>TreeOfLife — Governed Autonomous Engineering</h3>
+            </div>
+            <span class="verified-badge"><span aria-hidden="true">✓</span> Recovery verified</span>
+          </div>
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
+          <div class="flagship-story">
+            <div class="story-copy">
+              <p>
+                TreeOfLife turns complex goals into bounded, auditable work. Specialized roles plan,
+                implement, validate, and operate through explicit contracts. Model and tool access is
+                brokered by policy, and software changes stay isolated until the exact revision passes
+                its required checks.
+              </p>
+              <p>
+                The platform brings together durable operational state, provenance-aware knowledge,
+                role-scoped context, operator visibility, local-model support, and recovery tooling.
+              </p>
+            </div>
+            <aside class="milestone-callout" aria-labelledby="milestone-title">
+              <p class="mini-label" id="milestone-title">Latest verified milestone</p>
+              <p>
+                A clean cloud host was rebuilt from an encrypted off-host checkpoint. Restored code,
+                durable state, core services, operator views, and local inference were then verified
+                end to end.
+              </p>
+            </aside>
+          </div>
 
-        // Observe all elements with fade-in class
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
+          <ul class="proof-grid" aria-label="Verified platform capabilities">
+            <li class="proof-item">
+              <span class="proof-number">01</span>
+              <h4>Bounded orchestration</h4>
+              <p>Role-specific context, capabilities, and evidence keep collaborative work accountable.</p>
+            </li>
+            <li class="proof-item">
+              <span class="proof-number">02</span>
+              <h4>Isolated delivery</h4>
+              <p>Disposable candidate workspaces and validation gates protect the trusted code line.</p>
+            </li>
+            <li class="proof-item">
+              <span class="proof-number">03</span>
+              <h4>Durable operations</h4>
+              <p>Operational state and provenance survive beyond any single process or model session.</p>
+            </li>
+            <li class="proof-item">
+              <span class="proof-number">04</span>
+              <h4>Designed to recover</h4>
+              <p>Encrypted, verified recovery artifacts have passed a clean-host restoration rehearsal.</p>
+            </li>
+          </ul>
 
-        // Add some dynamic interaction
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-12px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(-8px) scale(1)';
-            });
-        });
+          <ul class="capability-list" aria-label="TreeOfLife capabilities">
+            <li>Role-aware model routing</li>
+            <li>Validation-gated delivery</li>
+            <li>Exact-version deployment</li>
+            <li>Operational observability</li>
+          </ul>
 
-        // Dynamic gradient background interaction
-        document.addEventListener('mousemove', (e) => {
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
-            
-            document.body.style.backgroundPosition = 
-                `${50 + mouseX * 10}% ${50 + mouseY * 10}%`;
-        });
-    </script>
+          <p class="honesty-note">
+            Current work is focused on deeper isolation, broader model routing, and longer unattended
+            operation. Those capabilities remain under active hardening and are not presented here as finished.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section projects-section" id="projects" aria-labelledby="projects-title">
+      <div class="shell">
+        <div class="section-heading section-heading-row">
+          <div>
+            <p class="eyebrow">Interactive work</p>
+            <h2 id="projects-title">Systems you can explore.</h2>
+          </div>
+          <p>Public experiments in systems visualization, browser graphics, and peer-to-peer rendering.</p>
+        </div>
+
+        <div class="project-grid">
+          <article class="project-card project-card-wide">
+            <div class="project-visual lab-visual" aria-hidden="true">
+              <div class="cell cell-one"><span></span></div>
+              <div class="cell cell-two"><span></span></div>
+              <div class="cell cell-three"><span></span></div>
+              <div class="flow-line flow-one"></div>
+              <div class="flow-line flow-two"></div>
+            </div>
+            <div class="project-body">
+              <div class="project-meta">
+                <span>Interactive systems visualization</span>
+                <span>Public concept</span>
+              </div>
+              <h3>Agent Operations Lab</h3>
+              <p>
+                A visual metaphor for bounded work cells, specialized roles, staged handoffs, tool use,
+                validation, recovery, and cleanup. It reflects design principles—not a live control surface.
+              </p>
+              <ul class="tech-list" aria-label="Technologies">
+                <li>Canvas</li>
+                <li>JavaScript</li>
+                <li>Systems design</li>
+              </ul>
+              <a class="text-link" href="container-llm-lab/">Open the lab <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-visual model-visual" aria-hidden="true">
+              <div class="model-cube"><span></span></div>
+              <div class="model-orbit"></div>
+            </div>
+            <div class="project-body">
+              <div class="project-meta">
+                <span>Browser graphics</span>
+                <span>Prototype</span>
+              </div>
+              <h3>Interactive 3D Model Workbench</h3>
+              <p>
+                A browser-based workbench for loading, inspecting, and rendering multiple 3D formats,
+                with material controls, model interaction, and scene organization.
+              </p>
+              <ul class="tech-list" aria-label="Technologies">
+                <li>Three.js</li>
+                <li>WebGL</li>
+                <li>Asset pipelines</li>
+              </ul>
+              <a class="text-link" href="3d-model-viewer/">Launch workbench <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-visual rtc-visual" aria-hidden="true">
+              <div class="screen screen-left"><span></span></div>
+              <div class="peer-line"><i></i><i></i><i></i></div>
+              <div class="screen screen-right"><span></span></div>
+            </div>
+            <div class="project-body">
+              <div class="project-meta">
+                <span>Peer-to-peer rendering</span>
+                <span>Paired prototype</span>
+              </div>
+              <h3>Thin-Client RTC Viewer</h3>
+              <p>
+                A browser-to-browser experiment that mirrors a rendered canvas over WebRTC and explores
+                manual signaling, latency, reconnection, diagnostics, and remote overlays.
+              </p>
+              <ul class="tech-list" aria-label="Technologies">
+                <li>WebRTC</li>
+                <li>Canvas</li>
+                <li>WebGL</li>
+              </ul>
+              <a class="text-link" href="rtc-viewer/">Open RTC viewer <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section approach-section" id="approach" aria-labelledby="approach-title">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="eyebrow">Engineering approach</p>
+          <h2 id="approach-title">Autonomy should be earned through evidence.</h2>
+          <p>I build systems to make progress without surrendering boundaries, traceability, or recovery.</p>
+        </div>
+
+        <ol class="approach-grid">
+          <li>
+            <span>01</span>
+            <h3>Plan with constraints</h3>
+            <p>Define the objective, allowed surface, risk, validation, and rollback before execution.</p>
+          </li>
+          <li>
+            <span>02</span>
+            <h3>Implement in isolation</h3>
+            <p>Keep experimental work away from trusted state until it has produced reviewable evidence.</p>
+          </li>
+          <li>
+            <span>03</span>
+            <h3>Validate exact results</h3>
+            <p>Promote the revision that passed—not a look-alike—and connect completion to deployed health.</p>
+          </li>
+          <li>
+            <span>04</span>
+            <h3>Recover deliberately</h3>
+            <p>Treat checkpoints and restoration rehearsals as part of the product, not an afterthought.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section about-section" id="about" aria-labelledby="about-title">
+      <div class="shell about-grid">
+        <div>
+          <p class="eyebrow">About</p>
+          <h2 id="about-title">Systems thinking, grounded in stewardship.</h2>
+        </div>
+        <div class="about-copy">
+          <p class="about-lede">
+            I’m Nathan Storms, a software engineer focused on the layers that make AI useful beyond a
+            single prompt: orchestration, context, policy, validation, operations, and recovery.
+          </p>
+          <p>
+            I care about explicit contracts, reproducible runs, measured health, and reversible changes.
+            I prefer systems that fail clearly, preserve provenance, and earn greater autonomy through proof.
+          </p>
+          <p>
+            My Christian faith shapes that work as stewardship. I believe powerful technology should remain
+            purposeful, accountable, and directed toward serving people well.
+          </p>
+
+          <section class="toolbox" aria-labelledby="toolbox-title">
+            <h3 id="toolbox-title">Selected engineering toolkit</h3>
+            <ul>
+              <li>Multi-agent systems</li>
+              <li>SpaceTimeDB</li>
+              <li>Rust</li>
+              <li>TypeScript</li>
+              <li>PowerShell</li>
+              <li>Docker</li>
+              <li>Ollama</li>
+              <li>GitHub Actions</li>
+              <li>JSON Schema</li>
+              <li>WebRTC</li>
+              <li>Three.js</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact" aria-labelledby="contact-title">
+      <div class="shell">
+        <div class="contact-card">
+          <div>
+            <p class="eyebrow">Start a conversation</p>
+            <h2 id="contact-title">Reliability and ambition can coexist.</h2>
+            <p>
+              Building an AI platform, developer tool, or complex interactive system? I’m interested in
+              conversations where both matter.
+            </p>
+          </div>
+          <div class="contact-actions">
+            <a class="button button-light" href="mailto:ittnathanstorms@gmail.com">Email Nathan</a>
+            <a class="button button-outline-light" href="https://github.com/Hero4383" rel="noopener noreferrer">View GitHub</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-grid">
+      <blockquote>
+        <p>“By wisdom a house is built, and through understanding it is established.”</p>
+        <cite>Proverbs 24:3</cite>
+      </blockquote>
+      <div class="footer-meta">
+        <p>© 2026 Nathan Storms</p>
+        <ul>
+          <li><a href="mailto:ittnathanstorms@gmail.com">Email</a></li>
+          <li><a href="https://github.com/Hero4383" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="#top">Back to top</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>

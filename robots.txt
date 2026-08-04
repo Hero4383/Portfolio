@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hero4383.github.io/Portfolio/sitemap.xml

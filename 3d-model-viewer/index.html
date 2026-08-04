@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Viewer</title>
+    <title>Interactive 3D Model Workbench | Nathan Storms</title>
+    <meta name="description" content="A browser-based prototype for loading, inspecting, texturing, and rendering 3D models.">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <style>
         body {
             margin: 0;
@@ -116,11 +119,20 @@
             text-align: center;
             font-size: 16px;
             text-shadow: 0 0 10px #00ff41;
+            width: min(calc(100vw - 40px), 560px);
             max-width: 600px;
+            max-height: calc(100vh - 48px);
+            overflow: auto;
+            border: 1px solid rgba(0, 255, 65, 0.34);
+            border-radius: 14px;
+            background: rgba(0, 10, 4, 0.94);
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.72);
+            padding: 24px;
+            box-sizing: border-box;
         }
         
         .progress-bar {
-            width: 400px;
+            width: min(400px, 100%);
             height: 6px;
             background: rgba(0, 255, 65, 0.2);
             border: 1px solid #00ff41;
@@ -139,6 +151,8 @@
         }
         
         .file-input-section {
+            display: block;
+            width: 100%;
             background: rgba(0, 255, 65, 0.1);
             border: 2px dashed #00ff41;
             color: #00ff41;
@@ -202,39 +216,129 @@
 
         #xrayCanvasToggle { accent-color: #00ff41; }
 
+        .portfolio-return {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 30;
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.32);
+            border-radius: 999px;
+            background: rgba(0,0,0,0.78);
+            color: #f3f0e8;
+            font: 700 12px/1 system-ui, sans-serif;
+            padding: 0 16px;
+            text-decoration: none;
+            text-shadow: none;
+        }
+
+        .portfolio-return:hover,
+        .portfolio-return:focus-visible {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .portfolio-return:focus-visible {
+            outline: 3px solid #e7bf6a;
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 600px) {
+            #loading {
+                width: calc(100vw - 24px);
+                max-height: calc(100vh - 88px);
+                padding: 18px 14px;
+                font-size: 13px;
+            }
+
+            #loading h1 {
+                margin-top: 0;
+                font-size: 20px;
+            }
+
+            .file-input-section {
+                padding: 12px;
+            }
+
+            .portfolio-return {
+                top: 8px;
+                right: 8px;
+                min-height: 38px;
+                padding-inline: 12px;
+            }
+
+            #info {
+                top: 56px;
+                left: 10px;
+                max-width: calc(100vw - 20px);
+                font-size: 12px;
+            }
+
+            #textureControls {
+                top: 56px;
+                right: 10px;
+                width: min(280px, calc(100vw - 20px));
+                max-height: calc(100vh - 150px);
+                overflow: auto;
+                background: rgba(0, 0, 0, 0.9);
+                padding: 10px;
+            }
+
+            #controls {
+                right: 10px;
+                bottom: 10px;
+                left: 10px;
+                max-height: 36vh;
+                overflow: auto;
+                background: rgba(0, 0, 0, 0.88);
+                padding: 8px;
+            }
+
+            #controls button {
+                min-height: 40px;
+            }
+
+            #attribution {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
-    <div id="container">
+    <a class="portfolio-return" href="../#projects">← Portfolio</a>
+    <main id="container">
         <canvas id="matrix-bg"></canvas>
         <div id="brain-container"></div>
         
         <div id="loading">
-            <h2>🧠 3D MODEL VIEWER</h2>
-            <p>Advanced UV Mapping & PBR Textures</p>
+            <h1>3D MODEL WORKBENCH</h1>
+            <p>Browser prototype · UV mapping and PBR materials</p>
             <p id="loadingProgress">Ready to load model and textures...</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <div class="file-input-section" onclick="document.getElementById('daeFile').click()">
-                📁 Load Model<br>
+            <button type="button" class="file-input-section" onclick="document.getElementById('daeFile').click()">
+                Load Model<br>
                 <small>Select your desired model file(s)</small>
-            </div>
+            </button>
             <input type="file" id="daeFile" accept=".dae,.xml,.glb,.gltf,.obj,.stl,.ply" onchange="handleDAESelect(event)">
             
-            <div class="file-input-section" onclick="document.getElementById('textureFiles').click()" style="margin-top: 10px;">
-                🎨 Load Textures<br>
+            <button type="button" class="file-input-section" onclick="document.getElementById('textureFiles').click()" style="margin-top: 10px;">
+                Load Textures<br>
                 <small>Select albedo, normal, roughness, AO textures</small>
-            </div>
+            </button>
             <input type="file" id="textureFiles" multiple accept=".jpg,.jpeg,.png,.tga,.bmp,.webp,.dds,.mtl" onchange="handleTextureSelect(event)">
-            <button id="continueFromLoadingBtn" style="margin-top:10px; width:100%; display:none;" onclick="continueFromLoading()">Continue without textures</button>
+            <button type="button" id="continueFromLoadingBtn" style="margin-top:10px; width:100%; display:none;" onclick="continueFromLoading()">Continue without textures</button>
             
             <p id="loadingDetails">Proper UV mapping for realistic texture application</p>
             <div id="errorContainer"></div>
         </div>
         
         <div id="info" style="display: none;">
-            <h2>🧠 3D MODEL VIEWER</h2>
+            <h2>3D MODEL WORKBENCH</h2>
             <p>PBR + Proper UV Mapping</p>
             <p id="status">Model with UV coordinates loaded!</p>
             <p id="modelStats">Analyzing geometry...</p>
@@ -242,7 +346,7 @@
         </div>
         
         <div id="textureControls" style="display: none;">
-            <h3>🎨 TEXTURE CONTROLS</h3>
+            <h3>TEXTURE CONTROLS</h3>
             <div style="margin: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
                 <div class="texture-info" style="margin:0;">X-Ray Canvas</div>
                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
@@ -254,19 +358,19 @@
                 <div class="texture-info">Loaded Textures:</div>
                 <div id="texturePreviews"></div>
             </div>
-            <button onclick="togglePBR()" style="width: 100%; margin: 10px 0;">Toggle PBR Mode</button>
-            <button onclick="cycleTextureSet()" style="width: 100%; margin: 5px 0;">Cycle Texture Set</button>
-            <button onclick="adjustIntensity()" style="width: 100%; margin: 5px 0;">Adjust Intensity</button>
+            <button type="button" onclick="togglePBR()" style="width: 100%; margin: 10px 0;">Toggle PBR Mode</button>
+            <button type="button" onclick="cycleTextureSet()" style="width: 100%; margin: 5px 0;">Cycle Texture Set</button>
+            <button type="button" onclick="adjustIntensity()" style="width: 100%; margin: 5px 0;">Adjust Intensity</button>
 
-<button onclick="verifyTextureStateUI()" style="width: 100%; margin: 5px 0;">Verify Texture State</button>
-<button onclick="dumpTextureStateUI()" style="width: 100%; margin: 5px 0;">Dump Texture State</button>
+<button type="button" onclick="verifyTextureStateUI()" style="width: 100%; margin: 5px 0;">Verify Texture State</button>
+<button type="button" onclick="dumpTextureStateUI()" style="width: 100%; margin: 5px 0;">Dump Texture State</button>
         
 <hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
 <div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">🧩 Bindings Inspector (Phase E)</div>
 <div id="bindingStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Bindings: 0</div>
-<button onclick="verifyBindingsUI()" style="width: 100%; margin: 5px 0;">Verify Bindings</button>
-<button onclick="dumpBindingsUI()" style="width: 100%; margin: 5px 0;">Dump Bindings</button>
-<input id="bindingSearch" placeholder="Search bindings (path / slot / textureId)" style="width:100%; box-sizing:border-box; margin:6px 0; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:12px;">
+<button type="button" onclick="verifyBindingsUI()" style="width: 100%; margin: 5px 0;">Verify Bindings</button>
+<button type="button" onclick="dumpBindingsUI()" style="width: 100%; margin: 5px 0;">Dump Bindings</button>
+<input id="bindingSearch" type="search" aria-label="Search bindings" placeholder="Search bindings (path / slot / textureId)" style="width:100%; box-sizing:border-box; margin:6px 0; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:12px;">
 <div id="bindingTable" style="max-height: 220px; overflow:auto; border:1px solid rgba(0,255,65,0.18); border-radius:8px; padding:6px; background:rgba(0,0,0,0.35);">
   <div style="font-size:12px; opacity:0.75;">No bindings yet.</div>
 </div>
@@ -275,36 +379,36 @@
 <div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">📡 WebRTC DataChannel (Phase F)</div>
 <div id="dcStatus" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">DataChannel: disconnected</div>
 <div style="display:flex; gap:6px;">
-  <button onclick="rtcCreateOfferUI()" style="flex:1; margin: 5px 0;">Create Offer</button>
-  <button onclick="rtcCreateAnswerUI()" style="flex:1; margin: 5px 0;">Create Answer</button>
+  <button type="button" onclick="rtcCreateOfferUI()" style="flex:1; margin: 5px 0;">Create Offer</button>
+  <button type="button" onclick="rtcCreateAnswerUI()" style="flex:1; margin: 5px 0;">Create Answer</button>
 </div>
-<button onclick="rtcSetRemoteSDPUI()" style="width:100%; margin: 5px 0;">Set Remote SDP</button>
-<button onclick="rtcCloseUI()" style="width:100%; margin: 5px 0;">Close RTC</button>
+<button type="button" onclick="rtcSetRemoteSDPUI()" style="width:100%; margin: 5px 0;">Set Remote SDP</button>
+<button type="button" onclick="rtcCloseUI()" style="width:100%; margin: 5px 0;">Close RTC</button>
 <div style="font-size:11px; opacity:0.8; margin-top:6px;">Local SDP (copy)</div>
 <textarea id="rtcLocalSDP" rows="5" style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:11px;"></textarea>
 <div style="font-size:11px; opacity:0.8; margin-top:6px;">Remote SDP (paste)</div>
 <textarea id="rtcRemoteSDP" rows="5" style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid rgba(0,255,65,0.25); background:rgba(0,0,0,0.55); color:#00ff41; font-size:11px;"></textarea>
-<button onclick="rtcSendTestDeltaUI()" style="width:100%; margin: 8px 0;">Send Test Delta (local apply + if connected send)</button>
+<button type="button" onclick="rtcSendTestDeltaUI()" style="width:100%; margin: 8px 0;">Send Test Delta (local apply + if connected send)</button>
 
 <hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
 <div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">🧑‍🏫 Teacher Mode (Phase G/H)</div>
 <div id="entityStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Entities: 0</div>
 <div style="display:flex; gap:6px; margin: 6px 0;">
-  <button onclick="registerCurrentModelAsEntityUI()" style="flex:1; margin: 5px 0;">Register Current Model</button>
-  <button onclick="duplicateEntityUI()" style="flex:1; margin: 5px 0;">Duplicate Entity</button>
+  <button type="button" onclick="registerCurrentModelAsEntityUI()" style="flex:1; margin: 5px 0;">Register Current Model</button>
+  <button type="button" onclick="duplicateEntityUI()" style="flex:1; margin: 5px 0;">Duplicate Entity</button>
 </div>
 <div style="display:flex; gap:6px; margin: 6px 0;">
-  <button onclick="dumpEntitiesUI()" style="flex:1; margin: 5px 0;">Dump Entities</button>
-  <button onclick="verifyEntitiesUI()" style="flex:1; margin: 5px 0;">Verify Entities</button>
+  <button type="button" onclick="dumpEntitiesUI()" style="flex:1; margin: 5px 0;">Dump Entities</button>
+  <button type="button" onclick="verifyEntitiesUI()" style="flex:1; margin: 5px 0;">Verify Entities</button>
 </div>
 <div style="display:flex; gap:6px; margin: 6px 0;">
-  <button onclick="spawnCubeEntityUI()" style="flex:1; margin: 5px 0;">Spawn Cube Entity</button>
+  <button type="button" onclick="spawnCubeEntityUI()" style="flex:1; margin: 5px 0;">Spawn Cube Entity</button>
 </div>
 
 <hr style="border: 0; border-top: 1px solid rgba(0,255,65,0.25); margin: 12px 0;">
 <div style="font-size: 12px; opacity: 0.95; margin-bottom: 6px;">📸 Dataset Export (Phase H)</div>
 <div id="teacherCaptureStats" style="font-size: 12px; opacity: 0.85; margin: 6px 0;">Last capture: none</div>
-<button onclick="captureTeacherFrameUI()" style="width: 100%; margin: 5px 0;">Capture Frame (PNG + JSON)</button>
+<button type="button" onclick="captureTeacherFrameUI()" style="width: 100%; margin: 5px 0;">Capture Frame (PNG + JSON)</button>
 <label style="display:flex; gap:6px; align-items:center; font-size:12px; opacity:0.9; margin-top:6px;">
   <span style="flex:1;">Include 2D bboxes</span>
   <input id="teacherIncludeBboxes" type="checkbox" checked />
@@ -315,33 +419,32 @@
 </label>
 
 </div>
-</div>
         
         <div id="controls" style="display: none;">
-            <button onclick="toggleRotation()">Toggle Rotation</button>
-            <button onclick="tiltBrain()">Tilt Brain (+10°)</button>
-            <button onclick="resetTilt()">Reset Tilt</button>
-            <button onclick="adjustLighting()">Adjust Lighting</button>
-            <button onclick="cycleBackground()">Background Effect</button>
-            <button onclick="toggleWireframe()">Toggle Wireframe</button>
-            <button onclick="changeColor()">Base Color</button>
-            <button onclick="resetCamera()">Reset View</button>
-            <button onclick="exportModel()">Export Model</button>
-            <button onclick="loadNewFiles()">Load New</button>
-            <button id="startStreamBtn" onclick="startStream()">Start Stream</button>
-            <button id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
-            <button onclick="openMatchingRtcViewer()" style="margin-top:6px;">Open Matching RTC Viewer</button>
+            <button type="button" onclick="toggleRotation()">Toggle Rotation</button>
+            <button type="button" onclick="tiltBrain()">Tilt Brain (+10°)</button>
+            <button type="button" onclick="resetTilt()">Reset Tilt</button>
+            <button type="button" onclick="adjustLighting()">Adjust Lighting</button>
+            <button type="button" onclick="cycleBackground()">Background Effect</button>
+            <button type="button" onclick="toggleWireframe()">Toggle Wireframe</button>
+            <button type="button" onclick="changeColor()">Base Color</button>
+            <button type="button" onclick="resetCamera()">Reset View</button>
+            <button type="button" onclick="exportModel()">Export Model</button>
+            <button type="button" onclick="loadNewFiles()">Load New</button>
+            <button type="button" id="startStreamBtn" onclick="startStream()">Start Stream</button>
+            <button type="button" id="stopStreamBtn" onclick="stopStream()" disabled>Stop Stream</button>
+            <button type="button" onclick="openMatchingRtcViewer()" style="margin-top:6px;">Open Paired RTC Renderer</button>
             <div id="streamStatus" class="control-note">Stream: idle</div>
             <div class="control-note">Make sure your model and textures are fully loaded before starting the stream.</div>
             <div class="control-note">For smooth streaming, keep this tab visible (not in the background).</div>
         </div>
         
         <div id="attribution">
-            3D Model Viewer v4.0<br>
-            Proper texture coordinate mapping<br>
-            Advanced PBR material system
+            Browser rendering prototype<br>
+            Local files remain in your browser<br>
+            Advanced controls are experimental
         </div>
-    </div>
+    </main>
 
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -357,6 +460,16 @@
         const matrixCtx = matrixCanvas.getContext('2d');
         let matrixInterval;
         let starsArray = [];
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
         
         function initMatrix() {
             matrixCanvas.width = window.innerWidth;
@@ -1863,31 +1976,45 @@ function _renderBindingsTable() {
   });
 
   if (filtered.length === 0) {
-    table.innerHTML = '<div style="font-size:12px; opacity:0.75;">No bindings match.</div>';
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:12px; opacity:0.75;';
+    empty.textContent = 'No bindings match.';
+    table.replaceChildren(empty);
     return;
   }
 
-  const rows = filtered.slice(0, 200).map(b => {
-    const path = (b.objectPath || '').replace(/^__root\//, '');
-    return `
-      <div data-binding-id="${b.bindingId}"
-           style="display:grid; grid-template-columns: 1fr 56px 1fr; gap:8px; padding:6px; border-bottom:1px solid rgba(0,255,65,0.12); cursor:pointer;"
-           title="${b.bindingId}">
-        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${path || '__root'}</div>
-        <div style="text-align:center; opacity:0.9;">${b.slot}</div>
-        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:0.9;">${b.sourceName || b.textureId}</div>
-      </div>
-    `;
-  }).join('');
+  const fragment = document.createDocumentFragment();
+  filtered.slice(0, 200).forEach((binding) => {
+    const bindingId = String(binding.bindingId || '');
+    const path = String(binding.objectPath || '').replace(/^__root\//, '') || '__root';
+    const slot = String(binding.slot || 'slot');
+    const source = String(binding.sourceName || binding.textureId || 'unbound');
 
-  table.innerHTML = rows;
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.dataset.bindingId = bindingId;
+    row.title = bindingId;
+    row.setAttribute('aria-label', `${path}, ${slot}, ${source}`);
+    row.style.cssText = 'display:grid; grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr); gap:8px; width:100%; margin:0; padding:6px; border:0; border-bottom:1px solid rgba(0,255,65,0.12); border-radius:0; background:transparent; color:inherit; text-align:left; cursor:pointer;';
 
-  table.querySelectorAll('[data-binding-id]').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.getAttribute('data-binding-id');
-      selectBinding(id);
-    });
+    const pathCell = document.createElement('span');
+    pathCell.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+    pathCell.textContent = path;
+
+    const slotCell = document.createElement('span');
+    slotCell.style.cssText = 'text-align:center; opacity:0.9;';
+    slotCell.textContent = slot;
+
+    const sourceCell = document.createElement('span');
+    sourceCell.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:0.9;';
+    sourceCell.textContent = source;
+
+    row.append(pathCell, slotCell, sourceCell);
+    row.addEventListener('click', () => selectBinding(bindingId));
+    fragment.appendChild(row);
   });
+
+  table.replaceChildren(fragment);
 }
 
 document.addEventListener('input', (e) => {
@@ -3979,7 +4106,7 @@ function handleDAESelect(event) {
                     });
                 }
 
-                await Promise.all(fileArr.map(async (file) => {
+                const textureResults = await Promise.allSettled(fileArr.map(async (file) => {
                     const lower = (file.name || '').toLowerCase();
                     let tex = null;
 
@@ -3989,17 +4116,42 @@ function handleDAESelect(event) {
                         tex = await loadImageFileAsTexture(file);
                     } else {
                         // Ignore non-texture here (MTL handled elsewhere)
-                        return;
+                        return { skipped: true, file };
                     }
 
                     const slot = guessTextureSlotFromName(file.name);
-                    if (slot) {
-                        loadedTextures[slot] = tex;
-                        loadedTextureFilesBySlot.set(slot, file);
-                    } else {
-                        loadedTextures[file.name] = tex;
-                    }
+                    return { file, slot, tex };
                 }));
+
+                const failedTextures = [];
+                textureResults.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        failedTextures.push(fileArr[index]?.name || `Texture ${index + 1}`);
+                        return;
+                    }
+                    const value = result.value;
+                    if (!value || value.skipped || !value.tex) return;
+                    if (value.slot) {
+                        loadedTextures[value.slot] = value.tex;
+                        loadedTextureFilesBySlot.set(value.slot, value.file);
+                    } else {
+                        loadedTextures[value.file.name] = value.tex;
+                    }
+                });
+
+                if (failedTextures.length) {
+                    const errorContainer = document.getElementById('errorContainer');
+                    if (errorContainer) {
+                        errorContainer.textContent = `${failedTextures.length} texture file${failedTextures.length === 1 ? '' : 's'} could not be loaded. You can continue with the files that succeeded.`;
+                    }
+                }
+
+                if (Object.keys(loadedTextures).length === 0) {
+                    updateLoadingProgress('No compatible textures were loaded. Continue without textures or choose different files.', 0, true);
+                    const continueButton = document.getElementById('continueFromLoadingBtn');
+                    if (continueButton) continueButton.style.display = 'block';
+                    return;
+                }
 
                 // Fallback: if only one texture provided and no slot was guessed, treat as albedo
                 if (!loadedTextures.albedo) {
@@ -4029,10 +4181,24 @@ function handleDAESelect(event) {
             const preview = document.createElement('div');
             preview.style.display = 'inline-block';
             preview.style.margin = '5px';
-            preview.innerHTML = `
-                <div class="texture-preview" style="background-image: url(${imageUrl})" onclick="toggleTextureType('${type}')"></div>
-                <div class="texture-info">${type.toUpperCase()}</div>
-            `;
+            const previewButton = document.createElement('button');
+            previewButton.type = 'button';
+            previewButton.className = 'texture-preview';
+            previewButton.setAttribute('aria-label', `Toggle ${String(type || 'texture')} texture`);
+            previewButton.style.padding = '0';
+            previewButton.style.overflow = 'hidden';
+
+            const image = document.createElement('img');
+            image.src = String(imageUrl || '');
+            image.alt = '';
+            image.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+            previewButton.appendChild(image);
+            previewButton.addEventListener('click', () => toggleTextureType(type));
+
+            const label = document.createElement('div');
+            label.className = 'texture-info';
+            label.textContent = String(type || 'texture').toUpperCase();
+            preview.append(previewButton, label);
             previews.appendChild(preview);
         }
         
@@ -5021,7 +5187,7 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                     <div style="text-align: center; background: rgba(0, 20, 0, 0.8); padding: 30px; border: 2px solid #00ff41; border-radius: 10px; max-width: 500px;">
                         <h2 style="color: #00ff41; margin-bottom: 20px;">🧠 DISCORD ICON PREVIEW</h2>
                         <div style="margin-bottom: 20px;">
-                            <img src="${previewDataURL}" style="width: 256px; height: 256px; border: 2px solid #00ff41; border-radius: 5px; image-rendering: pixelated;">
+                            <img src="${escapeHtml(previewDataURL)}" alt="Generated icon preview" style="width: 256px; height: 256px; border: 2px solid #00ff41; border-radius: 5px; image-rendering: pixelated;">
                         </div>
                         <p style="margin-bottom: 20px; line-height: 1.5;">
                             This is how the first frame will look.<br>
@@ -5029,10 +5195,10 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                             while maintaining current lighting and tilt.
                         </p>
                         <div>
-                            <button id="continueExport" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                            <button type="button" id="continueExport" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
                                 ✅ Continue Export (16 frames)
                             </button>
-                            <button id="cancelExport" style="background: rgba(255, 65, 65, 0.2); border: 1px solid #ff4141; color: #ff4141; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                            <button type="button" id="cancelExport" style="background: rgba(255, 65, 65, 0.2); border: 1px solid #ff4141; color: #ff4141; padding: 10px 20px; margin: 10px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
                                 ❌ Cancel
                             </button>
                         </div>
@@ -5125,10 +5291,10 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                     
                     <div style="text-align: left; margin-bottom: 20px; padding: 15px; background: rgba(0, 50, 0, 0.5); border-radius: 5px;">
                         <strong>Export Details:</strong><br>
-                        📁 Original: ${currentFileName}<br>
-                        ${stats}<br>
-                        ${textureStats}<br>
-                        UV Status: ${uvStatus}<br>
+                        📁 Original: ${escapeHtml(currentFileName)}<br>
+                        ${escapeHtml(stats)}<br>
+                        ${escapeHtml(textureStats)}<br>
+                        UV Status: ${escapeHtml(uvStatus)}<br>
                         🎬 Frames: ${frameCount} @ 256x256px
                     </div>
                     
@@ -5158,7 +5324,7 @@ updateLoadingProgress('UV-mapped textures applied successfully!', 100);
                     </div>
                     
                     <div style="margin-top: 20px;">
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
+                        <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" style="background: rgba(0, 255, 65, 0.2); border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; cursor: pointer; font-family: 'Courier New', monospace; border-radius: 3px;">
                             ✅ Got it!
                         </button>
                     </div>

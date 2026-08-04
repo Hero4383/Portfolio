@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thin Render RTC Viewer</title>
+    <title>Synchronized Browser Renderer | Nathan Storms</title>
+    <meta name="description" content="A paired-tab prototype for synchronized browser rendering with WebRTC video and local delta transport.">
+    <meta name="theme-color" content="#040a06">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
@@ -40,6 +43,30 @@
             margin: 0;
             font-size: 20px;
             letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .portfolio-link {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 0 12px;
+            text-decoration: none;
+        }
+
+        .portfolio-link:hover,
+        .portfolio-link:focus-visible {
+            background: rgba(0, 255, 65, 0.12);
         }
 
         .container {
@@ -401,25 +428,52 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (max-width: 480px) {
+            header {
+                align-items: stretch;
+                flex-direction: column;
+                padding: 12px;
+            }
+
+            header h1 {
+                font-size: 16px;
+            }
+
+            .header-actions {
+                justify-content: space-between;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .stage {
+                min-height: 360px;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>Thin Render RTC Viewer</h1>
-        <button id="panelToggle" class="panel-toggle">Show Controls</button>
+        <h1>Synchronized Browser Renderer</h1>
+        <div class="header-actions">
+            <a class="portfolio-link" href="../#projects">Portfolio</a>
+            <button type="button" id="panelToggle" class="panel-toggle" aria-controls="controlPanel" aria-expanded="false">Show Controls</button>
+        </div>
     </header>
 
-    <div class="container">
+    <main class="container">
         <div class="layout">
-            <div class="panel">
-                <h2>Stream Controls</h2>
-                <p>Open the 3D Model Viewer, load a model + textures, then click "Start Stream". This page will auto-connect and display the live stream.</p>
+            <div class="panel" id="controlPanel">
+                <h2>Paired-tab controls</h2>
+                <p>Open the matching 3D workbench in this browser, load a model, then select “Start Stream.” The tabs coordinate under the same site origin.</p>
                 <div id="status" class="status">Status: waiting for offer</div>
-                <button id="requestBtn">Request Stream</button>
-                <button id="disconnectBtn" disabled>Disconnect</button>
-                <button id="open3dBtn">Open Matching 3D Viewer</button>
+                <button type="button" id="requestBtn">Request Stream</button>
+                <button type="button" id="disconnectBtn" disabled>Disconnect</button>
+                <button type="button" id="open3dBtn">Open Paired 3D Workbench</button>
 
-                <div class="file-input" style="margin-top:12px;">Render mode:</div>
+                <label class="file-input" for="renderMode" style="margin-top:12px;">Render mode:</label>
                 <select id="renderMode" class="control-select">
                     <option value="delta" selected>Delta (model sync)</option>
                     <option value="video">Video (keyed stream)</option>
@@ -432,9 +486,9 @@
                     </div>
                 </div>
 
-                <div class="file-input">Optional background video:</div>
+                <label class="file-input" for="bgVideoInput">Optional background video:</label>
                 <input type="file" id="bgVideoInput" accept="video/*">
-                <div class="file-input" style="margin-top:12px;">Background canvas size:</div>
+                <label class="file-input" for="resolutionSelect" style="margin-top:12px;">Background canvas size:</label>
                 <select id="resolutionSelect" class="control-select">
                     <option value="auto" selected>Auto (fit)</option>
                     <option value="1280x720">1280 x 720</option>
@@ -463,9 +517,10 @@
 
                 <div class="panel-section">
                     <h3>Entity Actions</h3>
+                    <label class="file-input" for="entitySelect">Entity</label>
                     <select id="entitySelect" class="control-select"></select>
                     <div class="inline-control">
-                        <span style="font-size:11px; opacity:0.8;">Target</span>
+                        <label for="actionTarget" style="font-size:11px; opacity:0.8;">Target</label>
                         <select id="actionTarget" class="control-select" style="flex:1;">
                             <option value="source" selected>Send to source</option>
                             <option value="local">Local overlay only</option>
@@ -473,28 +528,28 @@
                     </div>
                     <div id="actionStatus" class="status small">Actions: idle</div>
                     <div class="action-grid">
-                        <button id="actionUp">Nudge Up</button>
-                        <button id="actionForward">Forward</button>
-                        <button id="actionRotateLeft">Rotate L</button>
-                        <button id="actionLeft">Left</button>
-                        <button id="actionDown">Nudge Down</button>
-                        <button id="actionRotateRight">Rotate R</button>
-                        <button id="actionRight">Right</button>
-                        <button id="actionBack">Back</button>
-                        <button id="actionReset">Reset</button>
-                        <button id="actionToggleVis">Toggle Vis</button>
-                        <button id="actionRandom">Randomize</button>
-                        <button id="actionSpawnCube">Spawn Cube</button>
+                        <button type="button" id="actionUp">Nudge Up</button>
+                        <button type="button" id="actionForward">Forward</button>
+                        <button type="button" id="actionRotateLeft">Rotate L</button>
+                        <button type="button" id="actionLeft">Left</button>
+                        <button type="button" id="actionDown">Nudge Down</button>
+                        <button type="button" id="actionRotateRight">Rotate R</button>
+                        <button type="button" id="actionRight">Right</button>
+                        <button type="button" id="actionBack">Back</button>
+                        <button type="button" id="actionReset">Reset</button>
+                        <button type="button" id="actionToggleVis">Toggle Vis</button>
+                        <button type="button" id="actionRandom">Randomize</button>
+                        <button type="button" id="actionSpawnCube">Spawn Cube</button>
                     </div>
                 </div>
 
                 <div class="panel-section">
                     <h3>Bindings</h3>
-                    <input id="bindingFilter" class="control-select mono" placeholder="Filter bindings..." style="margin-bottom:6px;">
+                    <input id="bindingFilter" type="search" aria-label="Filter bindings" class="control-select mono" placeholder="Filter bindings..." style="margin-bottom:6px;">
                     <div id="bindingList" class="data-list">No bindings yet.</div>
                 </div>
 
-                <p>Tip: leave the 3D viewer open while exploring this view to simulate a remote thin-client stream.</p>
+                <p>Prototype scope: paired tabs in the same browser. This demo is not a hosted remote-rendering service.</p>
             </div>
 
             <div class="stage" id="stage">
@@ -510,7 +565,7 @@
                 <div id="noStream" class="overlay">Waiting for stream...</div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         const channelName = 'portfolio-rtc-demo-v2';
@@ -743,27 +798,44 @@
                 entityListEl.textContent = 'No entities yet.';
                 return;
             }
-            entityListEl.innerHTML = entities.map((entity) => {
-                const tag = entity.primitive ? ` (${entity.primitive})` : '';
-                const path = entity.objectPathRoot || '';
-                return `
-                    <div class="data-item">
-                        <div><strong>${entity.entityId || 'unknown'}</strong>${tag}</div>
-                        <div class="mono" style="opacity:0.8;">${path}</div>
-                    </div>
-                `;
-            }).join('');
+            const fragment = document.createDocumentFragment();
+            entities.forEach((entity) => {
+                const item = document.createElement('div');
+                item.className = 'data-item';
+
+                const title = document.createElement('div');
+                const name = document.createElement('strong');
+                name.textContent = String(entity.entityId || 'unknown');
+                title.appendChild(name);
+                if (entity.primitive) {
+                    title.appendChild(document.createTextNode(` (${String(entity.primitive)})`));
+                }
+
+                const path = document.createElement('div');
+                path.className = 'mono';
+                path.style.opacity = '0.8';
+                path.textContent = String(entity.objectPathRoot || '');
+
+                item.append(title, path);
+                fragment.appendChild(item);
+            });
+            entityListEl.replaceChildren(fragment);
         }
 
         function renderEntitySelect() {
             if (!entitySelectEl) return;
             const entities = deltaRegistry.entities || [];
             const options = entities.length ? entities : [{ entityId: 'main' }];
-            entitySelectEl.innerHTML = options.map((entity) => {
-                const id = entity.entityId || 'main';
-                const label = entity.primitive ? `${id} (${entity.primitive})` : id;
-                return `<option value="${id}">${label}</option>`;
-            }).join('');
+            const fragment = document.createDocumentFragment();
+            options.forEach((entity) => {
+                const id = String(entity.entityId || 'main');
+                const label = entity.primitive ? `${id} (${String(entity.primitive)})` : id;
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = label;
+                fragment.appendChild(option);
+            });
+            entitySelectEl.replaceChildren(fragment);
         }
 
         function renderBindings() {
@@ -784,17 +856,28 @@
                 bindingListEl.textContent = 'No bindings yet.';
                 return;
             }
-            bindingListEl.innerHTML = filtered.map((binding) => {
-                const slot = binding.slot || 'slot';
-                const tex = binding.textureId || binding.sourceName || 'unbound';
-                const path = binding.objectPath || '';
-                return `
-                    <div class="data-item">
-                        <div><strong>${slot}</strong> → <span class="mono">${tex}</span></div>
-                        <div class="mono" style="opacity:0.7;">${path}</div>
-                    </div>
-                `;
-            }).join('');
+            const fragment = document.createDocumentFragment();
+            filtered.forEach((binding) => {
+                const item = document.createElement('div');
+                item.className = 'data-item';
+
+                const summary = document.createElement('div');
+                const slot = document.createElement('strong');
+                slot.textContent = String(binding.slot || 'slot');
+                const texture = document.createElement('span');
+                texture.className = 'mono';
+                texture.textContent = String(binding.textureId || binding.sourceName || 'unbound');
+                summary.append(slot, document.createTextNode(' → '), texture);
+
+                const path = document.createElement('div');
+                path.className = 'mono';
+                path.style.opacity = '0.7';
+                path.textContent = String(binding.objectPath || '');
+
+                item.append(summary, path);
+                fragment.appendChild(item);
+            });
+            bindingListEl.replaceChildren(fragment);
         }
 
         function setActionStatus(message) {
@@ -1592,6 +1675,7 @@
         function setFullscreenMode(enabled) {
             document.body.classList.toggle('fullscreen-mode', enabled);
             panelToggle.textContent = enabled ? 'Show Controls' : 'Hide Controls';
+            panelToggle.setAttribute('aria-expanded', String(!enabled));
             applyStageResolution();
             requestAnimationFrame(() => {
                 const { stageRect, overlayRect } = getOverlayBounds();

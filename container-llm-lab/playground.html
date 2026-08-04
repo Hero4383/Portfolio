@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Container Lab Playground | Tree of Life</title>
+    <title>Bounded Work Simulator | Nathan Storms</title>
+    <meta name="description" content="A game-like simulation of scoped tools, ordered execution, validation, and recovery.">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <style>
         * {
             margin: 0;
@@ -233,7 +235,7 @@
             backdrop-filter: blur(10px);
         }
 
-        .hat-panel h3 {
+        .hat-panel h2 {
             font-size: 0.95rem;
             margin-bottom: 0.6rem;
             color: #f5f7fa;
@@ -459,12 +461,13 @@
     </style>
 </head>
 <body>
-    <canvas id="playgroundCanvas" aria-label="Interactive container lab playground"></canvas>
+    <main>
+    <canvas id="playgroundCanvas">Interactive work-cell simulation. Use the on-screen controls or keyboard instructions to explore.</canvas>
 
     <div class="hud">
-        <div class="badge" id="containerBadge">Slave Container</div>
-        <h1>Autonomous Task Runner</h1>
-        <p>Each level represents a sealed container environment. Dots are work units; power nodes unlock specialized actions.</p>
+        <div class="badge" id="containerBadge">Worker Cell</div>
+        <h1>Bounded Work Simulator</h1>
+        <p>Each level is a visual simulation of a bounded work cell. Dots represent ordered steps; power nodes represent scoped tools.</p>
         <div class="controls">
             P: toggle player mode (demo defaults to autopilot)<br>
             Arrow keys (W/S/D optional): move in player mode<br>
@@ -504,21 +507,24 @@
         </div>
     </div>
 
-    <a class="corner-button" href="index.html">Back to Container Lab</a>
+    <nav aria-label="Simulator navigation">
+        <a class="corner-button" href="index.html">Back to Container Lab</a>
+    </nav>
     <div class="banner" id="completeBanner">Task Complete - Re-seeding level</div>
     <div class="debug-panel" id="debugPanel"></div>
     <div class="hat-panel" id="hatPanel">
-        <h3>Powerup Charge</h3>
+        <h2>Powerup Charge</h2>
         <div id="hatList"></div>
     </div>
-    <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
+    </main>
+    <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true" inert>
         <div class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
             <h2 id="tutorialTitle">Automation Insight</h2>
             <p id="tutorialMessage"></p>
-            <button id="tutorialOk">OK, continue</button>
+            <button id="tutorialOk" type="button">OK, continue</button>
         </div>
     </div>
-    <div class="hat-select-overlay" id="hatSelectOverlay" aria-hidden="true">
+    <div class="hat-select-overlay" id="hatSelectOverlay" aria-hidden="true" inert>
         <div class="hat-select-card" role="dialog" aria-modal="true" aria-labelledby="hatSelectTitle">
             <h2 id="hatSelectTitle">Choose Your Robot</h2>
             <p>Select a robot color to choose a single powerup for this container. The charge bar starts full and drains on each use.</p>
@@ -564,7 +570,7 @@
                     </span>
                 </label>
             </div>
-            <button id="hatSelectConfirm">Deploy Robot</button>
+            <button id="hatSelectConfirm" type="button">Deploy Robot</button>
         </div>
     </div>
 
@@ -596,14 +602,14 @@
             const hatSelectConfirm = document.getElementById('hatSelectConfirm');
             const hatOptions = document.getElementById('hatOptions');
             const params = new URLSearchParams(window.location.search);
-            const roleParam = (params.get('role') || 'slave').toLowerCase();
+            const roleParam = (params.get('role') || 'worker').toLowerCase();
             const debugEnabled = params.get('debug') === '1';
             const safeEnabled = params.get('safe') === '1';
             const roleConfigs = {
-                slave: { label: 'Slave Container', levels: [1, 2, 3, 4, 5], nextRole: 'servant' },
-                servant: { label: 'Servant Container', levels: [2, 3, 4], nextRole: null }
+                worker: { label: 'Worker Cell', levels: [1, 2, 3, 4, 5], nextRole: 'specialist' },
+                specialist: { label: 'Specialist Cell', levels: [2, 3, 4], nextRole: null }
             };
-            const roleKey = roleConfigs[roleParam] ? roleParam : 'slave';
+            const roleKey = roleConfigs[roleParam] ? roleParam : 'worker';
             const roleConfig = roleConfigs[roleKey];
             const rawContainer = parseInt(params.get('container') || '1', 10) || 1;
             const containerIndex = Math.min(Math.max(1, rawContainer), roleConfig.levels.length);
@@ -673,7 +679,7 @@
                 {
                     id: 1,
                     name: 'Sequence Primer',
-                    title: 'Autonomous Task Runner',
+                    title: 'Bounded Work Simulator',
                     summary: 'Three mini-chains demonstrate build, validate, and finalize loops.',
                     chainSets: [
                         ['red', 'orange', 'yellow'],
@@ -784,7 +790,7 @@
             const tutorialMessages = {
                 intro: {
                     title: 'Autopilot Overview',
-                    body: 'This demo shows a container agent executing a strict task chain. The robot must collect dots in order to keep workflows deterministic and repeatable.'
+                    body: 'This simulation shows a bounded worker following a strict task chain. The robot must collect dots in order to keep the illustrated workflow deterministic and repeatable.'
                 },
                 red: {
                     title: 'Executing Script',
@@ -800,7 +806,7 @@
                 },
                 power: {
                     title: 'Tool Access',
-                    body: 'Tool access equips a slave agent with targeted capabilities (scripts, overrides, bug fixes) that shorten execution time and keep workflows stable. In this demo, that idea is visualized as a single robot powerup.'
+                    body: 'Scoped tool access equips a bounded worker with a targeted capability. In this simulation, that idea is visualized as a single robot powerup.'
                 },
                 boost: {
                     title: 'Script Boost',
@@ -1193,12 +1199,14 @@
                 state.modalAction = null;
                 tutorialOverlay.classList.add('visible');
                 tutorialOverlay.setAttribute('aria-hidden', 'false');
+                tutorialOverlay.removeAttribute('inert');
             }
 
             function dismissTutorial() {
                 if (!tutorialOverlay || !state.tutorialActive) return;
                 tutorialOverlay.classList.remove('visible');
                 tutorialOverlay.setAttribute('aria-hidden', 'true');
+                tutorialOverlay.setAttribute('inert', '');
                 const hatSelectionOpen = hatSelectOverlay && hatSelectOverlay.classList.contains('visible');
                 state.paused = hatSelectionOpen ? true : false;
                 state.tutorialActive = false;
@@ -1227,6 +1235,7 @@
                 tutorialOk.textContent = buttonLabel || 'OK, continue';
                 tutorialOverlay.classList.add('visible');
                 tutorialOverlay.setAttribute('aria-hidden', 'false');
+                tutorialOverlay.removeAttribute('inert');
             }
 
             function showHatSelect() {
@@ -1234,6 +1243,7 @@
                 state.paused = true;
                 hatSelectOverlay.classList.add('visible');
                 hatSelectOverlay.setAttribute('aria-hidden', 'false');
+                hatSelectOverlay.removeAttribute('inert');
             }
 
             function applyHatSelection() {
@@ -1245,6 +1255,7 @@
                 state.runStartTime = performance.now();
                 hatSelectOverlay.classList.remove('visible');
                 hatSelectOverlay.setAttribute('aria-hidden', 'true');
+                hatSelectOverlay.setAttribute('inert', '');
                 state.paused = false;
                 updateHud();
                 if (state.pendingIntro) {
@@ -2076,8 +2087,8 @@
                     : null;
                 const nextLabel = hasNextInRole ? roleConfig.label : (nextRoleConfig ? nextRoleConfig.label : '');
                 const message = hasNext
-                    ? `${roleConfig.label} ${containerIndex} finished. It was destroyed to preserve resources. Spinning up ${nextLabel} ${nextContainerIndex}.`
-                    : 'All slave and servant containers completed. Returning to the Container Lab overview.';
+                    ? `${roleConfig.label} ${containerIndex} finished. Its simulated resources were released. Starting ${nextLabel} ${nextContainerIndex}.`
+                    : 'All worker and specialist cells completed. Returning to the simulator overview.';
                 const title = hasNext ? `${roleConfig.label} ${containerIndex} Complete` : 'All Containers Complete';
                 const action = () => {
                     banner.classList.remove('visible');
