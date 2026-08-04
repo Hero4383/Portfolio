@@ -4,10 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nathan Storms | AI Systems Architect &amp; Software Engineer</title>
-  <meta name="description" content="I build governed multi-agent systems with bounded execution, durable context, validation-gated delivery, and tested recovery.">
+  <meta name="description" content="Nathan Storms builds governed AI systems with bounded execution, durable context, validation-gated delivery, and tested recovery.">
   <meta name="author" content="Nathan Storms">
-  <meta name="theme-color" content="#081411">
-  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#2c3e50">
   <link rel="canonical" href="https://hero4383.github.io/Portfolio/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -43,299 +42,239 @@
     ]
   }
   </script>
+  <script src="assets/site.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
-    <div class="shell header-inner">
-      <a class="brand" href="#top" aria-label="NS — Nathan Storms, home">
-        <span class="brand-mark" aria-hidden="true">NS</span>
-        <span>Nathan Storms</span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <ul class="nav-list">
-          <li><a href="#work">Work</a></li>
-          <li><a href="#approach">Approach</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a class="nav-contact" href="#contact">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
+    <nav class="container header-inner" aria-label="Primary navigation">
+      <a class="logo" href="#home" aria-label="Nathan Storms, home">Nathan Storms</a>
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#treeoflife">TreeOfLife</a></li>
+        <li><a href="#interactive-work">Projects</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
   </header>
 
   <main id="main-content">
-    <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="shell hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow"><span aria-hidden="true"></span> AI systems architecture</p>
-          <h1 id="hero-title">Building AI systems that earn trust.</h1>
-          <p class="hero-lede">
-            I design the infrastructure around AI models—how specialized agents receive context,
-            coordinate work, prove results, recover from failure, and ship changes safely.
-          </p>
-          <div class="hero-actions" role="group" aria-label="Featured links">
-            <a class="button button-primary" href="#treeoflife">Explore TreeOfLife</a>
-            <a class="button button-secondary" href="#projects">View interactive work</a>
-          </div>
-          <ul class="signal-list" aria-label="Current focus areas">
-            <li>Governed autonomy</li>
-            <li>Resilient delivery</li>
-            <li>Human accountability</li>
-          </ul>
-        </div>
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <div class="container hero-content">
+        <h1 id="hero-title">Nathan Storms</h1>
+        <p class="hero-title">AI Systems Architect &amp; Software Engineer</p>
+        <p class="hero-lede">Building AI systems that plan, act, verify, and recover—beautifully, reliably, and with intention.</p>
 
-        <div class="system-card" role="img" aria-label="A conceptual Plan, Act, Verify, Recover system loop">
-          <div class="system-card-top">
-            <span>System loop</span>
-            <span class="status-dot">Active development</span>
-          </div>
-          <div class="system-map" aria-hidden="true">
-            <div class="map-ring map-ring-outer"></div>
-            <div class="map-ring map-ring-inner"></div>
-            <div class="map-core">
-              <span class="core-leaf"></span>
-              <strong>TreeOfLife</strong>
-              <small>bounded orchestration</small>
-            </div>
-            <span class="map-node node-plan">Plan</span>
-            <span class="map-node node-act">Act</span>
-            <span class="map-node node-verify">Verify</span>
-            <span class="map-node node-recover">Recover</span>
-          </div>
-          <p class="system-note">Conceptual view. Operational details remain private by design.</p>
-        </div>
+        <blockquote class="biblical-quote reveal">
+          <p>“By wisdom a house is built, and by understanding it is established; and by knowledge the rooms are filled with all precious and pleasant riches.”</p>
+          <cite>Proverbs 24:3–4 (LSB)</cite>
+        </blockquote>
+
+        <a class="cta-button" href="#projects">Explore My Work</a>
       </div>
     </section>
 
-    <section class="section flagship-section" id="work" aria-labelledby="work-title">
-      <div class="shell">
-        <div class="section-heading">
-          <p class="eyebrow">Flagship engineering work</p>
-          <h2 id="work-title">From ambitious idea to verified system.</h2>
-          <p>
-            TreeOfLife is my private R&amp;D platform. This case study shares verified outcomes and
-            selected design ideas while intentionally keeping implementation details out of public view.
-          </p>
-        </div>
+    <section class="projects" id="projects" aria-labelledby="featured-title">
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">Private R&amp;D platform <span aria-hidden="true">·</span> Active hardening</p>
+          <h2 id="featured-title">Featured System</h2>
+          <p>TreeOfLife is the larger system behind much of this work. This public view shares verified outcomes and selected design principles while intentionally keeping operational details private.</p>
+        </header>
 
-        <article class="flagship-card" id="treeoflife">
-          <div class="flagship-intro">
-            <div>
-              <p class="project-kicker">Private system <span aria-hidden="true">·</span> Active hardening</p>
-              <h3>TreeOfLife — Governed Autonomous Engineering</h3>
+        <article class="project-card project-card-featured reveal" id="treeoflife">
+          <div class="card-heading">
+            <span class="project-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18"></path>
+                <path d="M12 7 7 4M12 7l5-3M12 12l-7-3M12 12l7-3M12 17l-5 3M12 17l5 3"></path>
+                <circle cx="12" cy="3" r="1.5"></circle>
+                <circle cx="7" cy="4" r="1.5"></circle>
+                <circle cx="17" cy="4" r="1.5"></circle>
+                <circle cx="5" cy="9" r="1.5"></circle>
+                <circle cx="19" cy="9" r="1.5"></circle>
+                <circle cx="7" cy="20" r="1.5"></circle>
+                <circle cx="17" cy="20" r="1.5"></circle>
+              </svg>
+            </span>
+            <div class="card-title-group">
+              <p class="project-kicker">Governed autonomous engineering</p>
+              <h3>TreeOfLife</h3>
             </div>
             <span class="verified-badge"><span aria-hidden="true">✓</span> Recovery verified</span>
           </div>
 
-          <div class="flagship-story">
-            <div class="story-copy">
-              <p>
-                TreeOfLife turns complex goals into bounded, auditable work. Specialized roles plan,
-                implement, validate, and operate through explicit contracts. Model and tool access is
-                brokered by policy, and software changes stay isolated until the exact revision passes
-                its required checks.
-              </p>
-              <p>
-                The platform brings together durable operational state, provenance-aware knowledge,
-                role-scoped context, operator visibility, local-model support, and recovery tooling.
-              </p>
-            </div>
-            <aside class="milestone-callout" aria-labelledby="milestone-title">
-              <p class="mini-label" id="milestone-title">Latest verified milestone</p>
-              <p>
-                A clean cloud host was rebuilt from an encrypted off-host checkpoint. Restored code,
-                durable state, core services, operator views, and local inference were then verified
-                end to end.
-              </p>
-            </aside>
+          <div class="project-story">
+            <p>TreeOfLife turns complex goals into bounded, auditable work. Specialized roles plan, implement, validate, and operate through explicit contracts. Model and tool access is brokered by policy, and software changes stay isolated until the exact revision passes its required checks.</p>
+            <p>The platform brings together durable operational state, provenance-aware knowledge, role-scoped context, operator visibility, local-model support, and recovery tooling.</p>
           </div>
 
-          <ul class="proof-grid" aria-label="Verified platform capabilities">
-            <li class="proof-item">
-              <span class="proof-number">01</span>
+          <aside class="milestone-panel" aria-labelledby="milestone-title">
+            <h4 id="milestone-title">Latest verified milestone</h4>
+            <p>A clean cloud host was rebuilt from an encrypted off-host checkpoint. Restored code, durable state, core services, operator views, and local inference were then verified end to end.</p>
+          </aside>
+
+          <ul class="proof-grid">
+            <li>
+              <span>01</span>
               <h4>Bounded orchestration</h4>
               <p>Role-specific context, capabilities, and evidence keep collaborative work accountable.</p>
             </li>
-            <li class="proof-item">
-              <span class="proof-number">02</span>
+            <li>
+              <span>02</span>
               <h4>Isolated delivery</h4>
               <p>Disposable candidate workspaces and validation gates protect the trusted code line.</p>
             </li>
-            <li class="proof-item">
-              <span class="proof-number">03</span>
+            <li>
+              <span>03</span>
               <h4>Durable operations</h4>
               <p>Operational state and provenance survive beyond any single process or model session.</p>
             </li>
-            <li class="proof-item">
-              <span class="proof-number">04</span>
+            <li>
+              <span>04</span>
               <h4>Designed to recover</h4>
               <p>Encrypted, verified recovery artifacts have passed a clean-host restoration rehearsal.</p>
             </li>
           </ul>
 
-          <ul class="capability-list" aria-label="TreeOfLife capabilities">
-            <li>Role-aware model routing</li>
-            <li>Validation-gated delivery</li>
-            <li>Exact-version deployment</li>
-            <li>Operational observability</li>
-          </ul>
-
-          <p class="honesty-note">
-            Current work is focused on deeper isolation, broader model routing, and longer unattended
-            operation. Those capabilities remain under active hardening and are not presented here as finished.
-          </p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section projects-section" id="projects" aria-labelledby="projects-title">
-      <div class="shell">
-        <div class="section-heading section-heading-row">
-          <div>
-            <p class="eyebrow">Interactive work</p>
-            <h2 id="projects-title">Systems you can explore.</h2>
+          <div class="tech-stack">
+            <h4>
+              <span class="heading-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3l9 5-9 5-9-5 9-5z"></path>
+                  <path d="M3 12l9 5 9-5M3 17l9 5 9-5"></path>
+                </svg>
+              </span>
+              Selected Capabilities
+            </h4>
+            <ul class="tech-tags">
+              <li>Role-aware model routing</li>
+              <li>Validation-gated delivery</li>
+              <li>Exact-version deployment</li>
+              <li>Operational observability</li>
+              <li>Durable context</li>
+              <li>Recovery rehearsals</li>
+            </ul>
           </div>
-          <p>Public experiments in systems visualization, browser graphics, and peer-to-peer rendering.</p>
-        </div>
+
+          <p class="honesty-note">Current work is focused on deeper isolation, broader model routing, and longer unattended operation. Those capabilities remain under active hardening and are not presented here as finished. Operational details remain private by design.</p>
+        </article>
+
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <header class="section-header reveal" id="interactive-work">
+          <p class="eyebrow">Interactive engineering work</p>
+          <h2>Projects You Can Explore</h2>
+          <p>Browser-ready experiments that demonstrate systems visualization, interactive graphics, and peer-to-peer rendering without exposing private platform internals.</p>
+        </header>
 
         <div class="project-grid">
-          <article class="project-card project-card-wide">
-            <div class="project-visual lab-visual" aria-hidden="true">
-              <div class="cell cell-one"><span></span></div>
-              <div class="cell cell-two"><span></span></div>
-              <div class="cell cell-three"><span></span></div>
-              <div class="flow-line flow-one"></div>
-              <div class="flow-line flow-two"></div>
-            </div>
-            <div class="project-body">
-              <div class="project-meta">
-                <span>Interactive systems visualization</span>
-                <span>Public concept</span>
-              </div>
-              <h3>Agent Operations Lab</h3>
-              <p>
-                A visual metaphor for bounded work cells, specialized roles, staged handoffs, tool use,
-                validation, recovery, and cleanup. It reflects design principles—not a live control surface.
-              </p>
-              <ul class="tech-list" aria-label="Technologies">
-                <li>Canvas</li>
-                <li>JavaScript</li>
-                <li>Systems design</li>
-              </ul>
-              <a class="text-link" href="container-llm-lab/">Open the lab <span aria-hidden="true">↗</span></a>
-            </div>
-          </article>
+          <article class="project-card reveal">
+            <span class="project-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l9 5-9 5-9-5 9-5z"></path>
+                <path d="M3 7v10l9 5 9-5V7M12 12v10"></path>
+              </svg>
+            </span>
+            <h3>3D Model Viewer</h3>
+            <p>A browser-based workbench for loading, inspecting, and rendering multiple 3D formats, with material controls, model interaction, scene organization, and downloadable sample resources.</p>
 
-          <article class="project-card">
-            <div class="project-visual model-visual" aria-hidden="true">
-              <div class="model-cube"><span></span></div>
-              <div class="model-orbit"></div>
-            </div>
-            <div class="project-body">
-              <div class="project-meta">
-                <span>Browser graphics</span>
-                <span>Prototype</span>
-              </div>
-              <h3>Interactive 3D Model Workbench</h3>
-              <p>
-                A browser-based workbench for loading, inspecting, and rendering multiple 3D formats,
-                with material controls, model interaction, and scene organization.
-              </p>
-              <ul class="tech-list" aria-label="Technologies">
+            <div class="tech-stack">
+              <h4>Technologies &amp; Frameworks</h4>
+              <ul class="tech-tags">
                 <li>Three.js</li>
                 <li>WebGL</li>
-                <li>Asset pipelines</li>
+                <li>PBR Rendering</li>
+                <li>UV Mapping</li>
+                <li>Asset Pipelines</li>
+                <li>Interactive Systems</li>
               </ul>
-              <a class="text-link" href="3d-model-viewer/">Launch workbench <span aria-hidden="true">↗</span></a>
+            </div>
+
+            <div class="project-links">
+              <a class="project-link" href="3d-model-viewer/">Launch 3D Viewer</a>
+              <a class="project-link project-link-secondary" href="3d-model-viewer/extra-resources.zip" download>Download Resources</a>
             </div>
           </article>
 
-          <article class="project-card">
-            <div class="project-visual rtc-visual" aria-hidden="true">
-              <div class="screen screen-left"><span></span></div>
-              <div class="peer-line"><i></i><i></i><i></i></div>
-              <div class="screen screen-right"><span></span></div>
-            </div>
-            <div class="project-body">
-              <div class="project-meta">
-                <span>Peer-to-peer rendering</span>
-                <span>Paired prototype</span>
-              </div>
-              <h3>Thin-Client RTC Viewer</h3>
-              <p>
-                A browser-to-browser experiment that mirrors a rendered canvas over WebRTC and explores
-                manual signaling, latency, reconnection, diagnostics, and remote overlays.
-              </p>
-              <ul class="tech-list" aria-label="Technologies">
+          <article class="project-card reveal">
+            <span class="project-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M4.5 12a7.5 7.5 0 0 1 15 0M7.5 12a4.5 4.5 0 0 1 9 0"></path>
+              </svg>
+            </span>
+            <h3>Thin Render RTC Viewer</h3>
+            <p>A browser-to-browser experiment that mirrors a rendered canvas over WebRTC and explores manual signaling, latency, reconnection, diagnostics, and remote overlays.</p>
+
+            <div class="tech-stack">
+              <h4>Technologies &amp; Concepts</h4>
+              <ul class="tech-tags">
                 <li>WebRTC</li>
-                <li>Canvas</li>
-                <li>WebGL</li>
+                <li>RTCPeerConnection</li>
+                <li>Canvas Capture</li>
+                <li>SDP Signaling</li>
+                <li>Latency Tuning</li>
+                <li>Live Streaming</li>
               </ul>
-              <a class="text-link" href="rtc-viewer/">Open RTC viewer <span aria-hidden="true">↗</span></a>
+            </div>
+
+            <div class="project-links">
+              <a class="project-link" href="rtc-viewer/">Launch RTC Viewer</a>
+            </div>
+          </article>
+
+          <article class="project-card reveal">
+            <span class="project-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6" cy="7" r="2"></circle>
+                <circle cx="18" cy="7" r="2"></circle>
+                <circle cx="6" cy="17" r="2"></circle>
+                <circle cx="18" cy="17" r="2"></circle>
+                <path d="M8 7h8M6 9v6M18 9v6M8 17h8"></path>
+              </svg>
+            </span>
+            <h3>Agent Operations Lab</h3>
+            <p>An interactive visual metaphor for bounded work cells, specialized roles, staged handoffs, tool use, validation, recovery, and cleanup. It reflects design principles—not a live control surface.</p>
+
+            <div class="tech-stack">
+              <h4>Technologies &amp; Concepts</h4>
+              <ul class="tech-tags">
+                <li>Canvas</li>
+                <li>JavaScript</li>
+                <li>Systems Design</li>
+                <li>Bounded Execution</li>
+                <li>Validation</li>
+                <li>Observability</li>
+              </ul>
+            </div>
+
+            <div class="project-links">
+              <a class="project-link" href="container-llm-lab/">Explore the Operations Lab</a>
             </div>
           </article>
         </div>
-      </div>
-    </section>
 
-    <section class="section approach-section" id="approach" aria-labelledby="approach-title">
-      <div class="shell">
-        <div class="section-heading">
-          <p class="eyebrow">Engineering approach</p>
-          <h2 id="approach-title">Autonomy should be earned through evidence.</h2>
-          <p>I build systems to make progress without surrendering boundaries, traceability, or recovery.</p>
-        </div>
+        <blockquote class="biblical-quote-projects reveal">
+          <p>“And those who have insight will shine brightly like the brightness of the expanse of heaven, and those who lead the many to righteousness, like the stars forever and ever.”</p>
+          <cite>Daniel 12:3 (LSB)</cite>
+        </blockquote>
 
-        <ol class="approach-grid">
-          <li>
-            <span>01</span>
-            <h3>Plan with constraints</h3>
-            <p>Define the objective, allowed surface, risk, validation, and rollback before execution.</p>
-          </li>
-          <li>
-            <span>02</span>
-            <h3>Implement in isolation</h3>
-            <p>Keep experimental work away from trusted state until it has produced reviewable evidence.</p>
-          </li>
-          <li>
-            <span>03</span>
-            <h3>Validate exact results</h3>
-            <p>Promote the revision that passed—not a look-alike—and connect completion to deployed health.</p>
-          </li>
-          <li>
-            <span>04</span>
-            <h3>Recover deliberately</h3>
-            <p>Treat checkpoints and restoration rehearsals as part of the product, not an afterthought.</p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="section about-section" id="about" aria-labelledby="about-title">
-      <div class="shell about-grid">
-        <div>
-          <p class="eyebrow">About</p>
-          <h2 id="about-title">Systems thinking, grounded in stewardship.</h2>
-        </div>
-        <div class="about-copy">
-          <p class="about-lede">
-            I’m Nathan Storms, a software engineer focused on the layers that make AI useful beyond a
-            single prompt: orchestration, context, policy, validation, operations, and recovery.
-          </p>
-          <p>
-            I care about explicit contracts, reproducible runs, measured health, and reversible changes.
-            I prefer systems that fail clearly, preserve provenance, and earn greater autonomy through proof.
-          </p>
-          <p>
-            My Christian faith shapes that work as stewardship. I believe powerful technology should remain
-            purposeful, accountable, and directed toward serving people well.
-          </p>
-
-          <section class="toolbox" aria-labelledby="toolbox-title">
-            <h3 id="toolbox-title">Selected engineering toolkit</h3>
-            <ul>
-              <li>Multi-agent systems</li>
+        <section class="core-toolkit reveal" aria-labelledby="toolkit-title">
+          <div class="tech-stack">
+            <h3 id="toolkit-title">
+              <span class="heading-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3l9 5-9 5-9-5 9-5z"></path>
+                  <path d="M3 12l9 5 9-5M3 17l9 5 9-5"></path>
+                </svg>
+              </span>
+              Selected Engineering Toolkit
+            </h3>
+            <ul class="tech-tags">
+              <li>Multi-agent Systems</li>
               <li>SpaceTimeDB</li>
               <li>Rust</li>
               <li>TypeScript</li>
@@ -347,45 +286,72 @@
               <li>WebRTC</li>
               <li>Three.js</li>
             </ul>
-          </section>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div class="container about-content">
+        <header class="about-header reveal">
+          <p class="eyebrow eyebrow-light">Systems thinking, grounded in stewardship</p>
+          <h2 id="about-title">About Me</h2>
+        </header>
+
+        <div class="about-text">
+          <p class="about-paragraph reveal">I’m driven by the belief that powerful systems emerge when human creativity, disciplined engineering, and a clear sense of purpose meet. As a lifelong gamer, I’ve spent years studying how interconnected rules create engaging experiences—insight I now apply to AI orchestration and resilient software systems.</p>
+          <p class="about-paragraph reveal">Software development taught me that elegant code is more than functional; it is a form of craftsmanship. That mindset shapes TreeOfLife: explicit contracts, reproducible runs, measured health, reversible changes, and evidence that each promoted result is the one that actually passed.</p>
+          <p class="about-paragraph reveal">Rooted in my Christian faith and love for Jesus, I believe we are called to be good stewards of the technological capabilities we have been given. Powerful tools should remain purposeful, accountable, and directed toward serving people well.</p>
+          <p class="about-paragraph reveal">I’m working toward a future where specialized AI agents can coordinate useful work without surrendering boundaries, traceability, or human responsibility. TreeOfLife is still being hardened toward that vision, and I believe greater autonomy should be earned through proof.</p>
         </div>
       </div>
     </section>
 
-    <section class="section contact-section" id="contact" aria-labelledby="contact-title">
-      <div class="shell">
-        <div class="contact-card">
-          <div>
-            <p class="eyebrow">Start a conversation</p>
-            <h2 id="contact-title">Reliability and ambition can coexist.</h2>
-            <p>
-              Building an AI platform, developer tool, or complex interactive system? I’m interested in
-              conversations where both matter.
-            </p>
-          </div>
-          <div class="contact-actions">
-            <a class="button button-light" href="mailto:ittnathanstorms@gmail.com">Email Nathan</a>
-            <a class="button button-outline-light" href="https://github.com/Hero4383" rel="noopener noreferrer">View GitHub</a>
-          </div>
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="container reveal">
+        <h2 id="contact-title">Let’s Build the Future Together</h2>
+        <p>Building an AI platform, developer tool, or complex interactive system? Let’s discuss how thoughtful architecture can turn an ambitious vision into reliable software.</p>
+        <div class="contact-links">
+          <a class="contact-link" href="mailto:ittnathanstorms@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+              <path d="M3 7l9 6 9-6"></path>
+            </svg>
+            Email Me
+          </a>
+          <a class="contact-link" href="https://github.com/Hero4383" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M11 19l2-14"></path>
+            </svg>
+            GitHub
+          </a>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="shell footer-grid">
-      <blockquote>
-        <p>“By wisdom a house is built, and through understanding it is established.”</p>
-        <cite>Proverbs 24:3</cite>
-      </blockquote>
-      <div class="footer-meta">
-        <p>© 2026 Nathan Storms</p>
-        <ul>
-          <li><a href="mailto:ittnathanstorms@gmail.com">Email</a></li>
-          <li><a href="https://github.com/Hero4383" rel="noopener noreferrer">GitHub</a></li>
-          <li><a href="#top">Back to top</a></li>
-        </ul>
-      </div>
+    <div class="container footer-content">
+      <p class="footer-quote">“Technology should serve humanity’s highest purposes.”</p>
+      <p>© 2026 Nathan Storms. Building AI systems with intention and faith.</p>
+
+      <section class="support-panel" aria-labelledby="support-title">
+        <h2 id="support-title">Support the Work</h2>
+        <p>If my work helped you, consider supporting it.</p>
+        <p class="support-note">If you want your donation to support a specific area of development, let me know and I will direct it there.</p>
+        <div class="support-links">
+          <a class="support-link support-paypal" href="https://www.paypal.com/donate/?business=nathanstorms%40ymail.com&amp;no_recurring=0&amp;currency_code=USD" target="_blank" rel="noopener noreferrer">Support via PayPal</a>
+          <a class="support-link support-kofi" href="https://ko-fi.com/nathanstorms" target="_blank" rel="noopener noreferrer">Support on Ko-fi</a>
+          <a class="support-link support-direct" href="bank-transfer/">Bank Transfer / Zelle / USDC</a>
+        </div>
+        <p class="payment-note">Bank transfer, Zelle, or USDC available for contracted work. Contract ID required.</p>
+      </section>
+
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="mailto:ittnathanstorms@gmail.com">Email</a>
+        <a href="https://github.com/Hero4383" rel="noopener noreferrer">GitHub</a>
+        <a href="#home">Back to top</a>
+      </nav>
     </div>
   </footer>
 </body>
