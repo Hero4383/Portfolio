@@ -1,52 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">Nathan Storms — AI Systems Architect and Software Engineer</title>
-  <desc id="desc">A dark green portfolio card with the phrase Building AI systems that earn trust and a conceptual system loop.</desc>
+  <desc id="desc">A bright blue, green, and slate portfolio card about governed AI systems, resilient delivery, and tested recovery.</desc>
   <defs>
-    <radialGradient id="glowGreen" cx="0" cy="0" r="1" gradientTransform="translate(170 95) rotate(45) scale(520)">
-      <stop stop-color="#275f48" stop-opacity=".48"/>
-      <stop offset="1" stop-color="#06100e" stop-opacity="0"/>
+    <linearGradient id="portfolioGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#2c3e50"/>
+      <stop offset=".28" stop-color="#34495e"/>
+      <stop offset=".54" stop-color="#4a6741"/>
+      <stop offset=".78" stop-color="#2980b9"/>
+      <stop offset="1" stop-color="#3498db"/>
+    </linearGradient>
+    <linearGradient id="blueGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#3498db"/>
+      <stop offset="1" stop-color="#27846d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(980 120) rotate(130) scale(420)">
+      <stop stop-color="#ffffff" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glowGold" cx="0" cy="0" r="1" gradientTransform="translate(1080 100) rotate(135) scale(430)">
-      <stop stop-color="#9f7834" stop-opacity=".28"/>
-      <stop offset="1" stop-color="#06100e" stop-opacity="0"/>
-    </radialGradient>
-    <pattern id="grid" width="52" height="52" patternUnits="userSpaceOnUse">
-      <path d="M52 0H0V52" fill="none" stroke="#f3f0e8" stroke-opacity=".035"/>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity=".08"/>
     </pattern>
+    <filter id="shadow" x="-10%" y="-15%" width="120%" height="135%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#16283a" flood-opacity=".26"/>
+    </filter>
   </defs>
-  <rect width="1200" height="630" fill="#06100e"/>
-  <rect width="1200" height="630" fill="url(#glowGreen)"/>
-  <rect width="1200" height="630" fill="url(#glowGold)"/>
+
+  <rect width="1200" height="630" fill="url(#portfolioGradient)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
   <rect width="1200" height="630" fill="url(#grid)"/>
-  <rect x="44" y="44" width="1112" height="542" rx="30" fill="#081411" fill-opacity=".78" stroke="#f3f0e8" stroke-opacity=".15"/>
+  <circle cx="90" cy="570" r="250" fill="#3498db" fill-opacity=".12"/>
+  <circle cx="1140" cy="20" r="260" fill="#b7e6ff" fill-opacity=".12"/>
 
-  <g font-family="Inter,Segoe UI,Arial,sans-serif">
-    <circle cx="91" cy="91" r="22" fill="#71d39c" fill-opacity=".08" stroke="#71d39c" stroke-opacity=".65"/>
-    <text x="91" y="96" text-anchor="middle" fill="#9ce9bb" font-size="11" font-weight="800" letter-spacing="1">NS</text>
-    <text x="126" y="97" fill="#f3f0e8" font-size="21" font-weight="700">Nathan Storms</text>
+  <rect x="48" y="46" width="1104" height="538" rx="30" fill="#ffffff" fill-opacity=".94" stroke="#ffffff" stroke-opacity=".7" filter="url(#shadow)"/>
+  <rect x="48" y="46" width="10" height="538" rx="5" fill="url(#blueGreen)"/>
 
-    <line x1="88" y1="169" x2="120" y2="169" stroke="#71d39c"/>
-    <text x="133" y="174" fill="#9ce9bb" font-size="16" font-weight="700" letter-spacing="2.2">AI SYSTEMS ARCHITECTURE</text>
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <circle cx="99" cy="97" r="24" fill="url(#blueGreen)"/>
+    <text x="99" y="102" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="800" letter-spacing="1">NS</text>
+    <text x="137" y="104" fill="#2c3e50" font-size="22" font-weight="750">Nathan Storms</text>
 
-    <text x="86" y="266" fill="#f3f0e8" font-size="64" font-weight="700" letter-spacing="-3.5">Building AI systems</text>
-    <text x="86" y="340" fill="#f3f0e8" font-size="64" font-weight="700" letter-spacing="-3.5">that earn trust.</text>
+    <line x1="91" y1="170" x2="123" y2="170" stroke="#2980b9" stroke-width="2"/>
+    <text x="137" y="176" fill="#2474aa" font-size="16" font-weight="800" letter-spacing="2.1">AI SYSTEMS ARCHITECTURE</text>
 
-    <text x="89" y="412" fill="#b7bdb4" font-size="23">Governed autonomy · Resilient delivery · Tested recovery</text>
-    <text x="89" y="533" fill="#e7bf6a" font-size="16" font-weight="700" letter-spacing="1.2">AI SYSTEMS ARCHITECT &amp; SOFTWARE ENGINEER</text>
+    <text x="88" y="270" fill="#2c3e50" font-size="63" font-weight="760" letter-spacing="-3.2">Building AI systems</text>
+    <text x="88" y="343" fill="#2c3e50" font-size="63" font-weight="760" letter-spacing="-3.2">that earn trust.</text>
+
+    <text x="90" y="414" fill="#567089" font-size="23">Governed autonomy · Resilient delivery · Tested recovery</text>
+    <rect x="88" y="496" width="431" height="43" rx="21.5" fill="#e8f4fb" stroke="#c7e5f6"/>
+    <text x="304" y="523" text-anchor="middle" fill="#2c6187" font-size="15" font-weight="800" letter-spacing="1.1">AI SYSTEMS ARCHITECT &amp; SOFTWARE ENGINEER</text>
   </g>
 
-  <g transform="translate(932 307)">
-    <circle r="142" fill="#10231d" fill-opacity=".75" stroke="#71d39c" stroke-opacity=".24" stroke-dasharray="6 9"/>
-    <circle r="88" fill="none" stroke="#e7bf6a" stroke-opacity=".24"/>
-    <circle r="58" fill="#081411" stroke="#9ce9bb" stroke-opacity=".42"/>
-    <path d="M0 19V-12" stroke="#f3f0e8" stroke-width="3" stroke-linecap="round"/>
-    <path d="M-1-2c-17 0-26-10-26-26 17 0 26 9 26 26Z" fill="#71d39c"/>
-    <path d="M1 11c17 0 26-10 26-26-17 0-26 9-26 26Z" fill="#e7bf6a"/>
-    <g font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" fill="#e8e5dc" text-anchor="middle">
-      <g transform="translate(0 -142)"><rect x="-39" y="-16" width="78" height="32" rx="16" fill="#10231d" stroke="#f3f0e8" stroke-opacity=".2"/><text y="5">PLAN</text></g>
-      <g transform="translate(142 0)"><rect x="-35" y="-16" width="70" height="32" rx="16" fill="#10231d" stroke="#f3f0e8" stroke-opacity=".2"/><text y="5">ACT</text></g>
-      <g transform="translate(0 142)"><rect x="-43" y="-16" width="86" height="32" rx="16" fill="#10231d" stroke="#f3f0e8" stroke-opacity=".2"/><text y="5">VERIFY</text></g>
-      <g transform="translate(-142 0)"><rect x="-51" y="-16" width="102" height="32" rx="16" fill="#10231d" stroke="#f3f0e8" stroke-opacity=".2"/><text y="5">RECOVER</text></g>
+  <g transform="translate(934 314)">
+    <circle r="146" fill="#eaf6fb" stroke="#2980b9" stroke-opacity=".28" stroke-width="2" stroke-dasharray="7 9"/>
+    <circle r="95" fill="#ffffff" stroke="#4a6741" stroke-opacity=".28" stroke-width="2"/>
+    <circle r="59" fill="url(#blueGreen)"/>
+    <path d="M0 22V-13" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M-2-1c-18 0-28-10-28-28 18 0 28 10 28 28Z" fill="#d9f4e8"/>
+    <path d="M2 12c18 0 28-10 28-28-18 0-28 10-28 28Z" fill="#f5d477"/>
+
+    <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" font-weight="800" fill="#2c3e50" text-anchor="middle">
+      <g transform="translate(0 -146)"><rect x="-42" y="-17" width="84" height="34" rx="17" fill="#ffffff" stroke="#c6deeb"/><text y="5">PLAN</text></g>
+      <g transform="translate(146 0)"><rect x="-37" y="-17" width="74" height="34" rx="17" fill="#ffffff" stroke="#c6deeb"/><text y="5">ACT</text></g>
+      <g transform="translate(0 146)"><rect x="-46" y="-17" width="92" height="34" rx="17" fill="#ffffff" stroke="#c6deeb"/><text y="5">VERIFY</text></g>
+      <g transform="translate(-146 0)"><rect x="-53" y="-17" width="106" height="34" rx="17" fill="#ffffff" stroke="#c6deeb"/><text y="5">RECOVER</text></g>
     </g>
   </g>
 </svg>

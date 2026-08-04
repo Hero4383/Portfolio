@@ -24,6 +24,8 @@ Longer unattended operation, deeper isolation, and broader model routing remain 
 
 These demos illustrate selected engineering concepts. They are not live TreeOfLife control surfaces or production services.
 
+The optional 3D sample bundle is restored for local experimentation. Its third-party credits and license terms are documented in [`3d-model-viewer/ASSET_CREDITS.md`](3d-model-viewer/ASSET_CREDITS.md) and included inside the downloadable archive.
+
 ## Design principles
 
 - Evidence before autonomy
@@ -55,8 +57,14 @@ The interactive demos use browser APIs and pinned CDN libraries. Serve the repos
 ├── 3d-model-viewer/            # 3D workbench prototype
 ├── rtc-viewer/                 # Paired browser-rendering prototype
 ├── ai-orchestration-tutorial/  # Retirement notice for an early archive
-└── bank-transfer/              # Private-instructions payment policy
+└── bank-transfer/              # Support and contract-payment hub
 ```
+
+## Payments and privacy
+
+PayPal and Ko-fi use their provider-hosted checkout flows. Zelle and cryptocurrency options provide copy and local-QR transfer instructions, while ACH/wire details are shared only through a verified request. The static site does not collect card or bank-account data, store contract references, or claim to verify settlement.
+
+Wallet QR codes are served locally so opening the payment page does not disclose wallet lookups to a third-party QR service. Visitors should verify the recipient, network, contract or invoice reference, and provider confirmation before treating a payment as complete.
 
 ## Disclosure boundary
 
