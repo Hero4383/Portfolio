@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Containerized LLM Ops Lab | Nathan Storms</title>
+    <title>Agent Systems Simulator | Nathan Storms</title>
+    <meta name="description" content="An interactive visual simulation of bounded agent roles, staged handoffs, validation, and recovery.">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <style>
         * {
             margin: 0;
@@ -235,6 +237,24 @@
             overflow: hidden;
         }
 
+        .simulator-link {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-radius: 999px;
+            background: #2c3e50;
+            color: white;
+            font-weight: 700;
+            padding: 0.7rem 1.1rem;
+            text-decoration: none;
+        }
+
+        .simulator-link:hover,
+        .simulator-link:focus-visible {
+            background: #1f8a5b;
+        }
+
         #containerLabCanvas {
             width: 100%;
             height: 520px;
@@ -275,90 +295,83 @@
     <main>
         <section class="hero">
             <div class="container">
-                <h1>Containerized LLM Ops Lab</h1>
-                <p>Tree of Life uses a container-first lab to keep LLM experiments portable, reproducible, and production-ready without exposing internal datasets or prompts.</p>
+                <h1>Agent Systems Simulator</h1>
+                <p>An interactive architecture metaphor for bounded agent roles, staged handoffs, validation, and recovery. This is a public simulation—not the TreeOfLife control plane.</p>
                 <div class="tag-row">
-                    <span class="tag">Docker</span>
-                    <span class="tag">Docker Compose</span>
-                    <span class="tag">LLM Inference</span>
-                    <span class="tag">Vector DB</span>
-                    <span class="tag">API Gateway</span>
-                    <span class="tag">Observability</span>
-                    <span class="tag">GPU/CPU Profiles</span>
+                    <span class="tag">Canvas</span>
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">Bounded Work</span>
+                    <span class="tag">Role Specialization</span>
+                    <span class="tag">Validation</span>
+                    <span class="tag">Recovery</span>
                 </div>
             </div>
         </section>
         
         <section class="container">
             <div class="card">
-                <h2>Mission for Tree of Life</h2>
-                <p>This lab keeps research-grade LLM workflows repeatable and secure while still feeling fast to iterate on.</p>
+                <h2>What the simulation explores</h2>
+                <p>The animation turns orchestration concepts into something visible and approachable.</p>
                 <ul>
-                    <li>Single-command boot with Compose profiles for CPU or GPU.</li>
-                    <li>Strict service boundaries and network isolation by default.</li>
-                    <li>Config-driven deployments so environments stay consistent.</li>
-                    <li>Observability hooks for latency, throughput, and error tracking.</li>
+                    <li>Goals move from a coordinator to specialists and narrowly bounded workers.</li>
+                    <li>Each work cell has a defined purpose and limited surface.</li>
+                    <li>Handoffs carry results and evidence to the next stage.</li>
+                    <li>Validation, cleanup, and recovery are represented as first-class steps.</li>
                 </ul>
             </div>
 
             <div class="card">
-                <h2>Capability pillars</h2>
+                <h2>Design ideas represented</h2>
                 <div class="grid">
                     <div class="pill">
-                        <h3>Reproducible environments</h3>
-                        <p>Environment files and versioned containers keep every run consistent across machines.</p>
+                        <h3>Explicit boundaries</h3>
+                        <p>Work is divided into small cells with a clear objective and constrained authority.</p>
                     </div>
                     <div class="pill">
-                        <h3>Safe service boundaries</h3>
-                        <p>Clear separation between model runtime, retrieval, and external tools.</p>
+                        <h3>Specialized roles</h3>
+                        <p>Coordinators, specialists, and workers contribute at different levels of scope.</p>
                     </div>
                     <div class="pill">
-                        <h3>Performance control</h3>
-                        <p>CPU and GPU profiles tuned for predictable latency and cost awareness.</p>
+                        <h3>Evidence at handoff</h3>
+                        <p>Progress is represented as a chain of receipts instead of an unverified final answer.</p>
                     </div>
                     <div class="pill">
-                        <h3>Operational visibility</h3>
-                        <p>Structured logs and metrics for fast debugging and reporting.</p>
+                        <h3>Failure as a state</h3>
+                        <p>Retries, cleanup, and recovery paths remain visible in the simulated workflow.</p>
                     </div>
                 </div>
             </div>
             
             <div class="card">
-                <h2>Architecture snapshot</h2>
-                <p>High-level view only. Internal services and data are intentionally abstracted.</p>
-                <div class="diagram">Client UI
-   |
-   v
-Gateway / API
-   |
-   +-- Auth + Rate Limits
-   |
-   v
-LLM Runtime ----> Tooling Layer ----> Vector Store
-   |                    |                  |
-   v                    v                  v
-Observability <----- Metrics + Logs ---- Cache</div>
+                <h2>Conceptual loop</h2>
+                <p>The public demo intentionally abstracts implementation and infrastructure details.</p>
+                <div class="diagram">Bounded objective
+      |
+      v
+Plan → Delegate → Execute → Validate
+  ^                              |
+  |                              v
+  +-------- Evidence ← Recover / Finish</div>
             </div>
 
             <div class="card">
-                <h2>Delivery artifacts</h2>
-                <p>Portfolio-friendly outputs that show real delivery without exposing proprietary internals.</p>
+                <h2>How to read the animation</h2>
+                <p>Every visual element stands in for a systems concept rather than a literal deployment diagram.</p>
                 <ul>
-                    <li>Compose files with CPU and GPU profiles.</li>
-                    <li>Service health checks and startup orchestration.</li>
-                    <li>Environment templates with redacted secrets.</li>
-                    <li>Metrics dashboards for latency, errors, and throughput.</li>
-                    <li>Runbooks for local and staged deployments.</li>
+                    <li>Nested boxes represent increasingly narrow work boundaries.</li>
+                    <li>Moving agents represent role-specific execution.</li>
+                    <li>Pipes represent scoped requests and returned evidence.</li>
+                    <li>Status stages represent tool use, validation, persistence, and completion.</li>
                 </ul>
             </div>
             
             <div class="card">
-                <h2>Operational highlights</h2>
+                <h2>What the working system has demonstrated</h2>
                 <ul>
-                    <li>Health checks and startup sequencing prevent broken demos.</li>
-                    <li>Configurable rate limits protect infrastructure.</li>
-                    <li>GPU-aware scheduling keeps inference stable under load.</li>
-                    <li>Token and latency dashboards support clear reporting.</li>
+                    <li>Role-bounded orchestration with durable operational state.</li>
+                    <li>Disposable candidate workspaces and validation-gated delivery.</li>
+                    <li>Local-model inference through brokered execution.</li>
+                    <li>Clean-host restoration from a verified encrypted checkpoint.</li>
                 </ul>
             </div>
 
@@ -373,14 +386,15 @@ Observability <----- Metrics + Logs ---- Cache</div>
 
             <div class="card">
                 <h2>Why it matters</h2>
-                <p>Containerizing the workflow keeps experiments consistent, supports secure collaboration, and makes it practical to ship the same stack from local dev to production.</p>
+                <p>Autonomy becomes more useful when scope, evidence, failure, and recovery are visible parts of the design.</p>
             </div>
         </section>
 
         <section class="container animation-section">
             <div class="card">
                 <h2>Systems Playground (Interactive)</h2>
-                <p>A visual metaphor for the Tree of Life stack: containers inside containers, protocols as tunnels, and agent tiers that specialize by role and skill. This stays high-level by design while showing the architectural intent.</p>
+                <p>A visual metaphor for bounded work cells, scoped communication, and agent tiers that specialize by role. It stays high-level by design while showing the architectural intent.</p>
+                <p class="note">The labels, cell counts, and connection pattern are illustrative choices; they do not map the private system’s operational topology.</p>
                 <div class="legend">
                     <div class="legend-item">
                         <span class="legend-swatch"></span>
@@ -399,9 +413,10 @@ Observability <----- Metrics + Logs ---- Cache</div>
                         Skill hats and job roles
                     </div>
                 </div>
+                <a class="simulator-link" href="playground.html?role=worker&amp;container=1&amp;level=1">Launch the bounded work simulation</a>
                 <div class="canvas-wrap">
                     <canvas id="containerLabCanvas" role="img" aria-label="Animated diagram of nested containers, protocol tunnels, and AI agent tiers."></canvas>
-                    <div class="canvas-note">Move your cursor to shift the view. Click a slave container to open its scenario (each one ramps the difficulty), or click elsewhere to pause.</div>
+                    <div class="canvas-note">Move your cursor to shift the view. Click a worker cell to open its simulated scenario, or click elsewhere to pause.</div>
                 </div>
             </div>
         </section>
@@ -425,30 +440,30 @@ Observability <----- Metrics + Logs ---- Cache</div>
             let paused = prefersReducedMotion;
 
             const levels = [
-                { name: 'Master', topRatio: 0.08, heightRatio: 0.18, containers: 2, pattern: 'tile', env: '#e2e7ec' },
-                { name: 'Servant', topRatio: 0.34, heightRatio: 0.22, containers: 3, pattern: 'stone', env: '#e9edf2' },
-                { name: 'Slave', topRatio: 0.62, heightRatio: 0.28, containers: 5, pattern: 'brick', env: '#f2f5f8' }
+                { name: 'Coordinator', label: 'Coordinator', topRatio: 0.08, heightRatio: 0.18, containers: 2, pattern: 'tile', env: '#e2e7ec' },
+                { name: 'Specialist', label: 'Specialist', topRatio: 0.34, heightRatio: 0.22, containers: 3, pattern: 'stone', env: '#e9edf2' },
+                { name: 'Worker', label: 'Worker', topRatio: 0.62, heightRatio: 0.28, containers: 5, pattern: 'brick', env: '#f2f5f8' }
             ];
 
-            const masterServantLinks = [
+            const coordinatorSpecialistLinks = [
                 [0, 1],
                 [2]
             ];
 
-            const servantSlaveLinks = [
+            const specialistWorkerLinks = [
                 [0, 1],
                 [2, 3],
                 [4]
             ];
 
             const agents = [];
-            const slaveStages = [];
-            const hitRects = { slave: [] };
-            const slaveLevelMap = [1, 2, 3, 4, 5];
+            const workerStages = [];
+            const hitRects = { worker: [] };
+            const workerLevelMap = [1, 2, 3, 4, 5];
             const roleStyles = {
-                master: { radius: 14, speed: 0.35, color: '#e67e22' },
-                servant: { radius: 11, speed: 0.55, color: '#f39c12' },
-                slave: { radius: 9, speed: 0.75, color: '#f1c40f' }
+                coordinator: { radius: 14, speed: 0.35, color: '#e67e22' },
+                specialist: { radius: 11, speed: 0.55, color: '#f39c12' },
+                worker: { radius: 9, speed: 0.75, color: '#f1c40f' }
             };
 
             function resize() {
@@ -459,7 +474,7 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 canvas.height = Math.floor(height * dpr);
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 layoutLevels();
-                initSlaveStages();
+                initWorkerStages();
             }
 
             function layoutLevels() {
@@ -501,11 +516,11 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 });
             }
 
-            function initSlaveStages() {
-                slaveStages.length = 0;
-                const slaveLevel = levels[2];
-                if (!slaveLevel.layout) return;
-                slaveLevel.layout.containers.forEach((container, index) => {
+            function initWorkerStages() {
+                workerStages.length = 0;
+                const workerLevel = levels[2];
+                if (!workerLevel.layout) return;
+                workerLevel.layout.containers.forEach((container, index) => {
                     const columns = Math.max(6, Math.min(10, Math.floor(container.w / 50)));
                     const rows = container.h > 120 ? 3 : 2;
                     const stage = {
@@ -522,7 +537,7 @@ Observability <----- Metrics + Logs ---- Cache</div>
                     stage.path = stage.dots.map((dot, idx) => ({ x: dot.x, y: dot.y, dotIndex: idx }));
                     stage.total = stage.dots.length;
                     resetStage(stage);
-                    slaveStages[index] = stage;
+                    workerStages[index] = stage;
                 });
             }
 
@@ -755,16 +770,16 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 ctx.fill();
             }
 
-            function drawStrings(masterPoints, servantPoints, phase) {
+            function drawStrings(coordinatorPoints, specialistPoints, phase) {
                 ctx.strokeStyle = 'rgba(52, 73, 94, 0.35)';
                 ctx.lineWidth = 1.5;
-                masterPoints.forEach((master, index) => {
-                    const servant = servantPoints[index % servantPoints.length];
+                coordinatorPoints.forEach((coordinator, index) => {
+                    const specialist = specialistPoints[index % specialistPoints.length];
                     const sway = Math.sin(phase + index) * 6;
                     ctx.beginPath();
-                    ctx.moveTo(master.x, master.y);
-                    ctx.lineTo((master.x + servant.x) / 2 + sway, (master.y + servant.y) / 2);
-                    ctx.lineTo(servant.x, servant.y);
+                    ctx.moveTo(coordinator.x, coordinator.y);
+                    ctx.lineTo((coordinator.x + specialist.x) / 2 + sway, (coordinator.y + specialist.y) / 2);
+                    ctx.lineTo(specialist.x, specialist.y);
                     ctx.stroke();
                 });
             }
@@ -785,10 +800,10 @@ Observability <----- Metrics + Logs ---- Cache</div>
             }
 
             function updateAgents(delta, now) {
-                slaveStages.forEach((stage, index) => {
+                workerStages.forEach((stage, index) => {
                     if (stage && stage.resetAt && now >= stage.resetAt) {
                         resetStage(stage);
-                        const agent = getAgentByRole('slave', index);
+                        const agent = getAgentByRole('worker', index);
                         if (agent) agent.pauseUntil = null;
                     }
                 });
@@ -799,8 +814,8 @@ Observability <----- Metrics + Logs ---- Cache</div>
                     if (agent.pauseUntil && now < agent.pauseUntil) return;
                     const container = level.layout.containers[agent.containerIndex];
 
-                    if (agent.role === 'slave') {
-                        const stage = slaveStages[agent.containerIndex];
+                    if (agent.role === 'worker') {
+                        const stage = workerStages[agent.containerIndex];
                         if (!stage || stage.completeAt) return;
                         if (stage.path.length < 2) return;
                         const current = stage.path[stage.pathIndex];
@@ -849,7 +864,7 @@ Observability <----- Metrics + Logs ---- Cache</div>
                         agent.dir *= -1;
                     }
                     agent.x = minX + range * agent.progress;
-                    agent.y = container.y + container.h * (agent.role === 'master' ? 0.45 : agent.role === 'servant' ? 0.55 : 0.7);
+                    agent.y = container.y + container.h * (agent.role === 'coordinator' ? 0.45 : agent.role === 'specialist' ? 0.55 : 0.7);
                     agent.heading = agent.dir > 0 ? 0 : Math.PI;
                 });
             }
@@ -896,17 +911,17 @@ Observability <----- Metrics + Logs ---- Cache</div>
                             w: container.w,
                             h: container.h
                         };
-                        if (level.name === 'Slave') {
-                            hitRects.slave[idx] = rect;
+                        if (level.name === 'Worker') {
+                            hitRects.worker[idx] = rect;
                         }
                         ctx.save();
                         if (hoveredLevel && hoveredLevel !== level) {
                             ctx.globalAlpha = 0.6;
                         }
-                        drawContainer(rect, level.pattern, `${level.name} ${idx + 1}`);
-                        if (level.name === 'Slave') {
-                            drawStageDots(rect, slaveStages[idx], time * 2 + idx);
-                            drawStageStatus(rect, slaveStages[idx]);
+                        drawContainer(rect, level.pattern, `${level.label} ${idx + 1}`);
+                        if (level.name === 'Worker') {
+                            drawStageDots(rect, workerStages[idx], time * 2 + idx);
+                            drawStageStatus(rect, workerStages[idx]);
                         } else {
                             drawDots(rect, 8, time * 2 + idx);
                         }
@@ -914,49 +929,49 @@ Observability <----- Metrics + Logs ---- Cache</div>
                     });
                 });
 
-                masterServantLinks.forEach((servantIndices, masterIndex) => {
-                    const masterRect = getContainerRect(0, masterIndex, offsetX, offsetY, levelStates[0].sway);
-                    const from = { x: masterRect.x + masterRect.w / 2, y: masterRect.y + masterRect.h };
-                    servantIndices.forEach((servantIndex, idx) => {
-                        const servantRect = getContainerRect(1, servantIndex, offsetX, offsetY, levelStates[1].sway);
-                        const to = { x: servantRect.x + servantRect.w / 2, y: servantRect.y };
-                        drawPipe(from, to, time + idx * 0.3 + masterIndex, 'rgba(52, 152, 219, 0.8)');
+                coordinatorSpecialistLinks.forEach((specialistIndices, coordinatorIndex) => {
+                    const coordinatorRect = getContainerRect(0, coordinatorIndex, offsetX, offsetY, levelStates[0].sway);
+                    const from = { x: coordinatorRect.x + coordinatorRect.w / 2, y: coordinatorRect.y + coordinatorRect.h };
+                    specialistIndices.forEach((specialistIndex, idx) => {
+                        const specialistRect = getContainerRect(1, specialistIndex, offsetX, offsetY, levelStates[1].sway);
+                        const to = { x: specialistRect.x + specialistRect.w / 2, y: specialistRect.y };
+                        drawPipe(from, to, time + idx * 0.3 + coordinatorIndex, 'rgba(52, 152, 219, 0.8)');
                     });
                 });
 
-                servantSlaveLinks.forEach((slaveIndices, servantIndex) => {
-                    const servantRect = getContainerRect(1, servantIndex, offsetX, offsetY, levelStates[1].sway);
-                    const from = { x: servantRect.x + servantRect.w / 2, y: servantRect.y + servantRect.h };
-                    slaveIndices.forEach((slaveIndex, idx) => {
-                        const slaveRect = getContainerRect(2, slaveIndex, offsetX, offsetY, levelStates[2].sway);
-                        const to = { x: slaveRect.x + slaveRect.w / 2, y: slaveRect.y };
-                        drawPipe(from, to, time + idx * 0.4 + servantIndex, 'rgba(46, 204, 113, 0.75)');
+                specialistWorkerLinks.forEach((workerIndices, specialistIndex) => {
+                    const specialistRect = getContainerRect(1, specialistIndex, offsetX, offsetY, levelStates[1].sway);
+                    const from = { x: specialistRect.x + specialistRect.w / 2, y: specialistRect.y + specialistRect.h };
+                    workerIndices.forEach((workerIndex, idx) => {
+                        const workerRect = getContainerRect(2, workerIndex, offsetX, offsetY, levelStates[2].sway);
+                        const to = { x: workerRect.x + workerRect.w / 2, y: workerRect.y };
+                        drawPipe(from, to, time + idx * 0.4 + specialistIndex, 'rgba(46, 204, 113, 0.75)');
                     });
                 });
 
-                masterServantLinks.forEach((servantIndices, masterIndex) => {
-                    const masterAgent = getAgentByRole('master', masterIndex);
-                    if (!masterAgent) return;
-                    servantIndices.forEach((servantIndex) => {
-                        const servantAgent = getAgentByRole('servant', servantIndex);
-                        if (!servantAgent) return;
+                coordinatorSpecialistLinks.forEach((specialistIndices, coordinatorIndex) => {
+                    const coordinatorAgent = getAgentByRole('coordinator', coordinatorIndex);
+                    if (!coordinatorAgent) return;
+                    specialistIndices.forEach((specialistIndex) => {
+                        const specialistAgent = getAgentByRole('specialist', specialistIndex);
+                        if (!specialistAgent) return;
                         drawStrings(
-                            [{ x: masterAgent.x + offsetX + levelStates[0].sway, y: masterAgent.y + offsetY + levelStates[0].sway }],
-                            [{ x: servantAgent.x + offsetX + levelStates[1].sway, y: servantAgent.y + offsetY + levelStates[1].sway }],
+                            [{ x: coordinatorAgent.x + offsetX + levelStates[0].sway, y: coordinatorAgent.y + offsetY + levelStates[0].sway }],
+                            [{ x: specialistAgent.x + offsetX + levelStates[1].sway, y: specialistAgent.y + offsetY + levelStates[1].sway }],
                             time
                         );
                     });
                 });
 
-                servantSlaveLinks.forEach((slaveIndices, servantIndex) => {
-                    const servantAgent = getAgentByRole('servant', servantIndex);
-                    if (!servantAgent) return;
-                    slaveIndices.forEach((slaveIndex) => {
-                        const slaveAgent = getAgentByRole('slave', slaveIndex);
-                        if (!slaveAgent) return;
+                specialistWorkerLinks.forEach((workerIndices, specialistIndex) => {
+                    const specialistAgent = getAgentByRole('specialist', specialistIndex);
+                    if (!specialistAgent) return;
+                    workerIndices.forEach((workerIndex) => {
+                        const workerAgent = getAgentByRole('worker', workerIndex);
+                        if (!workerAgent) return;
                         drawStrings(
-                            [{ x: servantAgent.x + offsetX + levelStates[1].sway, y: servantAgent.y + offsetY + levelStates[1].sway }],
-                            [{ x: slaveAgent.x + offsetX + levelStates[2].sway, y: slaveAgent.y + offsetY + levelStates[2].sway }],
+                            [{ x: specialistAgent.x + offsetX + levelStates[1].sway, y: specialistAgent.y + offsetY + levelStates[1].sway }],
+                            [{ x: workerAgent.x + offsetX + levelStates[2].sway, y: workerAgent.y + offsetY + levelStates[2].sway }],
                             time + 1.5
                         );
                     });
@@ -993,10 +1008,10 @@ Observability <----- Metrics + Logs ---- Cache</div>
                 const rect = canvas.getBoundingClientRect();
                 const x = event.clientX - rect.left;
                 const y = event.clientY - rect.top;
-                const hitIndex = hitRects.slave.findIndex((hit) => hit && x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h);
+                const hitIndex = hitRects.worker.findIndex((hit) => hit && x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h);
                 if (hitIndex !== -1) {
-                    const level = slaveLevelMap[hitIndex] || 1;
-                    window.location.href = `playground.html?role=slave&container=${hitIndex + 1}&level=${level}`;
+                    const level = workerLevelMap[hitIndex] || 1;
+                    window.location.href = `playground.html?role=worker&container=${hitIndex + 1}&level=${level}`;
                     return;
                 }
                 paused = !paused;

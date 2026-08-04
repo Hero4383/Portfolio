@@ -1,353 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Orchestration Academy - Learn Multi-Agent Systems</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            line-height: 1.7;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #4a6741 50%, #2980b9 75%, #3498db 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            min-height: 100vh;
-            color: #2c3e50;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Header */
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(52, 73, 94, 0.1);
-            box-shadow: 0 2px 20px rgba(52, 73, 94, 0.1);
-        }
-        
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            text-decoration: none;
-            letter-spacing: -0.5px;
-        }
-        
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: #2c3e50;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        
-        .nav-links a:hover {
-            background: rgba(52, 152, 219, 0.1);
-            color: #3498db;
-            transform: translateY(-1px);
-        }
-        
-        /* Hero Section */
-        .hero {
-            text-align: center;
-            padding: 8rem 0 6rem;
-            color: white;
-        }
-        
-        .hero h1 {
-            font-size: 3.2rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .hero .title {
-            font-size: 1.4rem;
-            margin-bottom: 2rem;
-            opacity: 0.95;
-            font-weight: 400;
-            color: #ecf0f1;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 3rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            color: #bdc3c7;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 1.2rem 3rem;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
-            border: 2px solid transparent;
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.4);
-            background: linear-gradient(135deg, #2980b9, #3498db);
-        }
-        
-        /* Projects Section */
-        .projects {
-            padding: 8rem 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-        }
-        
-        .section-title {
-            text-align: center;
-            font-size: 2.8rem;
-            color: #2c3e50;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            margin-bottom: 4rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-        
-        .module-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2.5rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .module-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-        }
-        
-        .module-number {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1.5rem;
-        }
-        
-        .module-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .module-card p {
-            margin-bottom: 1.5rem;
-            color: #5a6c7d;
-            line-height: 1.6;
-        }
-        
-        .module-stats {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-        
-        .module-stat {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        
-        .module-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            padding: 0.8rem 1.8rem;
-            text-decoration: none;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .module-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
-        }
-        
-        .module-link.coming-soon {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        
-        /* Footer */
-        footer {
-            background: rgba(44, 62, 80, 0.95);
-            backdrop-filter: blur(15px);
-            text-align: center;
-            padding: 3rem 0;
-            color: #bdc3c7;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .hero .title { font-size: 1.2rem; }
-            .nav-links { gap: 1rem; }
-            .modules-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Learning Archive Retired | Nathan Storms</title>
+  <meta name="description" content="This early learning archive has been retired and is not a current product or implementation guide.">
+  <meta name="theme-color" content="#081411">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/site.css">
 </head>
-<body>
-    <header>
-        <nav class="container">
-            <a href="#" class="logo">🤖 AI Orchestration Academy</a>
-            <ul class="nav-links">
-                <li><a href="#modules">Modules</a></li>
-                <li><a href="../">Portfolio</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="policy-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="../">
+        <span class="brand-mark" aria-hidden="true">NS</span>
+        <span>Nathan Storms</span>
+      </a>
+      <a class="policy-nav-link" href="../#projects">Current work</a>
+    </div>
+  </header>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>🧠 AI Orchestration Academy</h1>
-                <div class="title">Learn to Build Multi-Agent AI Systems That Work Together</div>
-                <p>
-                    Start simple, build progressively. Learn how to create AI systems where multiple agents collaborate, 
-                    communicate, and accomplish complex tasks - from "Hello World" to production-ready orchestration platforms.
-                </p>
-                <a href="#modules" class="cta-button">Start Learning</a>
-            </div>
-        </section>
+  <main id="main-content" class="policy-main">
+    <div class="shell policy-shell">
+      <p class="eyebrow"><span aria-hidden="true"></span> Historical archive</p>
+      <h1>This early tutorial has been retired.</h1>
+      <p class="policy-lede">
+        The material documented an earlier stage of exploration. It is no longer maintained and should
+        not be read as a current implementation guide, production claim, or description of TreeOfLife.
+      </p>
+      <section class="policy-card" aria-labelledby="archive-title">
+        <h2 id="archive-title">Why it is no longer public-facing</h2>
+        <p>
+          The working system has moved toward bounded execution, explicit validation, durable state, and
+          tested recovery. The portfolio now presents only current, evidence-backed outcomes at a safe level of detail.
+        </p>
+      </section>
+      <div class="policy-actions">
+        <a class="button button-primary" href="../#treeoflife">Read the current case study</a>
+        <a class="button button-secondary" href="../">Return to portfolio</a>
+      </div>
+    </div>
+  </main>
 
-        <section id="modules" class="projects">
-            <div class="container">
-                <h2 class="section-title">Progressive Learning Path</h2>
-                <p class="section-subtitle">
-                    Master AI orchestration step by step. Each module builds on the previous one, 
-                    starting simple and growing into powerful multi-agent systems.
-                </p>
-
-                <div class="modules-grid">
-                    <div class="module-card">
-                        <div class="module-number">1</div>
-                        <h3>"Hello World" AI Director</h3>
-                        <p>Build your first AI decision-maker. Create a simple web interface where an LLM analyzes requests and decides what should happen next.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 30 minutes</span>
-                            <span class="module-stat">📁 3 files</span>
-                            <span class="module-stat">🔧 Basic HTML/JS</span>
-                        </div>
-                        <a href="modules/01-hello-world-director/" class="module-link">Start Module 1</a>
-                    </div>
-
-                    <div class="module-card">
-                        <div class="module-number">2</div>
-                        <h3>Professional AI Agent</h3>
-                        <p>Build a real AI agent using Pyantic AI with knowledge graphs, self-correction, and professional development workflows.</p>
-                        <div class="module-stats">
-                            <span class="module-stat">⏱️ 2 hours</span>
-                            <span class="module-stat">📁 15+ files</span>
-                            <span class="module-stat">🔧 Pyantic + Neo4j</span>
-                        </div>
-                        <a href="modules/02-pyantic-agent/" class="module-link">Start Module 2</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>🚀 Built with passion for AI orchestration • Part of Nathan Storms' Portfolio</p>
-            <p>Learn to build the future of collaborative AI systems</p>
-        </div>
-    </footer>
-
-    <script>
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-    </script>
+  <footer class="site-footer policy-footer">
+    <div class="shell footer-grid">
+      <p>© 2026 Nathan Storms</p>
+      <a href="../">Portfolio</a>
+    </div>
+  </footer>
 </body>
 </html>
